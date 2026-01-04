@@ -8,6 +8,7 @@ import { Copy } from 'lucide-react';
 
 interface StudentQRCodeDialogProps {
   student: Student;
+  sequentialId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -17,8 +18,12 @@ const PlaceholderQRCode = ({ studentId }: { studentId: string }) => {
   // Simple hashing function to create a visually different pattern for each ID
   const hash = (s: string) => {
     let h = 0;
-    for (let i = 0; i < s.length; i++) {
-      h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+    // Use a simple seeding mechanism if the input is purely numeric
+    const seed = parseInt(s, 10) * 1234567;
+    const str = seed.toString();
+
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
     }
     return h;
   };
@@ -47,13 +52,13 @@ const PlaceholderQRCode = ({ studentId }: { studentId: string }) => {
 };
 
 
-export default function StudentQRCodeDialog({ student, open, onOpenChange }: StudentQRCodeDialogProps) {
+export default function StudentQRCodeDialog({ student, sequentialId, open, onOpenChange }: StudentQRCodeDialogProps) {
   const { toast } = useToast();
 
   if (!student) return null;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(student.id);
+    navigator.clipboard.writeText(sequentialId);
     toast({
       title: "تم النسخ",
       description: "تم نسخ كود الطالب بنجاح.",
@@ -71,11 +76,11 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
         </DialogHeader>
         <div className="py-4 flex flex-col items-center gap-4">
           <div className="p-4 bg-white rounded-lg shadow-inner border">
-             <PlaceholderQRCode studentId={student.id} />
+             <PlaceholderQRCode studentId={sequentialId} />
           </div>
-          <p className="text-muted-foreground text-sm">هذا الكود هو المعرف الفريد للطالب</p>
-          <div className="p-3 bg-muted rounded-md w-full text-center font-mono text-sm break-all">
-            {student.id}
+          <p className="text-muted-foreground text-sm">هذا الكود هو المعرف الرقمي للطالب</p>
+          <div className="p-3 bg-muted rounded-md w-full text-center font-mono text-2xl tracking-widest">
+            {sequentialId}
           </div>
           <Button onClick={handleCopy} className="w-full">
             <Copy className="ms-2 h-4 w-4" />

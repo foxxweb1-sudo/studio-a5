@@ -39,6 +39,11 @@ const formSchema = z.object({
   parentPhone: z.string().optional(),
 });
 
+type SelectedStudent = {
+  student: Student;
+  sequentialId: string;
+};
+
 export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
@@ -46,7 +51,7 @@ export default function StudentManagement() {
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStudentForQR, setSelectedStudentForQR] = useState<Student | null>(null);
+  const [selectedStudentForQR, setSelectedStudentForQR] = useState<SelectedStudent | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -205,14 +210,16 @@ export default function StudentManagement() {
                   </TableHeader>
                   <TableBody>
                     {filteredStudents.length > 0 ? (
-                      filteredStudents.map((student, index) => (
+                      filteredStudents.map((student, index) => {
+                        const sequentialId = (index + 1).toString();
+                        return (
                         <TableRow key={student.id}>
-                          <TableCell className="font-mono text-sm">{index + 1}</TableCell>
+                          <TableCell className="font-mono text-sm">{sequentialId}</TableCell>
                           <TableCell className="font-medium">{student.name}</TableCell>
                            {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
                           <TableCell>{student.parentPhone || 'لا يوجد'}</TableCell>
                           <TableCell className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR(student)}>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR({ student, sequentialId })}>
                               <QrCode className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
@@ -241,7 +248,7 @@ export default function StudentManagement() {
                             </AlertDialog>
                           </TableCell>
                         </TableRow>
-                      ))
+                      )})
                     ) : (
                       <TableRow>
                         <TableCell colSpan={gradeFromUrl ? 5 : 5} className="h-24 text-center">
@@ -258,7 +265,8 @@ export default function StudentManagement() {
       </div>
       {selectedStudentForQR && (
         <StudentQRCodeDialog 
-          student={selectedStudentForQR} 
+          student={selectedStudentForQR.student} 
+          sequentialId={selectedStudentForQR.sequentialId}
           open={!!selectedStudentForQR} 
           onOpenChange={(isOpen) => !isOpen && setSelectedStudentForQR(null)}
         />

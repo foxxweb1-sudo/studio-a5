@@ -54,12 +54,12 @@ export default function SignUp() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
        <Image
-        src="https://picsum.photos/seed/sphinx/1920/1080"
-        alt="خلفية أبو الهول"
+        src="https://picsum.photos/seed/cairo/1920/1080"
+        alt="خلفية القاهرة"
         fill
         style={{ objectFit: 'cover' }}
         className="z-0"
-        data-ai-hint="sphinx giza"
+        data-ai-hint="cairo night"
         priority
       />
       <div className="absolute inset-0 bg-black/60 z-10" />

@@ -6,37 +6,37 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Users, CalendarCheck, FileText, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
-const dashboardItems = [
-  {
-    name: 'تسجيل الحضور اليومي',
-    icon: CalendarCheck,
-    href: '/attendance',
-    description: 'تسجيل حضور الطلاب لهذا اليوم.',
-  },
-  {
-    name: 'إدارة الطلاب',
-    icon: Users,
-    href: '/students',
-    description: 'إضافة وتعديل بيانات الطلاب.',
-  },
-  {
-    name: 'التقارير',
-    icon: FileText,
-    href: '/reports',
-    description: 'عرض تقارير الحضور والغياب.',
-  },
-  {
-    name: 'المدفوعات',
-    icon: CreditCard,
-    href: '/payments',
-    description: 'متابعة المدفوعات والرسوم المستحقة.',
-  },
-];
-
 export default function GradeDashboardPage() {
   const params = useParams();
   const gradeName = decodeURIComponent(params.gradeName as string);
   const stageName = params.stageName as string;
+
+  const dashboardItems = [
+    {
+      name: 'تسجيل الحضور اليومي',
+      icon: CalendarCheck,
+      href: '/attendance',
+      description: 'تسجيل حضور الطلاب لهذا اليوم.',
+    },
+    {
+      name: 'إدارة الطلاب',
+      icon: Users,
+      href: `/students?grade=${encodeURIComponent(gradeName)}`,
+      description: 'إضافة وتعديل بيانات الطلاب.',
+    },
+    {
+      name: 'التقارير',
+      icon: FileText,
+      href: '/reports',
+      description: 'عرض تقارير الحضور والغياب.',
+    },
+    {
+      name: 'المدفوعات',
+      icon: CreditCard,
+      href: '/payments',
+      description: 'متابعة المدفوعات والرسوم المستحقة.',
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-8">

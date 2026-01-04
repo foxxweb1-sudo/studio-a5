@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,15 +21,17 @@ import {
 } from "@/components/ui/table";
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
+import { useSearchParams } from 'next/navigation';
 
 const formSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
-  grade: z.string().min(1, 'الفصل مطلوب.'),
-  phone: z.string().optional(),
   parentPhone: z.string().optional(),
 });
 
 export default function StudentManagement() {
+  const searchParams = useSearchParams();
+  const gradeFromUrl = searchParams.get('grade') || '';
+  
   const { students, addStudent, isLoading } = useStudents();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,14 +41,30 @@ export default function StudentManagement() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      grade: '',
-      phone: '',
       parentPhone: '',
     },
   });
 
+  useEffect(() => {
+    if(gradeFromUrl){
+      form.setValue('grade', gradeFromUrl, { shouldValidate: true });
+    }
+  }, [gradeFromUrl, form])
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    addStudent(values);
+    if(!gradeFromUrl) {
+        toast({
+            variant: "destructive",
+            title: 'خطأ',
+            description: 'لم يتم تحديد الصف الدراسي. يرجى الوصول لهذه الصفحة من خلال لوحة التحكم الخاصة بالصف.',
+        });
+        return;
+    }
+    const studentData = {
+        ...values,
+        grade: gradeFromUrl,
+    }
+    addStudent(studentData);
     toast({
       title: 'تم تسجيل الطالب',
       description: `تم إضافة الطالب ${values.name} بنجاح.`,
@@ -55,8 +73,9 @@ export default function StudentManagement() {
   };
 
   const filteredStudents = students.filter(student => 
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.grade.toLowerCase().includes(searchTerm.toLowerCase())
+    (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (!gradeFromUrl || student.grade === gradeFromUrl)
   );
 
   return (
@@ -65,6 +84,7 @@ export default function StudentManagement() {
         <Card>
           <CardHeader>
             <CardTitle>تسجيل طالب جديد</CardTitle>
+             {gradeFromUrl && <CardDescription>الصف: {gradeFromUrl}</CardDescription>}
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -82,31 +102,7 @@ export default function StudentManagement() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="grade"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>الفصل</FormLabel>
-                      <FormControl>
-                        <Input placeholder="مثال: الصف الأول الثانوي" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>هاتف الطالب (اختياري)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="رقم الهاتف" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                
                 <FormField
                   control={form.control}
                   name="parentPhone"
@@ -119,10 +115,11 @@ export default function StudentManagement() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={!gradeFromUrl || isLoading}>
                   <UserPlus className="ms-2 h-4 w-4" />
                   إضافة طالب
                 </Button>
+                 {!gradeFromUrl && <p className="text-xs text-destructive text-center">الرجاء اختيار صف دراسي أولاً.</p>}
               </form>
             </Form>
           </CardContent>
@@ -131,14 +128,14 @@ export default function StudentManagement() {
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>قائمة الطلاب ({students.length})</CardTitle>
-            <CardDescription>عرض وبحث الطلاب المسجلين.</CardDescription>
+            <CardTitle>قائمة الطلاب {gradeFromUrl ? `(${filteredStudents.length})` : `(${students.length})`}</CardTitle>
+            <CardDescription>{gradeFromUrl ? `عرض طلاب صف: ${gradeFromUrl}` : 'عرض وبحث الطلاب المسجلين.'}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالاسم أو الفصل..."
+                placeholder="ابحث بالاسم..."
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -154,7 +151,7 @@ export default function StudentManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>الاسم</TableHead>
-                      <TableHead>الفصل</TableHead>
+                      {!gradeFromUrl && <TableHead>الفصل</TableHead>}
                       <TableHead>الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -163,7 +160,7 @@ export default function StudentManagement() {
                       filteredStudents.map((student) => (
                         <TableRow key={student.id}>
                           <TableCell className="font-medium">{student.name}</TableCell>
-                          <TableCell>{student.grade}</TableCell>
+                           {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
                           <TableCell>
                             <Button variant="ghost" size="icon" onClick={() => setSelectedStudent(student)}>
                               <QrCode className="h-4 w-4" />
@@ -173,7 +170,7 @@ export default function StudentManagement() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} className="h-24 text-center">
+                        <TableCell colSpan={gradeFromUrl ? 2 : 3} className="h-24 text-center">
                           {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على طلاب."}
                         </TableCell>
                       </TableRow>

@@ -2,8 +2,8 @@
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment } from "@/lib/definitions";
-import { collection, addDoc, doc, serverTimestamp } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc } from "firebase/firestore";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { format } from 'date-fns';
 
 // --- Students Hook ---
@@ -27,7 +27,19 @@ export function useStudents() {
     addDocumentNonBlocking(studentCollection, newStudent);
   };
 
-  return { students: students || [], isLoading, addStudent };
+  const updateStudent = (studentId: string, studentData: Partial<Student>) => {
+    if (!user) return;
+    const studentDoc = doc(firestore, `users/${user.uid}/students`, studentId);
+    updateDocumentNonBlocking(studentDoc, studentData);
+  };
+  
+  const deleteStudent = (studentId: string) => {
+    if (!user) return;
+    const studentDoc = doc(firestore, `users/${user.uid}/students`, studentId);
+    deleteDocumentNonBlocking(studentDoc);
+  };
+
+  return { students: students || [], isLoading, addStudent, updateStudent, deleteStudent };
 }
 
 // --- Attendance Hook ---

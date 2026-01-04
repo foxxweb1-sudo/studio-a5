@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2 } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -22,6 +22,17 @@ import {
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
 import { useSearchParams } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const formSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
@@ -32,10 +43,11 @@ export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
   
-  const { students, addStudent, isLoading } = useStudents();
+  const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudentForQR, setSelectedStudentForQR] = useState<Student | null>(null);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,8 +63,22 @@ export default function StudentManagement() {
     }
   }, [gradeFromUrl, form])
 
+  useEffect(() => {
+    if (editingStudent) {
+      form.reset({
+        name: editingStudent.name,
+        parentPhone: editingStudent.parentPhone,
+      });
+    } else {
+      form.reset({
+        name: '',
+        parentPhone: '',
+      });
+    }
+  }, [editingStudent, form]);
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if(!gradeFromUrl) {
+    if(!gradeFromUrl && !editingStudent) {
         toast({
             variant: "destructive",
             title: 'خطأ',
@@ -60,20 +86,37 @@ export default function StudentManagement() {
         });
         return;
     }
-    const studentData = {
-        ...values,
-        grade: gradeFromUrl,
+
+    if (editingStudent) {
+      updateStudent(editingStudent.id, { ...editingStudent, ...values });
+      toast({ title: 'تم التعديل', description: `تم تعديل بيانات الطالب ${values.name}.` });
+      setEditingStudent(null);
+    } else {
+      const studentData = {
+          ...values,
+          grade: gradeFromUrl,
+      }
+      addStudent(studentData);
+      toast({
+        title: 'تم تسجيل الطالب',
+        description: `تم إضافة الطالب ${values.name} بنجاح.`,
+      });
     }
-    addStudent(studentData);
-    toast({
-      title: 'تم تسجيل الطالب',
-      description: `تم إضافة الطالب ${values.name} بنجاح.`,
-    });
-    form.reset();
+    form.reset({ name: '', parentPhone: '' });
   };
+  
+  const handleDelete = (studentId: string) => {
+    deleteStudent(studentId);
+    toast({
+        variant: "destructive",
+        title: "تم الحذف",
+        description: "تم حذف الطالب بنجاح."
+    });
+  }
 
   const filteredStudents = students.filter(student => 
     (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (!gradeFromUrl || student.grade === gradeFromUrl)
   );
@@ -83,8 +126,9 @@ export default function StudentManagement() {
       <div className="lg:col-span-1">
         <Card>
           <CardHeader>
-            <CardTitle>تسجيل طالب جديد</CardTitle>
-             {gradeFromUrl && <CardDescription>الصف: {gradeFromUrl}</CardDescription>}
+            <CardTitle>{editingStudent ? 'تعديل بيانات الطالب' : 'تسجيل طالب جديد'}</CardTitle>
+             {gradeFromUrl && !editingStudent && <CardDescription>الصف: {gradeFromUrl}</CardDescription>}
+             {editingStudent && <CardDescription>تعديل بيانات: {editingStudent.name}</CardDescription>}
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -115,11 +159,12 @@ export default function StudentManagement() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={!gradeFromUrl || isLoading}>
+                <Button type="submit" className="w-full" disabled={(!gradeFromUrl && !editingStudent) || isLoading}>
                   <UserPlus className="ms-2 h-4 w-4" />
-                  إضافة طالب
+                  {editingStudent ? 'حفظ التعديلات' : 'إضافة طالب'}
                 </Button>
-                 {!gradeFromUrl && <p className="text-xs text-destructive text-center">الرجاء اختيار صف دراسي أولاً.</p>}
+                 {editingStudent && <Button variant="ghost" className="w-full" onClick={() => setEditingStudent(null)}>إلغاء التعديل</Button>}
+                 {!gradeFromUrl && !editingStudent && <p className="text-xs text-destructive text-center">الرجاء اختيار صف دراسي أولاً.</p>}
               </form>
             </Form>
           </CardContent>
@@ -135,13 +180,13 @@ export default function StudentManagement() {
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالاسم..."
+                placeholder="ابحث بالاسم أو الكود..."
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="max-h-96 overflow-auto">
+            <div className="max-h-[30rem] overflow-auto">
                {isLoading ? (
                   <div className="flex justify-center items-center h-48">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -151,6 +196,7 @@ export default function StudentManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>الاسم</TableHead>
+                      <TableHead>الكود</TableHead>
                       {!gradeFromUrl && <TableHead>الفصل</TableHead>}
                       <TableHead>الإجراءات</TableHead>
                     </TableRow>
@@ -160,17 +206,42 @@ export default function StudentManagement() {
                       filteredStudents.map((student) => (
                         <TableRow key={student.id}>
                           <TableCell className="font-medium">{student.name}</TableCell>
+                          <TableCell className="font-mono text-xs">{student.id}</TableCell>
                            {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
-                          <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudent(student)}>
+                          <TableCell className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR(student)}>
                               <QrCode className="h-4 w-4" />
                             </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
+                              <Edit className="h-4 w-4 text-blue-500" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    هذا الإجراء سيحذف الطالب ({student.name}) نهائياً. لا يمكن التراجع عن هذا الإجراء.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90">
+                                    حذف
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={gradeFromUrl ? 2 : 3} className="h-24 text-center">
+                        <TableCell colSpan={gradeFromUrl ? 4 : 4} className="h-24 text-center">
                           {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على طلاب."}
                         </TableCell>
                       </TableRow>
@@ -182,11 +253,11 @@ export default function StudentManagement() {
           </CardContent>
         </Card>
       </div>
-      {selectedStudent && (
+      {selectedStudentForQR && (
         <StudentQRCodeDialog 
-          student={selectedStudent} 
-          open={!!selectedStudent} 
-          onOpenChange={(isOpen) => !isOpen && setSelectedStudent(null)}
+          student={selectedStudentForQR} 
+          open={!!selectedStudentForQR} 
+          onOpenChange={(isOpen) => !isOpen && setSelectedStudentForQR(null)}
         />
       )}
     </div>

@@ -1,9 +1,18 @@
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, School, Building } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { GraduationCap, School, Building, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
+
+const mainLinks = [
+  {
+    name: 'تسجيل الحضور السريع',
+    icon: CalendarCheck,
+    href: '/attendance',
+    description: 'الانتقال مباشرة لتسجيل حضور طالب.',
+  },
+];
 
 const stages = [
   {
@@ -26,8 +35,25 @@ const stages = [
 export default function Home() {
   return (
     <div className="flex flex-col gap-8">
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {mainLinks.map((link) => (
+          <Link href={link.href} key={link.name} className="group sm:col-span-2 lg:col-span-3">
+             <Card className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+              <CardContent className="flex flex-col items-center justify-center p-8 gap-4">
+                  <div className="flex items-center justify-center w-24 h-24 rounded-full bg-primary-foreground/10 border-4 border-primary-foreground/20">
+                    <link.icon className="w-12 h-12 text-primary-foreground" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-center">{link.name}</h2>
+                  <p className="text-sm text-primary-foreground/80">{link.description}</p>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
       <PageHeader>
-        <PageHeaderTitle>اختر المرحلة الدراسية</PageHeaderTitle>
+        <PageHeaderTitle>او اختر المرحلة الدراسية</PageHeaderTitle>
         <PageHeaderDescription>
           حدد المرحلة التي تريد عرض الصفوف الخاصة بها.
         </PageHeaderDescription>

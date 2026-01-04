@@ -8,17 +8,23 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import {
-  LayoutDashboard,
+  Home,
   Users,
   BarChart3,
   CreditCard,
+  CalendarCheck,
 } from "lucide-react";
 
 const navItems = [
   {
     href: "/",
-    icon: LayoutDashboard,
+    icon: Home,
     label: "الرئيسية",
+  },
+  {
+    href: "/attendance",
+    icon: CalendarCheck,
+    label: "تسجيل الحضور",
   },
   {
     href: "/students",
@@ -47,7 +53,7 @@ export function SidebarNav() {
           <Link href={item.href} passHref legacyBehavior>
             <SidebarMenuButton
               as="a"
-              isActive={pathname === item.href}
+              isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
               tooltip={item.label}
             >
               <item.icon />

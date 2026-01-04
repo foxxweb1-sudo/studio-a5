@@ -35,22 +35,21 @@ export default function StagePage() {
   const stage = stageData[stageName];
 
   if (!stage) {
-    // Handle invalid stage name, maybe redirect to home or show a 404
     if (typeof window !== 'undefined') {
        router.push('/');
     }
-    return null; // Or a loading/error component
+    return null;
   }
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader>
         <PageHeaderTitle>{stage.name}</PageHeaderTitle>
-        <PageHeaderDescription>اختر الصف لعرض التفاصيل.</PageHeaderDescription>
+        <PageHeaderDescription>اختر الصف لعرض لوحة التحكم الخاصة به.</PageHeaderDescription>
       </PageHeader>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stage.grades.map((grade) => (
-          <Link href="#" key={grade}>
+          <Link href={`/stage/${stageName}/${encodeURIComponent(grade)}`} key={grade}>
             <Card className="hover:shadow-lg hover:border-primary transition-all duration-300">
               <CardContent className="flex items-center justify-between p-6">
                 <h3 className="text-lg font-semibold">{grade}</h3>

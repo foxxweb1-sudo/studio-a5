@@ -1,0 +1,178 @@
+{
+  "entities": {
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student enrolled in the school.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The student's full name."
+        },
+        "grade": {
+          "type": "string",
+          "description": "The student's current grade level."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The student's phone number."
+        },
+        "parentContact": {
+          "type": "string",
+          "description": "Contact information for the student's parent or guardian."
+        },
+        "qrCode": {
+          "type": "string",
+          "description": "The unique QR code assigned to the student."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "grade",
+        "phone",
+        "parentContact",
+        "qrCode"
+      ]
+    },
+    "AttendanceRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AttendanceRecord",
+      "type": "object",
+      "description": "Represents a record of a student's attendance on a specific date.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AttendanceRecord entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N AttendanceRecord)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date for which attendance is being recorded.",
+          "format": "date"
+        },
+        "isPresent": {
+          "type": "boolean",
+          "description": "Indicates whether the student was present (true) or absent (false)."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "date",
+        "isPresent"
+      ]
+    },
+    "Payment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payment",
+      "type": "object",
+      "description": "Represents a payment made by a student.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Payment entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Payment)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the payment."
+        },
+        "month": {
+          "type": "string",
+          "description": "The month for which the payment was made."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the payment was recorded.",
+          "format": "date"
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "amount",
+        "month",
+        "date"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/students/{studentId}",
+        "definition": {
+          "entityName": "Student",
+          "schema": {
+            "$ref": "#/backend/entities/Student"
+          },
+          "description": "Stores student profiles. Uses student ID as the document ID.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/attendance/{attendanceId}",
+        "definition": {
+          "entityName": "AttendanceRecord",
+          "schema": {
+            "$ref": "#/backend/entities/AttendanceRecord"
+          },
+          "description": "Stores attendance records for each student. Uses attendance ID as the document ID.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "attendanceId",
+              "description": "The unique identifier for the attendance record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Stores payment records for each student. Uses payment ID as the document ID.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "paymentId",
+              "description": "The unique identifier for the payment."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to provide a secure and scalable solution for managing student data, attendance records, and payments. It emphasizes authorization independence and simplifies security rules by denormalizing authorization context and segregating data based on access needs.\n\n*   **Authorization Independence:** The structure avoids hierarchical authorization dependencies (`get()`) by using path-based ownership for private user data and ensuring all documents within a collection share the same security requirements. For instance, attendance records and payments are stored as subcollections of the `students` collection, ensuring that access to these records is controlled by the user ID.\n*   **Segregation & QAPs:** The structure facilitates secure `list` operations by storing data with similar access requirements in the same collection. For example, all students are in the `students` collection and attendance records are kept under the student.\n*   **Data Integrity:** The structure enables integrity of data through its paths. Student data is owned by the student path. Attendance and payments are organized under the student path.\n\nThe structure uses the following patterns:\n\n*   **Path-Based Ownership:** For entities that represent a `User 1:N Entity` relationship, path-based ownership like `/users/{userId}/threads/{threadId}` is used. This structure is highly secure and makes ownership-based security rules simple and efficient. This structure is implemented for `Student`, `AttendanceRecord`, and `Payment` entities.\n"
+  }
+}

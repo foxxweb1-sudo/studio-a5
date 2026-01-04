@@ -56,12 +56,12 @@ export default function Login() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
       <Image
-        src="https://picsum.photos/seed/pyramids/1920/1080"
-        alt="خلفية الأهرامات"
+        src="https://picsum.photos/seed/desert/1920/1080"
+        alt="خلفية الصحراء"
         fill
         style={{ objectFit: 'cover' }}
         className="z-0"
-        data-ai-hint="pyramids giza"
+        data-ai-hint="desert"
         priority
       />
       <div className="absolute inset-0 bg-black/60 z-10" />

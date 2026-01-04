@@ -214,12 +214,12 @@ export default function StudentManagement() {
                         const sequentialId = (index + 1).toString();
                         return (
                         <TableRow key={student.id}>
-                          <TableCell className="font-mono text-sm">{sequentialId}</TableCell>
+                          <TableCell className="font-mono text-sm">{student.id}</TableCell>
                           <TableCell className="font-medium">{student.name}</TableCell>
                            {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
                           <TableCell>{student.parentPhone || 'لا يوجد'}</TableCell>
                           <TableCell className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR({ student, sequentialId })}>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR({ student, sequentialId: student.id })}>
                               <QrCode className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>

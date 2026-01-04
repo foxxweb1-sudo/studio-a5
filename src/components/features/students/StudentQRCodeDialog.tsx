@@ -19,7 +19,7 @@ const PlaceholderQRCode = ({ studentId }: { studentId: string }) => {
   const hash = (s: string) => {
     let h = 0;
     // Use a simple seeding mechanism if the input is purely numeric
-    const seed = parseInt(s, 10) * 1234567;
+    const seed = s.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) * 1234567;
     const str = seed.toString();
 
     for (let i = 0; i < str.length; i++) {

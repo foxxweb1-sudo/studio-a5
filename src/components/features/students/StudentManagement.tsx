@@ -198,6 +198,7 @@ export default function StudentManagement() {
                       <TableHead>الكود</TableHead>
                       <TableHead>الاسم</TableHead>
                       {!gradeFromUrl && <TableHead>الفصل</TableHead>}
+                      <TableHead>رقم ولي الامر</TableHead>
                       <TableHead>الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -208,6 +209,7 @@ export default function StudentManagement() {
                           <TableCell className="font-mono text-sm">{index + 1}</TableCell>
                           <TableCell className="font-medium">{student.name}</TableCell>
                            {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
+                          <TableCell>{student.parentPhone || 'لا يوجد'}</TableCell>
                           <TableCell className="flex gap-1">
                             <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR(student)}>
                               <QrCode className="h-4 w-4" />
@@ -241,7 +243,7 @@ export default function StudentManagement() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={gradeFromUrl ? 4 : 4} className="h-24 text-center">
+                        <TableCell colSpan={gradeFromUrl ? 5 : 5} className="h-24 text-center">
                           {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على طلاب."}
                         </TableCell>
                       </TableRow>

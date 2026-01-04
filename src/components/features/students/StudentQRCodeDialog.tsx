@@ -61,7 +61,8 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
           <div className="p-4 bg-white rounded-lg shadow-inner">
             <PlaceholderQRCode />
           </div>
-          <div className="p-3 bg-muted rounded-md w-full text-center font-mono text-sm break-all">
+          <p className="text-muted-foreground text-sm">هذا الكود هو المعرف الفريد للطالب</p>
+          <div className="p-3 bg-muted rounded-md w-full text-center font-mono text-xs break-all">
             {student.id}
           </div>
           <Button onClick={handleCopy} className="w-full">

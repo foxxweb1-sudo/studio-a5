@@ -180,7 +180,7 @@ export default function StudentManagement() {
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالاسم أو الكود..."
+                placeholder="ابحث بالاسم..."
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -195,18 +195,18 @@ export default function StudentManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>الاسم</TableHead>
                       <TableHead>الكود</TableHead>
+                      <TableHead>الاسم</TableHead>
                       {!gradeFromUrl && <TableHead>الفصل</TableHead>}
                       <TableHead>الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredStudents.length > 0 ? (
-                      filteredStudents.map((student) => (
+                      filteredStudents.map((student, index) => (
                         <TableRow key={student.id}>
+                          <TableCell className="font-mono text-sm">{index + 1}</TableCell>
                           <TableCell className="font-medium">{student.name}</TableCell>
-                          <TableCell className="font-mono text-xs">{student.id}</TableCell>
                            {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
                           <TableCell className="flex gap-1">
                             <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR(student)}>

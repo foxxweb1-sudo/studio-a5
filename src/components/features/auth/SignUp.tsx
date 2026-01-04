@@ -54,7 +54,7 @@ export default function SignUp() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
        <Image
-        src="https://picsum.photos/seed/cairo/1920/1080"
+        src="https://picsum.photos/seed/egyptnight/1920/1080"
         alt="خلفية القاهرة"
         fill
         style={{ objectFit: 'cover' }}

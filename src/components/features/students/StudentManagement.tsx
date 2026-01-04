@@ -59,6 +59,7 @@ export default function StudentManagement() {
 
   useEffect(() => {
     if(gradeFromUrl){
+      // @ts-ignore
       form.setValue('grade', gradeFromUrl, { shouldValidate: true });
     }
   }, [gradeFromUrl, form])
@@ -116,7 +117,7 @@ export default function StudentManagement() {
 
   const filteredStudents = students.filter(student => 
     (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (student.id && student.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
     student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (!gradeFromUrl || student.grade === gradeFromUrl)
   );
@@ -180,7 +181,7 @@ export default function StudentManagement() {
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالاسم..."
+                placeholder="ابحث بالاسم أو الكود..."
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

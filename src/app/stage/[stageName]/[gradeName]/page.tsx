@@ -40,12 +40,17 @@ export default function GradeDashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader>
-        <PageHeaderTitle>لوحة التحكم: {gradeName}</PageHeaderTitle>
-        <PageHeaderDescription>
-          اختر أحد الخيارات لإدارة الحضور والطلاب.
-        </PageHeaderDescription>
-      </PageHeader>
+      <div className="flex justify-between items-start">
+        <PageHeader>
+          <PageHeaderTitle>لوحة التحكم: {gradeName}</PageHeaderTitle>
+          <PageHeaderDescription>
+            اختر أحد الخيارات لإدارة الحضور والطلاب.
+          </PageHeaderDescription>
+        </PageHeader>
+        <Link href={`/stage/${stageName}`} className="text-primary hover:underline whitespace-nowrap pt-2">
+          &larr; العودة إلى اختيار الصف
+        </Link>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {dashboardItems.map((item) => (
           <Link href={item.href} key={item.name}>
@@ -60,11 +65,6 @@ export default function GradeDashboardPage() {
             </Card>
           </Link>
         ))}
-      </div>
-      <div className="mt-4">
-        <Link href={`/stage/${stageName}`} className="text-primary hover:underline">
-          &larr; العودة إلى اختيار الصف
-        </Link>
       </div>
     </div>
   );

@@ -43,10 +43,15 @@ export default function StagePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader>
-        <PageHeaderTitle>{stage.name}</PageHeaderTitle>
-        <PageHeaderDescription>اختر الصف لعرض لوحة التحكم الخاصة به.</PageHeaderDescription>
-      </PageHeader>
+      <div className="flex justify-between items-start">
+        <PageHeader>
+          <PageHeaderTitle>{stage.name}</PageHeaderTitle>
+          <PageHeaderDescription>اختر الصف لعرض لوحة التحكم الخاصة به.</PageHeaderDescription>
+        </PageHeader>
+        <Link href="/" className="text-primary hover:underline whitespace-nowrap pt-2">
+          &larr; العودة إلى المراحل الدراسية
+        </Link>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stage.grades.map((grade) => (
           <Link href={`/stage/${stageName}/${encodeURIComponent(grade)}`} key={grade}>
@@ -58,11 +63,6 @@ export default function StagePage() {
             </Card>
           </Link>
         ))}
-      </div>
-       <div className="mt-4">
-        <Link href="/" className="text-primary hover:underline">
-          &larr; العودة إلى المراحل الدراسية
-        </Link>
       </div>
     </div>
   );

@@ -8,14 +8,13 @@ import { Suspense } from "react";
 function StudentManagementPage() {
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader>
-        <PageHeaderTitle>إدارة الطلاب</PageHeaderTitle>
-        <PageHeaderDescription>
-          إضافة طلاب جدد، تعديل بياناتهم، وعرض أكوادهم الخاصة.
-        </PageHeaderDescription>
-      </PageHeader>
-      <StudentManagement />
-       <div className="mt-4">
+       <div className="flex justify-between items-start">
+        <PageHeader>
+          <PageHeaderTitle>إدارة الطلاب</PageHeaderTitle>
+          <PageHeaderDescription>
+            إضافة طلاب جدد، تعديل بياناتهم، وعرض أكوادهم الخاصة.
+          </PageHeaderDescription>
+        </PageHeader>
          <Button variant="link" asChild className="p-0">
           <Link href="/">
             <ArrowRight className="ms-2 h-4 w-4" />
@@ -23,6 +22,7 @@ function StudentManagementPage() {
           </Link>
         </Button>
       </div>
+      <StudentManagement />
     </div>
   )
 }

@@ -8,14 +8,13 @@ import { ArrowRight } from "lucide-react";
 export default function ReportsPage() {
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader>
-        <PageHeaderTitle>تقارير الحضور</PageHeaderTitle>
-        <PageHeaderDescription>
-          عرض تقارير الغياب اليومية وتحليلات الحضور الأسبوعية.
-        </PageHeaderDescription>
-      </PageHeader>
-      <ReportsDashboard />
-       <div className="mt-4">
+      <div className="flex justify-between items-start">
+        <PageHeader>
+          <PageHeaderTitle>تقارير الحضور</PageHeaderTitle>
+          <PageHeaderDescription>
+            عرض تقارير الغياب اليومية وتحليلات الحضور الأسبوعية.
+          </PageHeaderDescription>
+        </PageHeader>
         <Button variant="link" asChild className="p-0">
           <Link href="/">
             <ArrowRight className="ms-2 h-4 w-4" />
@@ -23,6 +22,7 @@ export default function ReportsPage() {
           </Link>
         </Button>
       </div>
+      <ReportsDashboard />
     </div>
   );
 }

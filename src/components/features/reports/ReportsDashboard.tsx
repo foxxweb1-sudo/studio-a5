@@ -36,22 +36,3 @@ export default function ReportsDashboard() {
     </Tabs>
   );
 }
-
-
-function AbsenceReport() {
-    // Placeholder until the real component is built
-    return (
-        <div className="text-center text-muted-foreground p-8">
-            سيتم هنا عرض تقرير الغياب اليومي.
-        </div>
-    )
-}
-
-function WeeklyOverview() {
-    // Placeholder until the real component is built
-    return (
-        <div className="text-center text-muted-foreground p-8">
-            سيتم هنا عرض نظرة عامة على الحضور الأسبوعي.
-        </div>
-    )
-}

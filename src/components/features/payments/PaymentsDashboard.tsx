@@ -36,21 +36,3 @@ export default function PaymentsDashboard() {
     </Tabs>
   );
 }
-
-function PaymentTracker() {
-  // Placeholder until the real component is built
-  return (
-    <div className="text-center text-muted-foreground p-8">
-      سيتم هنا عرض واجهة تسجيل وتتبع المدفوعات.
-    </div>
-  )
-}
-
-function OutstandingPayments() {
-  // Placeholder until the real component is built
-  return (
-    <div className="text-center text-muted-foreground p-8">
-      سيتم هنا عرض قائمة بالطلاب الذين لديهم مدفوعات مستحقة.
-    </div>
-  )
-}

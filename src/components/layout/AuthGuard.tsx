@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Skeleton } from "../ui/skeleton";
 
-const publicRoutes = ["/login", "/signup"];
+const publicRoutes = ["/login", "/signup", "/forgot-password"];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();

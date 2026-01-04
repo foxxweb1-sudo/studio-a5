@@ -116,6 +116,11 @@ export default function Login() {
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
+            <Link href="/forgot-password" className="underline">
+              نسيت كلمة المرور؟
+            </Link>
+          </div>
+          <div className="mt-4 text-center text-sm">
             ليس لديك حساب؟{" "}
             <Link href="/signup" className="underline">
               إنشاء حساب

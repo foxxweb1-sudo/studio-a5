@@ -24,6 +24,7 @@ import { useAuth, initiateEmailSignUp } from "@/firebase";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
+import Image from "next/image";
 
 const formSchema = z.object({
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
@@ -51,8 +52,18 @@ export default function SignUp() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-md mx-auto">
+    <div className="relative flex items-center justify-center min-h-screen">
+       <Image
+        src="https://picsum.photos/seed/sphinx/1920/1080"
+        alt="خلفية أبو الهول"
+        fill
+        style={{ objectFit: 'cover' }}
+        className="z-0"
+        data-ai-hint="sphinx giza"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/60 z-10" />
+      <Card className="w-full max-w-md mx-auto z-20 bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
           <CardDescription>

@@ -24,6 +24,7 @@ import { useAuth, initiateEmailSignIn } from "@/firebase";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn } from "lucide-react";
+import Image from "next/image";
 
 const formSchema = z.object({
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
@@ -53,8 +54,18 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-md mx-auto">
+    <div className="relative flex items-center justify-center min-h-screen">
+      <Image
+        src="https://picsum.photos/seed/pyramids/1920/1080"
+        alt="خلفية الأهرامات"
+        fill
+        style={{ objectFit: 'cover' }}
+        className="z-0"
+        data-ai-hint="pyramids giza"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/60 z-10" />
+      <Card className="w-full max-w-md mx-auto z-20 bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">تسجيل الدخول</CardTitle>
           <CardDescription>

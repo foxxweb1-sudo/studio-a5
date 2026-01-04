@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { CheckCircle, UserPlus } from 'lucide-react';
+import { CheckCircle, UserPlus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   Table,
@@ -28,8 +28,8 @@ const formSchema = z.object({
 });
 
 export default function AttendanceRecorder() {
-  const { students } = useStudents();
-  const { attendance, addAttendance } = useAttendance();
+  const { students, isLoading: studentsLoading } = useStudents();
+  const { attendance, addAttendance, isLoading: attendanceLoading } = useAttendance();
   const { toast } = useToast();
   const [lastAttended, setLastAttended] = useState<string | null>(null);
 
@@ -73,11 +73,13 @@ export default function AttendanceRecorder() {
     });
     form.reset();
   };
-
+  
   const attendedToday = attendance
     .filter((a) => a.date === today)
     .map((a) => students.find((s) => s.id === a.studentId))
     .filter(Boolean);
+
+  const isLoading = studentsLoading || attendanceLoading;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -97,14 +99,14 @@ export default function AttendanceRecorder() {
                     <FormItem>
                       <FormLabel>كود الطالب</FormLabel>
                       <FormControl>
-                        <Input placeholder="أدخل الكود هنا..." {...field} />
+                        <Input placeholder="أدخل الكود هنا..." {...field} autoFocus />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
-                  <CheckCircle className="ms-2 h-4 w-4" />
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <CheckCircle className="ms-2 h-4 w-4" />}
                   تسجيل
                 </Button>
               </form>
@@ -124,7 +126,11 @@ export default function AttendanceRecorder() {
             <CardDescription>قائمة الطلاب الذين سجلوا حضورهم اليوم.</CardDescription>
           </CardHeader>
           <CardContent>
-            {attendedToday.length > 0 ? (
+            {isLoading ? (
+               <div className="flex justify-center items-center h-48">
+                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+               </div>
+            ) : attendedToday.length > 0 ? (
               <div className="max-h-96 overflow-auto">
                 <Table>
                   <TableHeader>
@@ -147,7 +153,7 @@ export default function AttendanceRecorder() {
             ) : (
               <div className="text-center py-10">
                 <p className="text-muted-foreground mb-4">لم يسجل أي طالب حضوره اليوم بعد.</p>
-                {students.length === 0 && (
+                {students.length === 0 && !isLoading && (
                   <Button asChild variant="outline">
                     <Link href="/students">
                       <UserPlus className="ms-2 h-4 w-4" />

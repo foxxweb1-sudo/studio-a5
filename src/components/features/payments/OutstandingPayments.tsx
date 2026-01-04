@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { subMonths, format } from "date-fns";
+import { Loader2 } from "lucide-react";
 
 // Function to get the last N months
 const getLastNMonths = (n: number): string[] => {
@@ -29,6 +30,7 @@ const getOutstandingStudents = (
   payments: PaymentRecord[],
   months: string[]
 ): (Student & { outstandingMonths: string[] })[] => {
+  if (!students || !payments) return [];
   return students
     .map((student) => {
       const paidMonths = payments
@@ -45,11 +47,21 @@ const getOutstandingStudents = (
 };
 
 export default function OutstandingPayments() {
-  const { students } = useStudents();
-  const { payments } = usePayments();
+  const { students, isLoading: studentsLoading } = useStudents();
+  const { payments, isLoading: paymentsLoading } = usePayments();
 
   const requiredMonths = getLastNMonths(3); // Check last 3 months for payment
   const outstandingStudents = getOutstandingStudents(students, payments, requiredMonths);
+
+  const isLoading = studentsLoading || paymentsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div>

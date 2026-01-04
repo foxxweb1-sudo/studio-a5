@@ -13,8 +13,18 @@ import {
 import { SidebarNav } from '@/components/layout/SidebarNav';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useUser } from '@/firebase';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const { user } = useUser();
+
+  const handleSignOut = () => {
+    signOut(auth);
+  };
+  
   // Read the cookie to set the initial state of the sidebar.
   // This prevents a flash of the sidebar on page load.
   const [defaultOpen, setDefaultOpen] = React.useState(true);
@@ -28,6 +38,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setDefaultOpen(cookieValue === 'true');
     }
   }, []);
+
+  if (!user) {
+    return <>{children}</>;
+  }
+
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
@@ -50,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarNav />
         </SidebarContent>
         <SidebarFooter>
-          <Button variant="ghost" className="w-full justify-start">
+          <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
             <LogOut />
             <span className="group-data-[collapsible=icon]:hidden">تسجيل الخروج</span>
           </Button>

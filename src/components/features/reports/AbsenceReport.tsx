@@ -11,11 +11,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { UserX } from "lucide-react";
+import { UserX, Loader2 } from "lucide-react";
 
 export default function AbsenceReport() {
-  const { students } = useStudents();
-  const { attendance } = useAttendance();
+  const { students, isLoading: studentsLoading } = useStudents();
+  const { attendance, isLoading: attendanceLoading } = useAttendance();
   const today = format(new Date(), "yyyy-MM-dd");
 
   const attendedTodayIds = new Set(
@@ -25,6 +25,16 @@ export default function AbsenceReport() {
   const absentStudents = students.filter(
     (student) => !attendedTodayIds.has(student.id)
   );
+
+  const isLoading = studentsLoading || attendanceLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div>

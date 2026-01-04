@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -30,7 +30,7 @@ const formSchema = z.object({
 });
 
 export default function StudentManagement() {
-  const { students, addStudent } = useStudents();
+  const { students, addStudent, isLoading } = useStudents();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -131,7 +131,7 @@ export default function StudentManagement() {
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>قائمة الطلاب</CardTitle>
+            <CardTitle>قائمة الطلاب ({students.length})</CardTitle>
             <CardDescription>عرض وبحث الطلاب المسجلين.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -145,36 +145,42 @@ export default function StudentManagement() {
               />
             </div>
             <div className="max-h-96 overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الاسم</TableHead>
-                    <TableHead>الفصل</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>{student.grade}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => setSelectedStudent(student)}>
-                            <QrCode className="h-4 w-4" />
-                          </Button>
+               {isLoading ? (
+                  <div className="flex justify-center items-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+               ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>الاسم</TableHead>
+                      <TableHead>الفصل</TableHead>
+                      <TableHead>الإجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredStudents.length > 0 ? (
+                      filteredStudents.map((student) => (
+                        <TableRow key={student.id}>
+                          <TableCell className="font-medium">{student.name}</TableCell>
+                          <TableCell>{student.grade}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudent(student)}>
+                              <QrCode className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="h-24 text-center">
+                          {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على طلاب."}
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="h-24 text-center">
-                        {students.length === 0 ? "لا يوجد طلاب مسجلون بعد." : "لم يتم العثور على طلاب."}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           </CardContent>
         </Card>

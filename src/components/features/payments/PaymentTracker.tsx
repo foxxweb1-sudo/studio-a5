@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, DollarSign } from "lucide-react";
+import { CreditCard, DollarSign, Loader2 } from "lucide-react";
 import { format, subMonths } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -47,8 +47,8 @@ const getLastNMonths = (n: number): { value: string; label: string }[] => {
 };
 
 export default function PaymentTracker() {
-  const { students } = useStudents();
-  const { payments, addPayment } = usePayments();
+  const { students, isLoading: studentsLoading } = useStudents();
+  const { payments, addPayment, isLoading: paymentsLoading } = usePayments();
   const { toast } = useToast();
   const availableMonths = getLastNMonths(12);
 
@@ -63,7 +63,7 @@ export default function PaymentTracker() {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const student = students.find((s) => s.id === values.studentId);
-    if (!student) return; // Should not happen if select is populated
+    if (!student) return; 
 
     const alreadyPaid = payments.some(
       (p) => p.studentId === values.studentId && p.month === values.month
@@ -92,6 +92,8 @@ export default function PaymentTracker() {
     });
   };
 
+  const isLoading = studentsLoading || paymentsLoading;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -101,10 +103,10 @@ export default function PaymentTracker() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>الطالب</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading || students.length === 0}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر طالباً..." />
+                    <SelectValue placeholder={isLoading ? "جاري تحميل الطلاب..." : "اختر طالباً..."} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -129,7 +131,7 @@ export default function PaymentTracker() {
                 <FormControl>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="number" placeholder="0.00" className="pr-10" {...field} />
+                    <Input type="number" placeholder="0.00" className="pr-10" {...field} disabled={isLoading}/>
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -145,6 +147,7 @@ export default function PaymentTracker() {
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={isLoading}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -164,8 +167,8 @@ export default function PaymentTracker() {
             )}
           />
         </div>
-        <Button type="submit" className="w-full">
-          <CreditCard className="ms-2 h-4 w-4" />
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <CreditCard className="ms-2 h-4 w-4" />}
           تسجيل الدفعة
         </Button>
       </form>

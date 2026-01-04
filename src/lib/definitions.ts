@@ -1,16 +1,22 @@
+import { FieldValue } from "firebase/firestore";
+
 export type Student = {
   id: string;
   name: string;
   grade: string;
-  phone: string;
-  parentPhone: string;
-  createdAt: string;
+  phone?: string;
+  parentPhone?: string;
+  createdAt: FieldValue;
 };
 
+export type NewStudent = Omit<Student, 'id' | 'createdAt'>;
+
 export type AttendanceRecord = {
+  id: string;
   studentId: string;
   date: string; // YYYY-MM-DD
   status: 'present';
+  createdAt: FieldValue;
 };
 
 export type PaymentRecord = {
@@ -19,4 +25,7 @@ export type PaymentRecord = {
   amount: number;
   month: string; // YYYY-MM
   date: string; // YYYY-MM-DD
+  createdAt: FieldValue;
 };
+
+export type NewPayment = Omit<PaymentRecord, 'id' | 'createdAt' | 'date'>;

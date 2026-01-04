@@ -1,67 +1,83 @@
 "use client";
 
-import { Student, AttendanceRecord, PaymentRecord } from "@/lib/definitions";
-import useLocalStorage from "./use-local-storage";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment } from "@/lib/definitions";
+import { collection, addDoc, doc, serverTimestamp } from "firebase/firestore";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { format } from 'date-fns';
 
 // --- Students Hook ---
 export function useStudents() {
-  const [students, setStudents] = useLocalStorage<Student[]>("students", []);
+  const firestore = useFirestore();
+  const { user } = useUser();
 
-  const addStudent = (studentData: Omit<Student, "id" | "createdAt">) => {
-    const newStudent: Student = {
+  const studentsQuery = useMemoFirebase(() => 
+    user ? collection(firestore, `users/${user.uid}/students`) : null,
+  [user, firestore]);
+
+  const { data: students, isLoading } = useCollection<Student>(studentsQuery);
+
+  const addStudent = (studentData: NewStudent) => {
+    if (!user) return;
+    const studentCollection = collection(firestore, `users/${user.uid}/students`);
+    const newStudent = {
       ...studentData,
-      id: `student-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      createdAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
     };
-    setStudents([...students, newStudent]);
+    addDocumentNonBlocking(studentCollection, newStudent);
   };
 
-  const updateStudent = (updatedStudent: Student) => {
-    setStudents(
-      students.map((s) => (s.id === updatedStudent.id ? updatedStudent : s))
-    );
-  };
-
-  const deleteStudent = (studentId: string) => {
-    setStudents(students.filter((s) => s.id !== studentId));
-  };
-
-  return { students, addStudent, updateStudent, deleteStudent };
+  return { students: students || [], isLoading, addStudent };
 }
 
 // --- Attendance Hook ---
 export function useAttendance() {
-  const [attendance, setAttendance] = useLocalStorage<AttendanceRecord[]>(
-    "attendance",
-    []
-  );
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  const attendanceQuery = useMemoFirebase(() =>
+    user ? collection(firestore, `users/${user.uid}/attendance`) : null,
+  [user, firestore]);
+  
+  const { data: attendance, isLoading } = useCollection<AttendanceRecord>(attendanceQuery);
 
   const addAttendance = (studentId: string) => {
+    if (!user) return;
+    const attendanceCollection = collection(firestore, `users/${user.uid}/attendance`);
     const today = format(new Date(), 'yyyy-MM-dd');
-    const newRecord: AttendanceRecord = {
+    const newRecord = {
       studentId,
       date: today,
       status: "present",
+      createdAt: serverTimestamp(),
     };
-    setAttendance([...attendance, newRecord]);
+    addDocumentNonBlocking(attendanceCollection, newRecord);
   };
   
-  return { attendance, addAttendance };
+  return { attendance: attendance || [], isLoading, addAttendance };
 }
 
 // --- Payments Hook ---
 export function usePayments() {
-    const [payments, setPayments] = useLocalStorage<PaymentRecord[]>("payments", []);
+    const firestore = useFirestore();
+    const { user } = useUser();
 
-    const addPayment = (paymentData: Omit<PaymentRecord, 'id' | 'date'>) => {
-        const newPayment: PaymentRecord = {
+    const paymentsQuery = useMemoFirebase(() =>
+      user ? collection(firestore, `users/${user.uid}/payments`) : null,
+    [user, firestore]);
+
+    const { data: payments, isLoading } = useCollection<PaymentRecord>(paymentsQuery);
+
+    const addPayment = (paymentData: NewPayment) => {
+        if (!user) return;
+        const paymentCollection = collection(firestore, `users/${user.uid}/payments`);
+        const newPayment = {
             ...paymentData,
-            id: `payment-${Date.now()}`,
             date: format(new Date(), 'yyyy-MM-dd'),
+            createdAt: serverTimestamp(),
         };
-        setPayments([...payments, newPayment]);
+        addDocumentNonBlocking(paymentCollection, newPayment);
     };
 
-    return { payments, addPayment };
+    return { payments: payments || [], isLoading, addPayment };
 }

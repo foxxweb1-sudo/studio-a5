@@ -11,10 +11,10 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 export default function WeeklyOverview() {
-  const { attendance } = useAttendance();
+  const { attendance, isLoading } = useAttendance();
 
   const today = new Date();
   const last7Days = eachDayOfInterval({
@@ -28,6 +28,14 @@ export default function WeeklyOverview() {
     const count = attendance.filter((a) => a.date === formattedDate).length;
     return { name: dayName, total: count };
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[350px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height={350}>

@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { FaWhatsapp, FaFacebook, FaTumblr, FaTwitter, FaPinterest } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
 const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -29,6 +32,7 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   const { toast } = useToast();
+  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -40,7 +44,7 @@ export default function Footer() {
     setContactForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.message) {
       toast({
@@ -174,18 +178,20 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-border mt-8 py-6 text-center">
-        <Button
-          size="icon"
-          variant="ghost"
-          className="rounded-full h-12 w-12 shadow-lg bg-muted hover:bg-muted/90 text-muted-foreground mx-auto mb-4"
-          onClick={scrollToTop}
-        >
-          <ChevronUp className="h-6 w-6" />
-        </Button>
-        <p className="text-center text-xs text-muted-foreground">
-          جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
-        </p>
+      <div className="border-t border-border mt-8">
+        <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
+            <p className="text-xs text-muted-foreground">
+            جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
+            </p>
+            <Button
+            size="icon"
+            variant="ghost"
+            className="rounded-full h-10 w-10 bg-muted hover:bg-muted/90 text-muted-foreground"
+            onClick={scrollToTop}
+            >
+            <ChevronUp className="h-5 w-5" />
+            </Button>
+        </div>
       </div>
     </footer>
   );

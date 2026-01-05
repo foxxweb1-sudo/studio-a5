@@ -39,7 +39,7 @@ export default function Home() {
       <div className="grid grid-cols-1">
         {mainLinks.map((link) => (
           <Link href={link.href} key={link.name} className="group">
-             <Card className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg rounded-3xl">
+             <Card className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg rounded-2xl">
               <CardContent className="flex flex-col items-center justify-center p-6 sm:p-10 gap-4">
                   <div className="flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary-foreground/10 border-4 border-primary-foreground/20 transform group-hover:scale-110 transition-transform">
                     <link.icon className="w-10 h-10 sm:w-12 sm:h-12 text-primary-foreground" />

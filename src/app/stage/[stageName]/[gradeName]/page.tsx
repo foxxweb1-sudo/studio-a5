@@ -58,7 +58,7 @@ export default function GradeDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {dashboardItems.map((item) => (
           <Link href={item.href} key={item.name}>
-            <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+            <Card className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full rounded-2xl">
               <CardContent className="flex flex-col items-center justify-center p-6 gap-4 text-center">
                 <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-2">
                   <item.icon className="w-10 h-10 text-primary" />

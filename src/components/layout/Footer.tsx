@@ -15,7 +15,7 @@ import {
   Globe,
   Send,
 } from 'lucide-react';
-import { FaWhatsapp, FaFacebook, FaTelegram } from 'react-icons/fa';
+import { FaWhatsapp, FaFacebook, FaTelegram, FaPinterest, FaTumblr } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -69,6 +69,8 @@ export default function Footer() {
      { name: 'واتساب', icon: FaWhatsapp, href: 'https://wa.me/YOUR_NUMBER' },
      { name: 'فيسبوك', icon: FaFacebook, href: 'https://facebook.com/YOUR_PAGE' },
      { name: 'تليجرام', icon: TelegramIcon, href: 'https://t.me/YOUR_CHANNEL' },
+     { name: 'بنترست', icon: FaPinterest, href: 'https://pinterest.com/YOUR_PROFILE' },
+     { name: 'تمبلر', icon: FaTumblr, href: 'https://www.tumblr.com/YOUR_BLOG' },
      { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://your-website.com' },
   ]
 
@@ -135,7 +137,7 @@ export default function Footer() {
             
             <div className="pt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-center text-muted-foreground">تابعنا على منصات التواصل الاجتماعي.</p>
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
                     {socialLinks.map((social) => (
                         <a 
                             key={social.name} 

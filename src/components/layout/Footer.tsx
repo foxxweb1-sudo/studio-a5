@@ -90,10 +90,6 @@ export default function Footer() {
                     <div className="w-full h-0.5 bg-gradient-to-r from-red-500 to-purple-600"></div>
                   </div>
                   <div className="absolute left-1/2 -translate-x-1/2 -top-4">
-                    <div className="bg-gradient-to-r from-red-500 to-purple-600 text-white px-4 py-1 rounded-md text-sm font-semibold flex items-center gap-2">
-                      <Bookmark className="w-4 h-4 transform -rotate-90" />
-                      نموذج الاتصال
-                    </div>
                   </div>
                 </div>
               </div>

@@ -2,12 +2,12 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, UserCircle2, Palette, ShieldCheck } from 'lucide-react';
-import { useAuth } from '@/firebase';
+import { LogOut, Home, UserCircle2, Palette, ShieldCheck, Users } from 'lucide-react';
+import { useAuth, useUser } from '@/firebase';
+import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
-import { useUser } from '@/firebase';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu"
-import { ModeToggle, ThemeMenuItems } from './ModeToggle';
+import { ThemeMenuItems } from './ModeToggle';
 import Footer from './Footer';
 
 // IMPORTANT: Replace with your actual Admin UID
@@ -29,6 +29,7 @@ const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { user } = useUser();
+  const { students } = useStudents();
   const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
 
   const isAdmin = React.useMemo(() => user?.uid === ADMIN_UID, [user]);
@@ -123,6 +124,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <UserCircle2 className="ms-2 h-4 w-4" />
                     <span>إدارة الحساب</span>
                   </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem disabled>
+                    <Users className="ms-2 h-4 w-4" />
+                    <span>عدد الطلاب: {students.length}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>

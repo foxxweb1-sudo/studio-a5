@@ -143,7 +143,7 @@ export default function AccountManagement() {
                   name="displayName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>الاسم المعروض</FormLabel>
+                      <FormLabel>الأسم</FormLabel>
                       <FormControl>
                         <Input placeholder="اسمك الكامل" {...field} />
                       </FormControl>

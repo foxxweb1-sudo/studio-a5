@@ -1,10 +1,14 @@
+'use client';
+
 import AttendanceRecorder from "@/components/features/attendance/AttendanceRecorder";
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AttendancePage() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-start">
@@ -14,11 +18,9 @@ export default function AttendancePage() {
             أدخل كود الطالب أو امسح QR Code لتسجيل حضوره.
           </PageHeaderDescription>
         </PageHeader>
-         <Button variant="outline" asChild>
-          <Link href="/">
+         <Button variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="ms-2 h-4 w-4" />
-            العودة للرئيسية
-          </Link>
+            رجوع
         </Button>
       </div>
       <AttendanceRecorder />

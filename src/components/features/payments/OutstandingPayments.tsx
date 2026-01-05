@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useStudents, usePayments } from '@/hooks/use-app-data';
 import { Student, PaymentRecord } from '@/lib/definitions';
@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { subMonths, format } from 'date-fns';
+import { subMonths, format, parse } from 'date-fns';
 import { Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ar } from 'date-fns/locale';
@@ -123,7 +123,7 @@ export default function OutstandingPayments({ gradeFilter }: OutstandingPayments
                     <div className="flex flex-wrap gap-1">
                       {student.outstandingMonths.map((month) => (
                         <Badge key={month} variant="destructive">
-                           {format(new Date(month), 'MMMM yyyy', { locale: ar })}
+                           {format(parse(month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}
                         </Badge>
                       ))}
                     </div>

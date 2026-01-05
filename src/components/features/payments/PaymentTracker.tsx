@@ -24,27 +24,23 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { CreditCard, DollarSign, Loader2 } from "lucide-react";
-import { format, subMonths } from "date-fns";
+import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
+const currentYear = new Date().getFullYear();
 const formSchema = z.object({
   studentId: z.string().min(1, "الرجاء اختيار طالب."),
   amount: z.coerce.number().min(1, "الرجاء إدخال المبلغ."),
+  year: z.string().min(1, "الرجاء اختيار السنة."),
   month: z.string().min(1, "الرجاء اختيار الشهر."),
 });
 
-const getLastNMonths = (n: number): { value: string; label: string }[] => {
-  const months: { value: string; label: string }[] = [];
-  const today = new Date();
-  for (let i = 0; i < n; i++) {
-    const date = subMonths(today, i);
-    months.push({
-      value: format(date, "yyyy-MM"),
-      label: format(date, "MMMM yyyy", { locale: ar }),
-    });
-  }
-  return months;
-};
+const availableYears = Array.from({ length: 6 }, (_, i) => (2025 + i).toString());
+
+const availableMonths = Array.from({ length: 12 }, (_, i) => ({
+  value: (i + 1).toString().padStart(2, '0'),
+  label: format(new Date(2000, i), "MMMM", { locale: ar }),
+}));
 
 interface PaymentTrackerProps {
   gradeFilter?: string;
@@ -54,7 +50,6 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
   const { students: allStudents, isLoading: studentsLoading } = useStudents();
   const { payments, addPayment, isLoading: paymentsLoading } = usePayments();
   const { toast } = useToast();
-  const availableMonths = getLastNMonths(12);
 
   const students = gradeFilter 
     ? allStudents.filter(s => s.grade === gradeFilter)
@@ -65,7 +60,8 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
     defaultValues: {
       studentId: "",
       amount: undefined,
-      month: format(new Date(), "yyyy-MM"),
+      year: new Date().getFullYear().toString(),
+      month: (new Date().getMonth() + 1).toString().padStart(2, '0'),
     },
   });
 
@@ -73,8 +69,10 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
     const student = students.find((s) => s.id === values.studentId);
     if (!student) return; 
 
+    const paymentMonth = `${values.year}-${values.month}`;
+
     const alreadyPaid = payments.some(
-      (p) => p.studentId === values.studentId && p.month === values.month
+      (p) => p.studentId === values.studentId && p.month === paymentMonth
     );
 
     if (alreadyPaid) {
@@ -86,17 +84,21 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
       return;
     }
 
-    addPayment(values);
+    addPayment({
+      studentId: values.studentId,
+      amount: values.amount,
+      month: paymentMonth,
+    });
+    const monthLabel = availableMonths.find(m => m.value === values.month)?.label;
     toast({
       title: "تم تسجيل الدفعة",
-      description: `تم تسجيل دفعة للطالب ${student.name} لشهر ${
-        availableMonths.find((m) => m.value === values.month)?.label
-      }.`,
+      description: `تم تسجيل دفعة للطالب ${student.name} لشهر ${monthLabel} ${values.year}.`,
     });
     form.reset({
       studentId: "",
       amount: undefined,
-      month: format(new Date(), "yyyy-MM"),
+      year: new Date().getFullYear().toString(),
+      month: (new Date().getMonth() + 1).toString().padStart(2, '0'),
     });
   };
 
@@ -129,8 +131,7 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
+        <FormField
             control={form.control}
             name="amount"
             render={({ field }) => (
@@ -142,6 +143,35 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
                     <Input type="number" placeholder="0.00" className="pr-10" {...field} disabled={isLoading}/>
                   </div>
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="year"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>السنة</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر سنة..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

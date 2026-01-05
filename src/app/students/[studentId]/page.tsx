@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useParams } from 'next/navigation';
 import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
@@ -6,7 +6,7 @@ import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, User, GraduationCap, Phone, Calendar, BadgeDollarSign, ArrowLeft } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -142,7 +142,7 @@ export default function StudentProfilePage() {
                         <TableBody>
                         {studentPayments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((payment) => (
                             <TableRow key={payment.id}>
-                            <TableCell>{format(new Date(payment.month), 'MMMM yyyy', { locale: ar })}</TableCell>
+                            <TableCell>{format(parse(payment.month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}</TableCell>
                             <TableCell className="font-medium">{payment.amount} جنيه</TableCell>
                             <TableCell>{format(new Date(payment.date), 'd MMMM yyyy', { locale: ar })}</TableCell>
                             </TableRow>

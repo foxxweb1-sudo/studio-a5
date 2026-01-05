@@ -31,7 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (names.length > 1) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    return name.substring(0, 1).toUpperCase();
   };
 
   if (!user) {
@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <path d="M9 4.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zm0 15a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zm-4-5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zm10 5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm-5-5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm-2.5-2.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zM5 9.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zm5 5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm5-5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0z"/>
               </svg>
               <h1 className="font-headline text-xl font-bold text-primary">
-                الحضور
+                الحاضر
               </h1>
             </Link>
           </div>
@@ -67,7 +67,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                   </Avatar>
                 </Button>

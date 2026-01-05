@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useAuth, useStorage } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -22,25 +22,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, ImageUp } from 'lucide-react';
+import { Loader2, KeyRound, Save } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState, useRef } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useState } from 'react';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'الاسم مطلوب.'),
-  photoFile: z.instanceof(File).optional(),
 });
 
 export default function AccountManagement() {
   const { user, isUserLoading, reloadUser } = useUser();
   const auth = useAuth();
-  const storage = useStorage();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -53,22 +49,10 @@ export default function AccountManagement() {
     if (!user) return;
     setIsSaving(true);
     try {
-      let photoURL = user.photoURL;
-
-      // If a new file is selected, upload it
-      if (values.photoFile) {
-        const file = values.photoFile;
-        const storageRef = ref(storage, `profile-pictures/${user.uid}/${file.name}`);
-        const uploadResult = await uploadBytes(storageRef, file);
-        photoURL = await getDownloadURL(uploadResult.ref);
-      }
-
       await updateProfile(user, {
         displayName: values.displayName,
-        photoURL: photoURL,
       });
 
-      // Reload user to get fresh data, THEN reset the form.
       await reloadUser();
 
       toast({
@@ -76,11 +60,7 @@ export default function AccountManagement() {
         description: 'تم تحديث معلومات ملفك الشخصي.',
       });
 
-      // Reset form after everything is done
-      form.reset({ displayName: values.displayName, photoFile: undefined });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      form.reset({ displayName: values.displayName });
 
     } catch (error: any) {
       toast({
@@ -122,9 +102,6 @@ export default function AccountManagement() {
     }
     return name.substring(0, 2).toUpperCase();
   };
-  
-  const selectedFileName = form.watch('photoFile')?.name;
-
 
   if (isUserLoading) {
     return (
@@ -138,7 +115,6 @@ export default function AccountManagement() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
       <div className="md:col-span-1 flex flex-col items-center gap-4">
          <Avatar className="h-32 w-32 border-4 border-primary">
-            <AvatarImage src={user?.photoURL ?? ''} alt={user?.displayName ?? ''} />
             <AvatarFallback className="text-4xl bg-muted">
                 {getInitials(user?.displayName)}
             </AvatarFallback>
@@ -153,7 +129,7 @@ export default function AccountManagement() {
           <CardHeader>
             <CardTitle>تعديل الملف الشخصي</CardTitle>
             <CardDescription>
-              قم بتغيير اسمك أو صورتك الرمزية هنا.
+              قم بتغيير اسمك هنا.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -175,40 +151,7 @@ export default function AccountManagement() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="photoFile"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>الصورة الرمزية</FormLabel>
-                       <FormControl>
-                        <div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                <ImageUp className="ms-2 h-4 w-4" />
-                                اختر صورة
-                            </Button>
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                ref={fileInputRef}
-                                className="hidden"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    field.onChange(file);
-                                }}
-                            />
-                            {selectedFileName && <span className="text-sm text-muted-foreground me-2">{selectedFileName}</span>}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? (
                     <Loader2 className="ms-2 h-4 w-4 animate-spin" />

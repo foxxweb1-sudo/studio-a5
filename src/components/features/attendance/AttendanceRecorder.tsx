@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { CheckCircle, UserPlus, Loader2, PartyPopper } from 'lucide-react';
+import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, Type } from 'lucide-react';
 import Link from 'next/link';
 import {
   Table,
@@ -21,6 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import QRCodeScanner from './QRCodeScanner';
 
 
 const formSchema = z.object({
@@ -42,11 +44,10 @@ export default function AttendanceRecorder() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // Try to find by sequential ID first, then by actual ID
-    let student = students.find((s, index) => (index + 1).toString() === values.studentCode);
+  const recordAttendance = (studentCode: string) => {
+    let student = students.find((s, index) => (index + 1).toString() === studentCode);
     if (!student) {
-        student = students.find(s => s.id === values.studentCode);
+        student = students.find(s => s.id === studentCode);
     }
     
     if (!student) {
@@ -77,11 +78,23 @@ export default function AttendanceRecorder() {
       description: `تم تسجيل حضور الطالب ${student!.name} بنجاح.`,
     });
     form.reset();
+  }
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    recordAttendance(values.studentCode);
   };
   
   const attendedToday = attendance
     .filter((a) => a.date === today)
-    .map((a) => students.find((s) => s.id === a.studentId))
+    .map((a) => {
+        const student = students.find((s) => s.id === a.studentId);
+        if (!student) return null;
+        const studentIndex = students.findIndex((s) => s.id === a.studentId);
+        return {
+            ...student,
+            sequentialId: (studentIndex + 1).toString()
+        }
+    })
     .filter(Boolean);
 
   const isLoading = studentsLoading || attendanceLoading;
@@ -89,43 +102,68 @@ export default function AttendanceRecorder() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1">
-        <Card>
-          <CardHeader>
-            <CardTitle>تسجيل الحضور</CardTitle>
-            <CardDescription>أدخل كود الطالب أو امسح QR Code.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="studentCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>كود الطالب</FormLabel>
-                      <FormControl>
-                        <Input placeholder="أدخل الكود هنا..." {...field} autoFocus className="text-center text-2xl h-16"/>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full h-12 text-lg" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="ms-2 h-6 w-6 animate-spin" /> : <CheckCircle className="ms-2 h-6 w-6" />}
-                  تسجيل
-                </Button>
-              </form>
-            </Form>
-            {lastAttended && (
-               <div className="mt-4 p-4 bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700 rounded-lg text-center">
-                <div className="flex justify-center items-center gap-2">
-                  <PartyPopper className="h-6 w-6 text-green-600 dark:text-green-400"/>
-                  <p className="text-green-800 dark:text-green-200">آخر من سجل: <span className="font-bold">{lastAttended}</span></p>
-                </div>
-               </div>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="scanner" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="scanner">
+              <QrCode className="ms-2 h-4 w-4" />
+              مسح الكود
+            </TabsTrigger>
+            <TabsTrigger value="manual">
+              <Type className="ms-2 h-4 w-4" />
+              إدخال يدوي
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="scanner">
+             <Card>
+                <CardHeader>
+                  <CardTitle>تسجيل الحضور</CardTitle>
+                  <CardDescription>امسح QR Code الخاص بالطالب.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <QRCodeScanner onScan={recordAttendance} />
+                </CardContent>
+             </Card>
+          </TabsContent>
+          <TabsContent value="manual">
+            <Card>
+              <CardHeader>
+                <CardTitle>تسجيل الحضور</CardTitle>
+                <CardDescription>أدخل كود الطالب يدوياً.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="studentCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>كود الطالب</FormLabel>
+                          <FormControl>
+                            <Input placeholder="أدخل الكود هنا..." {...field} autoFocus className="text-center text-2xl h-16"/>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full h-12 text-lg" disabled={isLoading}>
+                      {isLoading ? <Loader2 className="ms-2 h-6 w-6 animate-spin" /> : <CheckCircle className="ms-2 h-6 w-6" />}
+                      تسجيل
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+        {lastAttended && (
+           <div className="mt-4 p-4 bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700 rounded-lg text-center">
+            <div className="flex justify-center items-center gap-2">
+              <PartyPopper className="h-6 w-6 text-green-600 dark:text-green-400"/>
+              <p className="text-green-800 dark:text-green-200">آخر من سجل: <span className="font-bold">{lastAttended}</span></p>
+            </div>
+           </div>
+        )}
       </div>
       <div className="lg:col-span-2">
         <Card>
@@ -143,6 +181,7 @@ export default function AttendanceRecorder() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>الكود</TableHead>
                       <TableHead>الاسم</TableHead>
                       <TableHead>الفصل</TableHead>
                     </TableRow>
@@ -151,6 +190,7 @@ export default function AttendanceRecorder() {
                     {attendedToday.map((student) => (
                       student &&
                       <TableRow key={student.id}>
+                        <TableCell className="font-mono text-sm">{student.sequentialId}</TableCell>
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell>{student.grade}</TableCell>
                       </TableRow>

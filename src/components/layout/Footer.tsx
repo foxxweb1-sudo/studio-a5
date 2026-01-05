@@ -78,22 +78,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           {/* Contact Form Side */}
           <div className="space-y-6">
-            <div className="flex items-center">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
-                    <Phone />
-                  </div>
-                </div>
-                <div className="relative flex-grow">
-                  <div className="absolute inset-y-0 left-0 flex items-center w-full">
-                    <div className="w-full h-0.5 bg-gradient-to-r from-red-500 to-purple-600"></div>
-                  </div>
-                  <div className="absolute left-1/2 -translate-x-1/2 -top-4">
-                  </div>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
+                <Phone />
               </div>
+              <h3 className="text-xl font-bold">نموذج الاتصال</h3>
             </div>
+
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="relative">
@@ -136,24 +127,13 @@ export default function Footer() {
 
           {/* Social Media Side */}
           <div className="space-y-6">
-            <div className="flex items-center">
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
+            <div className="flex items-center gap-4">
+               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
                   <Share2 />
                 </div>
-              </div>
-              <div className="relative flex-grow">
-                <div className="absolute inset-y-0 left-0 flex items-center w-full">
-                  <div className="w-full h-0.5 bg-gradient-to-r from-red-500 to-purple-600"></div>
-                </div>
-                <div className="absolute left-1/2 -translate-x-1/2 -top-4">
-                  <div className="bg-gradient-to-r from-red-500 to-purple-600 text-white px-4 py-1 rounded-md text-sm font-semibold flex items-center gap-2">
-                    <Bookmark className="w-4 h-4 transform -rotate-90" />
-                    تواصل معنا
-                  </div>
-                </div>
-              </div>
+               <h3 className="text-xl font-bold">تواصل معنا</h3>
             </div>
+            
             <div className="pt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-center text-muted-foreground">تابعنا على منصات التواصل الاجتماعي.</p>
                 <div className="flex items-center justify-center gap-4">

@@ -13,9 +13,12 @@ import {
   Globe,
   Send,
   Loader2,
+  Mail,
 } from 'lucide-react';
 import { FaWhatsapp, FaFacebook, FaTumblr, FaTwitter, FaPinterest } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
 const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -28,6 +31,7 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   const { toast } = useToast();
+  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -39,7 +43,7 @@ export default function Footer() {
     setContactForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.message) {
       toast({
@@ -51,22 +55,34 @@ export default function Footer() {
     }
     
     setIsSubmitting(true);
-
-    const whatsappNumber = "201121473424"; // EGY country code + number
-    const composedMessage = `رسالة من: ${contactForm.name}\n\n${contactForm.message}`;
-    const encodedMessage = encodeURIComponent(composedMessage);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-
-    // Open WhatsApp link in a new tab
-    window.open(whatsappUrl, '_blank');
     
-    toast({
-        title: 'جاهز للإرسال!',
-        description: 'تم تجهيز رسالتك في واتساب. اضغط إرسال هناك.',
-    });
-    setContactForm({ name: '', message: '' });
-    
-    setIsSubmitting(false);
+    try {
+        const messagesCollection = collection(firestore, 'contactMessages');
+        const newMessage = {
+            name: contactForm.name,
+            message: contactForm.message,
+            email: 'N/A',
+            createdAt: serverTimestamp(),
+        }
+        
+        await addDoc(messagesCollection, newMessage);
+
+        toast({
+            title: 'تم إرسال رسالتك بنجاح!',
+            description: 'شكراً لتواصلك معنا. سنقوم بالرد في أقرب وقت ممكن.',
+        });
+        setContactForm({ name: '', message: '' });
+
+    } catch (error) {
+        console.error("Error sending message:", error);
+        toast({
+            variant: 'destructive',
+            title: 'حدث خطأ',
+            description: 'فشل إرسال الرسالة. يرجى المحاولة مرة أخرى.',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
 
@@ -95,9 +111,9 @@ export default function Footer() {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
-                <FaWhatsapp />
+                <Mail />
               </div>
-               <h3 className="text-xl font-bold">تواصل معنا عبر واتساب</h3>
+               <h3 className="text-xl font-bold">تواصل معنا</h3>
             </div>
 
 
@@ -126,7 +142,7 @@ export default function Footer() {
               </div>
                <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Send className="ms-2 h-4 w-4" />}
-                إرسال عبر واتساب
+                إرسال الرسالة
               </Button>
             </form>
           </div>
@@ -180,7 +196,7 @@ export default function Footer() {
       </div>
       <div className="border-t border-border mt-8 py-6">
         <p className="text-center text-xs text-muted-foreground">
-          جميع الحقوق محفوظة © تقنيات 2026
+          جميع الحقوق محفوظة © {new Date().getFullYear()}، شركة تقنيات.
         </p>
       </div>
       <div className="fixed bottom-4 left-4 z-50">

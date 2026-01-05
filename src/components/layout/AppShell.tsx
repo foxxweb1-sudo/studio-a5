@@ -65,10 +65,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {currentDateTime && (
               <>
                 <div className="text-sm font-medium text-foreground">
-                  {new Intl.DateTimeFormat('ar-EG', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).format(currentDateTime)}
+                  {new Intl.DateTimeFormat('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentDateTime)}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {new Intl.DateTimeFormat('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentDateTime)}
+                  {new Intl.DateTimeFormat('ar-EG', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).format(currentDateTime)}
                 </div>
               </>
             )}

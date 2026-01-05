@@ -16,9 +16,6 @@ import {
 } from 'lucide-react';
 import { FaWhatsapp, FaFacebook, FaTumblr, FaTwitter, FaPinterest } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
 const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -31,7 +28,6 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -55,47 +51,22 @@ export default function Footer() {
     }
     
     setIsSubmitting(true);
+
+    const whatsappNumber = "201121473424"; // EGY country code + number
+    const composedMessage = `رسالة من: ${contactForm.name}\n\n${contactForm.message}`;
+    const encodedMessage = encodeURIComponent(composedMessage);
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+    // Open WhatsApp link in a new tab
+    window.open(whatsappUrl, '_blank');
     
-    if (!firestore) {
-        toast({
-            variant: 'destructive',
-            title: 'خطأ في الاتصال',
-            description: 'لا يمكن الاتصال بقاعدة البيانات. يرجى المحاولة مرة أخرى لاحقًا.',
-        });
-        setIsSubmitting(false);
-        return;
-    }
-
-    const messagesCollection = collection(firestore, 'contactMessages');
-    const newMessage = {
-        name: contactForm.name,
-        message: contactForm.message,
-        email: 'N/A', // Email is removed from form
-        createdAt: serverTimestamp(),
-    };
-
-    addDoc(messagesCollection, newMessage)
-      .then(() => {
-        toast({
-            title: 'تم إرسال الرسالة',
-            description: 'شكراً لتواصلك معنا، سنرد عليك قريباً.',
-        });
-        setContactForm({ name: '', message: '' });
-      })
-      .catch((error) => {
-        console.error("Error sending message:", error);
-        
-        const contextualError = new FirestorePermissionError({
-            path: messagesCollection.path,
-            operation: 'create',
-            requestResourceData: newMessage
-        });
-
-        errorEmitter.emit('permission-error', contextualError);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+    toast({
+        title: 'جاهز للإرسال!',
+        description: 'تم تجهيز رسالتك في واتساب. اضغط إرسال هناك.',
+    });
+    setContactForm({ name: '', message: '' });
+    
+    setIsSubmitting(false);
   };
 
 
@@ -124,9 +95,9 @@ export default function Footer() {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
-                <Phone />
+                <FaWhatsapp />
               </div>
-               <h3 className="text-xl font-bold">تواصل معنا</h3>
+               <h3 className="text-xl font-bold">تواصل معنا عبر واتساب</h3>
             </div>
 
 
@@ -153,9 +124,9 @@ export default function Footer() {
                    disabled={isSubmitting}
                 />
               </div>
-               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity" disabled={isSubmitting || !firestore}>
+               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Send className="ms-2 h-4 w-4" />}
-                إرسال الرسالة
+                إرسال عبر واتساب
               </Button>
             </form>
           </div>

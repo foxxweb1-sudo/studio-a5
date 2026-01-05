@@ -176,13 +176,17 @@ export default function Footer() {
                     </div>
                 </div>
             </div>
+             <div className="flex flex-col items-center justify-center pt-8 mt-8 border-t">
+                <AiAssistant />
+                <p className="text-sm text-muted-foreground mt-2">تحتاج مساعدة؟ تحدث إلى المساعد الذكي.</p>
+            </div>
           </div>
         </div>
       </div>
       <div className="border-t border-border mt-8">
         <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
             <div className="flex-1">
-                 <AiAssistant />
+                {/* Empty div for spacing */}
             </div>
             <p className="text-xs text-muted-foreground text-center flex-shrink-0">
             جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.

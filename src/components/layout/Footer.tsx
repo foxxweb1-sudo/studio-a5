@@ -179,18 +179,21 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-border mt-8">
-        <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6 flex flex-col items-center gap-4">
-            <Button
-            size="icon"
-            variant="ghost"
-            className="rounded-full h-10 w-10 bg-muted hover:bg-muted/90 text-muted-foreground"
-            onClick={scrollToTop}
-            >
-            <ChevronUp className="h-5 w-5" />
-            </Button>
-            <p className="text-xs text-muted-foreground">
+        <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
+            <div className="flex-1"></div>
+            <p className="text-xs text-muted-foreground text-center flex-shrink-0">
             جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
             </p>
+            <div className="flex-1 flex justify-end">
+                <Button
+                size="icon"
+                variant="ghost"
+                className="rounded-full h-10 w-10 bg-muted hover:bg-muted/90 text-muted-foreground"
+                onClick={scrollToTop}
+                >
+                <ChevronUp className="h-5 w-5" />
+                </Button>
+            </div>
         </div>
       </div>
     </footer>

@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, User, ImageUp } from 'lucide-react';
+import { Loader2, KeyRound, Save, ImageUp } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState, useRef } from 'react';
@@ -68,13 +68,20 @@ export default function AccountManagement() {
         photoURL: photoURL,
       });
 
-      // Reload user to get fresh data
+      // Reload user to get fresh data, THEN reset the form.
       await reloadUser();
 
       toast({
         title: 'تم الحفظ بنجاح',
         description: 'تم تحديث معلومات ملفك الشخصي.',
       });
+
+      // Reset form after everything is done
+      form.reset({ displayName: values.displayName, photoFile: undefined });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -83,10 +90,6 @@ export default function AccountManagement() {
       });
     } finally {
       setIsSaving(false);
-      form.reset({ displayName: values.displayName, photoFile: undefined });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 

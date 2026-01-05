@@ -30,11 +30,12 @@ export default function AiAssistant() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 h-16 w-16 rounded-full shadow-lg z-50 bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center"
+        variant="ghost"
         size="icon"
         aria-label="مساعد الذكاء الاصطناعي"
+        className="text-muted-foreground hover:text-primary"
       >
-        <Bot className="h-8 w-8" />
+        <Bot className="h-5 w-5" />
       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[425px]">

@@ -19,6 +19,7 @@ import { FaWhatsapp, FaFacebook, FaTumblr, FaTwitter, FaPinterest } from 'react-
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+import AiAssistant from './AiAssistant';
 
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
@@ -180,7 +181,9 @@ export default function Footer() {
       </div>
       <div className="border-t border-border mt-8">
         <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
-            <div className="flex-1"></div>
+            <div className="flex-1">
+                 <AiAssistant />
+            </div>
             <p className="text-xs text-muted-foreground text-center flex-shrink-0">
             جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
             </p>

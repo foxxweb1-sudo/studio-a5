@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ThemeMenuItems } from './ModeToggle';
 import Footer from './Footer';
-import AiAssistant from './AiAssistant';
 
 // IMPORTANT: Replace with your actual Admin UID
 const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
@@ -150,7 +149,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="container flex-grow py-4 sm:py-6 lg:py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</main>
-      <AiAssistant />
       <Footer />
     </div>
   );

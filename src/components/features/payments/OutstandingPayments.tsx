@@ -16,6 +16,10 @@ import { Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ar } from 'date-fns/locale';
 
+interface OutstandingPaymentsProps {
+  gradeFilter?: string;
+}
+
 // Function to get the last N months
 const getLastNMonths = (n: number): string[] => {
   const months: string[] = [];
@@ -48,9 +52,13 @@ const getOutstandingStudents = (
     .filter((student) => student.outstandingMonths.length > 0);
 };
 
-export default function OutstandingPayments() {
-  const { students, isLoading: studentsLoading } = useStudents();
+export default function OutstandingPayments({ gradeFilter }: OutstandingPaymentsProps) {
+  const { students: allStudents, isLoading: studentsLoading } = useStudents();
   const { payments, isLoading: paymentsLoading } = usePayments();
+
+  const students = gradeFilter
+    ? allStudents.filter(s => s.grade === gradeFilter)
+    : allStudents;
 
   const requiredMonths = getLastNMonths(3); // Check last 3 months for payment
   const outstandingStudents = getOutstandingStudents(
@@ -100,7 +108,7 @@ export default function OutstandingPayments() {
             <TableHeader>
               <TableRow>
                 <TableHead>اسم الطالب</TableHead>
-                <TableHead>الفصل</TableHead>
+                { !gradeFilter && <TableHead>الفصل</TableHead> }
                 <TableHead>هاتف ولي الأمر</TableHead>
                 <TableHead>الشهور المستحقة</TableHead>
               </TableRow>
@@ -109,7 +117,7 @@ export default function OutstandingPayments() {
               {outstandingStudents.map((student) => (
                 <TableRow key={student.id}>
                   <TableCell className="font-medium">{student.name}</TableCell>
-                  <TableCell>{student.grade}</TableCell>
+                  { !gradeFilter && <TableCell>{student.grade}</TableCell> }
                    <TableCell>{student.parentPhone || 'غير مسجل'}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">

@@ -4,11 +4,14 @@ import PaymentsDashboard from "@/components/features/payments/PaymentsDashboard"
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 
-export default function PaymentsPage() {
+function PaymentsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const gradeFromUrl = searchParams.get('grade') || '';
 
   return (
     <div className="flex flex-col gap-4">
@@ -16,7 +19,7 @@ export default function PaymentsPage() {
         <PageHeader>
           <PageHeaderTitle>إدارة المدفوعات</PageHeaderTitle>
           <PageHeaderDescription>
-            تتبع مدفوعات الطلاب واعرض الرسوم المستحقة.
+            {gradeFromUrl ? `عرض مدفوعات صف: ${gradeFromUrl}` : 'تتبع مدفوعات الطلاب واعرض الرسوم المستحقة.'}
           </PageHeaderDescription>
         </PageHeader>
         <Button variant="outline" onClick={() => router.back()}>
@@ -24,7 +27,16 @@ export default function PaymentsPage() {
              رجوع
         </Button>
       </div>
-      <PaymentsDashboard />
+      <PaymentsDashboard gradeFilter={gradeFromUrl} />
     </div>
   )
+}
+
+
+export default function PaymentsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentsPageContent />
+    </Suspense>
+  );
 }

@@ -34,7 +34,7 @@ export default function GradeDashboardPage() {
     {
       name: 'المدفوعات',
       icon: CreditCard,
-      href: '/payments',
+      href: `/payments?grade=${encodeURIComponent(gradeName)}`,
       description: 'متابعة المدفوعات والرسوم المستحقة.',
     },
   ];

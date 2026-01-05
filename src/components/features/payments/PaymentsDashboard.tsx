@@ -6,7 +6,11 @@ import { CreditCard, AlertCircle } from 'lucide-react';
 import PaymentTracker from "./PaymentTracker";
 import OutstandingPayments from "./OutstandingPayments";
 
-export default function PaymentsDashboard() {
+interface PaymentsDashboardProps {
+  gradeFilter?: string;
+}
+
+export default function PaymentsDashboard({ gradeFilter }: PaymentsDashboardProps) {
   return (
     <Tabs defaultValue="tracker" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
@@ -22,14 +26,14 @@ export default function PaymentsDashboard() {
       <TabsContent value="tracker">
         <Card>
           <CardContent className="pt-6">
-            <PaymentTracker />
+            <PaymentTracker gradeFilter={gradeFilter} />
           </CardContent>
         </Card>
       </TabsContent>
       <TabsContent value="outstanding">
         <Card>
           <CardContent className="pt-6">
-            <OutstandingPayments />
+            <OutstandingPayments gradeFilter={gradeFilter} />
           </CardContent>
         </Card>
       </TabsContent>

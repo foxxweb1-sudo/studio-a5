@@ -46,11 +46,19 @@ const getLastNMonths = (n: number): { value: string; label: string }[] => {
   return months;
 };
 
-export default function PaymentTracker() {
-  const { students, isLoading: studentsLoading } = useStudents();
+interface PaymentTrackerProps {
+  gradeFilter?: string;
+}
+
+export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
+  const { students: allStudents, isLoading: studentsLoading } = useStudents();
   const { payments, addPayment, isLoading: paymentsLoading } = usePayments();
   const { toast } = useToast();
   const availableMonths = getLastNMonths(12);
+
+  const students = gradeFilter 
+    ? allStudents.filter(s => s.grade === gradeFilter)
+    : allStudents;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -103,7 +111,7 @@ export default function PaymentTracker() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>الطالب</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading || students.length === 0}>
+              <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || students.length === 0}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={isLoading ? "جاري تحميل الطلاب..." : "اختر طالباً..."} />

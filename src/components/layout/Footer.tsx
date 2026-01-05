@@ -133,7 +133,7 @@ export default function Footer() {
                 <MessageSquare className="absolute left-4 top-5 h-5 w-5 text-muted-foreground" />
                 <Textarea
                   name="message"
-                  placeholder="رسالتك"
+                  placeholder="اكتب رسالتك مع إضافات البريد أو رقم واتساب"
                   className="pl-12 min-h-[100px]"
                   value={contactForm.message}
                   onChange={handleInputChange}

@@ -2,28 +2,39 @@
 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import {
   Phone,
-  Folder,
   User,
   Mail,
   MessageSquare,
   Bookmark,
   ChevronUp,
+  Share2,
+  Globe,
 } from 'lucide-react';
+import { FaWhatsapp, FaFacebook, FaTelegram } from 'react-icons/fa';
+
+// A simple SVG icon for Telegram if react-icons is not preferred.
+const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M22 2L11 13" />
+        <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+    </svg>
+);
+
 
 export default function Footer() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const socialLinks = [
+     { name: 'واتساب', icon: FaWhatsapp, href: 'https://wa.me/YOUR_NUMBER' },
+     { name: 'فيسبوك', icon: FaFacebook, href: 'https://facebook.com/YOUR_PAGE' },
+     { name: 'تليجرام', icon: TelegramIcon, href: 'https://t.me/YOUR_CHANNEL' },
+     { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://your-website.com' },
+  ]
 
   return (
     <footer className="bg-card text-card-foreground border-t mt-12 py-12">
@@ -75,12 +86,12 @@ export default function Footer() {
             </form>
           </div>
 
-          {/* Translation Side */}
+          {/* Social Media Side */}
           <div className="space-y-6">
             <div className="flex items-center">
               <div className="relative">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
-                  <Folder />
+                  <Share2 />
                 </div>
               </div>
               <div className="relative flex-grow">
@@ -90,32 +101,28 @@ export default function Footer() {
                 <div className="absolute left-1/2 -translate-x-1/2 -top-4">
                   <div className="bg-gradient-to-r from-red-500 to-purple-600 text-white px-4 py-1 rounded-md text-sm font-semibold flex items-center gap-2">
                     <Bookmark className="w-4 h-4 transform -rotate-90" />
-                    ترجمة
+                    تواصل معنا
                   </div>
                 </div>
               </div>
             </div>
-            <div className="pt-8">
-              <Select dir="ltr">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="ar">العربية</SelectItem>
-                  <SelectItem value="fr">Français</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex items-center justify-end mt-2 text-xs text-muted-foreground gap-1">
-                <span>Powered by</span>
-                <span className="font-bold text-blue-600">G</span>
-                <span className="font-bold text-red-600">o</span>
-                <span className="font-bold text-yellow-500">o</span>
-                <span className="font-bold text-blue-600">g</span>
-                <span className="font-bold text-green-600">l</span>
-                <span className="font-bold text-red-600">e</span>
-                <span>Translate</span>
-              </div>
+            <div className="pt-8 flex flex-col items-center justify-center gap-4">
+                <p className="text-center text-muted-foreground">تابعنا على منصات التواصل الاجتماعي.</p>
+                <div className="flex items-center justify-center gap-4">
+                    {socialLinks.map((social) => (
+                        <a 
+                            key={social.name} 
+                            href={social.href} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            aria-label={social.name}
+                        >
+                            <Button variant="outline" size="icon" className="rounded-full w-12 h-12 hover:bg-primary/10 hover:text-primary transition-colors">
+                                <social.icon className="h-6 w-6" />
+                            </Button>
+                        </a>
+                    ))}
+                </div>
             </div>
           </div>
         </div>

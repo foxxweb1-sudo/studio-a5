@@ -45,9 +45,15 @@ export default function AttendanceRecorder() {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const recordAttendance = (studentCode: string) => {
-    let student = students.find((s, index) => (index + 1).toString() === studentCode);
-    if (!student) {
-        student = students.find(s => s.id === studentCode);
+    // Check if the code is a sequential number first for manual entry
+    const sequentialId = parseInt(studentCode, 10);
+    let student;
+    if (!isNaN(sequentialId) && sequentialId > 0 && sequentialId <= students.length) {
+       // It's a valid sequential ID, get the student by index
+       student = students[sequentialId - 1];
+    } else {
+       // It's not a sequential ID, assume it's the actual document ID (from QR scan)
+       student = students.find(s => s.id === studentCode);
     }
     
     if (!student) {
@@ -88,12 +94,7 @@ export default function AttendanceRecorder() {
     .filter((a) => a.date === today)
     .map((a) => {
         const student = students.find((s) => s.id === a.studentId);
-        if (!student) return null;
-        const studentIndex = students.findIndex((s) => s.id === a.studentId);
-        return {
-            ...student,
-            sequentialId: (studentIndex + 1).toString()
-        }
+        return student || null;
     })
     .filter(Boolean);
 
@@ -138,7 +139,7 @@ export default function AttendanceRecorder() {
                       name="studentCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>كود الطالب</FormLabel>
+                          <FormLabel>كود الطالب (الرقم التسلسلي)</FormLabel>
                           <FormControl>
                             <Input placeholder="أدخل الكود هنا..." {...field} autoFocus className="text-center text-2xl h-16"/>
                           </FormControl>
@@ -190,7 +191,7 @@ export default function AttendanceRecorder() {
                     {attendedToday.map((student) => (
                       student &&
                       <TableRow key={student.id}>
-                        <TableCell className="font-mono text-sm">{student.sequentialId}</TableCell>
+                        <TableCell className="font-mono text-sm">{(students.findIndex(s => s.id === student.id) + 1)}</TableCell>
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell>{student.grade}</TableCell>
                       </TableRow>

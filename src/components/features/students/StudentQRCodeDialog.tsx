@@ -8,7 +8,6 @@ import { Copy } from 'lucide-react';
 
 interface StudentQRCodeDialogProps {
   student: Student;
-  sequentialId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -18,12 +17,8 @@ const PlaceholderQRCode = ({ studentId }: { studentId: string }) => {
   // Simple hashing function to create a visually different pattern for each ID
   const hash = (s: string) => {
     let h = 0;
-    // Use a simple seeding mechanism if the input is purely numeric
-    const seed = s.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) * 1234567;
-    const str = seed.toString();
-
-    for (let i = 0; i < str.length; i++) {
-      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+    for (let i = 0; i < s.length; i++) {
+      h = Math.imul(31, h) + s.charCodeAt(i) | 0;
     }
     return h;
   };
@@ -52,13 +47,13 @@ const PlaceholderQRCode = ({ studentId }: { studentId: string }) => {
 };
 
 
-export default function StudentQRCodeDialog({ student, sequentialId, open, onOpenChange }: StudentQRCodeDialogProps) {
+export default function StudentQRCodeDialog({ student, open, onOpenChange }: StudentQRCodeDialogProps) {
   const { toast } = useToast();
 
   if (!student) return null;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(sequentialId);
+    navigator.clipboard.writeText(student.id);
     toast({
       title: "تم النسخ",
       description: "تم نسخ كود الطالب بنجاح.",
@@ -76,11 +71,11 @@ export default function StudentQRCodeDialog({ student, sequentialId, open, onOpe
         </DialogHeader>
         <div className="py-4 flex flex-col items-center gap-4">
           <div className="p-4 bg-white rounded-lg shadow-inner border">
-             <PlaceholderQRCode studentId={sequentialId} />
+             <PlaceholderQRCode studentId={student.id} />
           </div>
           <p className="text-muted-foreground text-sm">هذا الكود هو المعرف الرقمي للطالب</p>
-          <div className="p-3 bg-muted rounded-md w-full text-center font-mono text-2xl tracking-widest">
-            {sequentialId}
+          <div className="p-3 bg-muted rounded-md w-full text-center font-mono text-lg tracking-widest break-all">
+            {student.id}
           </div>
           <Button onClick={handleCopy} className="w-full">
             <Copy className="ms-2 h-4 w-4" />

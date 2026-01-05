@@ -131,7 +131,7 @@
           "description": "Timestamp when the message was sent."
         }
       },
-      "required": ["name", "email", "message", "createdAt"]
+      "required": ["name", "message", "createdAt"]
     }
   },
   "auth": {

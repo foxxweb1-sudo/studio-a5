@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Phone,
   User,
-  Mail,
   MessageSquare,
-  Bookmark,
   ChevronUp,
   Share2,
   Globe,
@@ -37,7 +35,6 @@ export default function Footer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
-    email: '',
     message: '',
   });
 
@@ -46,9 +43,9 @@ export default function Footer() {
     setContactForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent, db: Firestore) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+    if (!contactForm.name || !contactForm.message) {
       toast({
         variant: 'destructive',
         title: 'حقول فارغة',
@@ -59,12 +56,14 @@ export default function Footer() {
     
     setIsSubmitting(true);
     try {
-        if (!db) {
+        if (!firestore) {
             throw new Error("Firestore is not initialized");
         }
-        const messagesCollection = collection(db, 'contactMessages');
+        const messagesCollection = collection(firestore, 'contactMessages');
         await addDoc(messagesCollection, {
-            ...contactForm,
+            name: contactForm.name,
+            message: contactForm.message,
+            email: 'N/A', // Email is removed from form
             createdAt: serverTimestamp(),
         });
         
@@ -72,7 +71,7 @@ export default function Footer() {
             title: 'تم إرسال الرسالة',
             description: 'شكراً لتواصلك معنا، سنرد عليك قريباً.',
         });
-        setContactForm({ name: '', email: '', message: '' });
+        setContactForm({ name: '', message: '' });
 
     } catch (error) {
         console.error("Error sending message:", error);
@@ -118,19 +117,7 @@ export default function Footer() {
             </div>
 
 
-            <form className="space-y-4" onSubmit={(e) => handleSubmit(e, firestore)}>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="email"
-                  name="email"
-                  placeholder="بريد إلكتروني"
-                  className="pl-12"
-                  value={contactForm.email}
-                  onChange={handleInputChange}
-                  disabled={isSubmitting}
-                />
-              </div>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input

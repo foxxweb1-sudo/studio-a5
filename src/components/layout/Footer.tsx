@@ -15,7 +15,7 @@ import {
   Globe,
   Send,
 } from 'lucide-react';
-import { FaWhatsapp, FaFacebook, FaTelegram, FaPinterest, FaTumblr } from 'react-icons/fa';
+import { FaWhatsapp, FaFacebook, FaTelegram, FaPinterest, FaTumblr, FaTwitter } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -69,6 +69,7 @@ export default function Footer() {
      { name: 'واتساب', icon: FaWhatsapp, href: 'https://whatsapp.com/channel/0029Vb6jCdZHLHQVARrm8n3e' },
      { name: 'فيسبوك', icon: FaFacebook, href: 'https://www.facebook.com/s1h2i3m4' },
      { name: 'تليجرام', icon: TelegramIcon, href: 'https://t.me/qwr01_bo' },
+     { name: 'X', icon: FaTwitter, href: 'https://x.com/tqnyt170296' },
      { name: 'بنترست', icon: FaPinterest, href: 'https://pinterest.com/YOUR_PROFILE' },
      { name: 'تمبلر', icon: FaTumblr, href: 'https://www.tumblr.com/YOUR_BLOG' },
      { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://tech-p1.blogspot.com' },

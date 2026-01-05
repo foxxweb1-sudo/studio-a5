@@ -73,6 +73,9 @@ export default function Footer() {
      { name: 'تمبلر', icon: FaTumblr, href: 'https://www.tumblr.com/YOUR_BLOG' },
      { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://your-website.com' },
   ]
+  
+  const socialLinksRow1 = socialLinks.slice(0, 4);
+  const socialLinksRow2 = socialLinks.slice(4);
 
   return (
     <footer className="bg-card text-card-foreground border-t mt-12 py-12">
@@ -128,7 +131,7 @@ export default function Footer() {
 
           {/* Social Media Side */}
           <div className="space-y-6">
-            <div className="flex items-center gap-4">
+             <div className="flex items-center gap-4">
                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
                   <Share2 />
                 </div>
@@ -137,20 +140,37 @@ export default function Footer() {
             
             <div className="pt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-center text-muted-foreground">تابعنا على منصات التواصل الاجتماعي.</p>
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                    {socialLinks.map((social) => (
-                        <a 
-                            key={social.name} 
-                            href={social.href} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            aria-label={social.name}
-                        >
-                            <Button variant="outline" size="icon" className="rounded-full w-12 h-12 hover:bg-primary/10 hover:text-primary transition-colors">
-                                <social.icon className="h-6 w-6" />
-                            </Button>
-                        </a>
-                    ))}
+                <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                        {socialLinksRow1.map((social) => (
+                            <a 
+                                key={social.name} 
+                                href={social.href} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                aria-label={social.name}
+                            >
+                                <Button variant="outline" size="icon" className="rounded-full w-12 h-12 hover:bg-primary/10 hover:text-primary transition-colors">
+                                    <social.icon className="h-6 w-6" />
+                                </Button>
+                            </a>
+                        ))}
+                    </div>
+                     <div className="flex items-center justify-center gap-2 flex-wrap">
+                        {socialLinksRow2.map((social) => (
+                            <a 
+                                key={social.name} 
+                                href={social.href} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                aria-label={social.name}
+                            >
+                                <Button variant="outline" size="icon" className="rounded-full w-12 h-12 hover:bg-primary/10 hover:text-primary transition-colors">
+                                    <social.icon className="h-6 w-6" />
+                                </Button>
+                            </a>
+                        ))}
+                    </div>
                 </div>
             </div>
           </div>

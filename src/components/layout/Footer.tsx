@@ -67,7 +67,7 @@ export default function Footer() {
 
   const socialLinks = [
      { name: 'واتساب', icon: FaWhatsapp, href: 'https://whatsapp.com/channel/0029Vb6jCdZHLHQVARrm8n3e' },
-     { name: 'فيسبوك', icon: FaFacebook, href: 'https://facebook.com/YOUR_PAGE' },
+     { name: 'فيسبوك', icon: FaFacebook, href: 'https://www.facebook.com/share/1DnCgtkURW/' },
      { name: 'تليجرام', icon: TelegramIcon, href: 'https://t.me/qwr01_bo' },
      { name: 'بنترست', icon: FaPinterest, href: 'https://pinterest.com/YOUR_PROFILE' },
      { name: 'تمبلر', icon: FaTumblr, href: 'https://www.tumblr.com/YOUR_BLOG' },

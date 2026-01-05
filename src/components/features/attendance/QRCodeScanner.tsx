@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import jsQR from 'jsqr';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,6 +17,10 @@ export default function QRCodeScanner({ onScan, className }: QRCodeScannerProps)
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
+  const [isScanning, setIsScanning] = useState(true);
+  const lastScannedData = useRef<string | null>(null);
+  const scanTimeout = useRef<NodeJS.Timeout | null>(null);
+
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -44,13 +48,34 @@ export default function QRCodeScanner({ onScan, className }: QRCodeScannerProps)
         const stream = videoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
       }
+      if(scanTimeout.current) {
+        clearTimeout(scanTimeout.current);
+      }
     };
   }, [toast]);
+  
+  const handleScan = useCallback((data: string) => {
+    if (data && data !== lastScannedData.current) {
+      lastScannedData.current = data;
+      onScan(data);
+      setIsScanning(false); // Pause scanning
+      
+      // Resume scanning after a delay
+      scanTimeout.current = setTimeout(() => {
+        setIsScanning(true);
+        lastScannedData.current = null;
+      }, 3000); // 3-second delay
+    }
+  }, [onScan]);
 
   useEffect(() => {
     let animationFrameId: number;
 
     const tick = () => {
+       if (!isScanning) {
+        animationFrameId = requestAnimationFrame(tick);
+        return;
+      }
       if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
         if (canvasRef.current) {
           const canvas = canvasRef.current;
@@ -66,7 +91,7 @@ export default function QRCodeScanner({ onScan, className }: QRCodeScannerProps)
             });
 
             if (code) {
-               onScan(code.data);
+               handleScan(code.data);
             }
           }
         }
@@ -80,8 +105,11 @@ export default function QRCodeScanner({ onScan, className }: QRCodeScannerProps)
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+       if(scanTimeout.current) {
+        clearTimeout(scanTimeout.current);
+      }
     };
-  }, [hasCameraPermission, onScan]);
+  }, [hasCameraPermission, handleScan, isScanning]);
 
   return (
     <div className={cn("relative flex flex-col items-center justify-center gap-4", className)}>
@@ -94,6 +122,11 @@ export default function QRCodeScanner({ onScan, className }: QRCodeScannerProps)
                 muted
             />
             <div className="absolute inset-0 bg-grid-pattern opacity-20"/>
+             {!isScanning && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <p className="text-white text-xl font-bold">تم المسح!</p>
+              </div>
+            )}
             <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-primary"/>
             <div className="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-primary"/>
             <div className="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-primary"/>

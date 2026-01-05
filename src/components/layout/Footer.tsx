@@ -180,7 +180,7 @@ export default function Footer() {
       </div>
       <div className="border-t border-border mt-8 py-6">
         <p className="text-center text-xs text-muted-foreground">
-            جميع الحقوق محفوظه©تقنيات 2026
+          جميع الحقوق محفوظة © تقنيات 2026
         </p>
       </div>
       <div className="fixed bottom-4 left-4 z-50">

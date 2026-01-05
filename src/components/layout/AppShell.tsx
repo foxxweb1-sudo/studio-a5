@@ -43,6 +43,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between max-w-screen-2xl">
           
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center gap-2">
+              <h1 className="font-headline text-xl font-bold text-primary">
+                تطبيق الحضور
+              </h1>
+            </Link>
+          </div>
+
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/">
@@ -82,15 +90,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2">
-              <h1 className="font-headline text-xl font-bold text-primary">
-                تطبيق الحضور
-              </h1>
-            </Link>
-          </div>
-
         </div>
       </header>
       <main className="container py-4 sm:py-6 lg:py-8 max-w-screen-2xl">{children}</main>

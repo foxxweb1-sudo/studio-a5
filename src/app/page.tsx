@@ -1,9 +1,13 @@
 'use client';
 
+import { useMemo } from 'react';
+import { useUser } from '@/firebase';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { GraduationCap, School, Building, CalendarCheck } from 'lucide-react';
+import { GraduationCap, School, Building, CalendarCheck, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+
+const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
 
 const mainLinks = [
   {
@@ -33,6 +37,33 @@ const stages = [
 ];
 
 export default function Home() {
+  const { user } = useUser();
+  const isAdmin = useMemo(() => user?.uid === ADMIN_UID, [user]);
+
+  if (isAdmin) {
+    return (
+      <div className="flex flex-col gap-8 items-center justify-center text-center h-full">
+        <PageHeader>
+            <PageHeaderTitle>مرحباً أيها المشرف</PageHeaderTitle>
+            <PageHeaderDescription>
+                أنت في وضع المشرف. استخدم الرابط أدناه للوصول إلى لوحة التحكم الخاصة بك.
+            </PageHeaderDescription>
+        </PageHeader>
+        <Link href="/admin" className="group">
+            <Card className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg rounded-2xl w-full max-w-md">
+                <CardContent className="flex flex-col items-center justify-center p-10 gap-4">
+                    <div className="flex items-center justify-center w-24 h-24 rounded-full bg-primary-foreground/10 border-4 border-primary-foreground/20 transform group-hover:scale-110 transition-transform">
+                        <ShieldCheck className="w-12 h-12 text-primary-foreground" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-center">لوحة تحكم المشرف</h2>
+                    <p className="text-base text-primary-foreground/80">عرض وإدارة جميع بيانات الطلاب في النظام.</p>
+                </CardContent>
+            </Card>
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-8">
       

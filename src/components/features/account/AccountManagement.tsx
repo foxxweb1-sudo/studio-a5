@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useStorage } from '@/firebase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -22,28 +22,30 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, User } from 'lucide-react';
+import { Loader2, KeyRound, Save, User, ImageUp } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'الاسم مطلوب.'),
-  photoURL: z.string().url('الرجاء إدخال رابط صورة صالح.').or(z.literal('')),
+  photoFile: z.instanceof(File).optional(),
 });
 
 export default function AccountManagement() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const storage = useStorage();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     values: {
       displayName: user?.displayName ?? '',
-      photoURL: user?.photoURL ?? '',
     },
   });
 
@@ -51,9 +53,19 @@ export default function AccountManagement() {
     if (!user) return;
     setIsSaving(true);
     try {
+      let photoURL = user.photoURL;
+
+      // If a new file is selected, upload it
+      if (values.photoFile) {
+        const file = values.photoFile;
+        const storageRef = ref(storage, `profile-pictures/${user.uid}/${file.name}`);
+        const uploadResult = await uploadBytes(storageRef, file);
+        photoURL = await getDownloadURL(uploadResult.ref);
+      }
+
       await updateProfile(user, {
         displayName: values.displayName,
-        photoURL: values.photoURL,
+        photoURL: photoURL,
       });
       toast({
         title: 'تم الحفظ بنجاح',
@@ -63,10 +75,11 @@ export default function AccountManagement() {
       toast({
         variant: 'destructive',
         title: 'خطأ',
-        description: 'فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.',
+        description: error.message || 'فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.',
       });
     } finally {
       setIsSaving(false);
+      form.reset({ displayName: values.displayName, photoFile: undefined });
     }
   };
 
@@ -99,6 +112,9 @@ export default function AccountManagement() {
     }
     return name.substring(0, 2).toUpperCase();
   };
+  
+  const selectedFileName = form.watch('photoFile')?.name;
+
 
   if (isUserLoading) {
     return (
@@ -127,7 +143,7 @@ export default function AccountManagement() {
           <CardHeader>
             <CardTitle>تعديل الملف الشخصي</CardTitle>
             <CardDescription>
-              قم بتغيير اسمك أو رابط صورتك الرمزية هنا.
+              قم بتغيير اسمك أو صورتك الرمزية هنا.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -151,17 +167,38 @@ export default function AccountManagement() {
                 />
                 <FormField
                   control={form.control}
-                  name="photoURL"
+                  name="photoFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>رابط الصورة الرمزية</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/image.png" {...field} />
+                      <FormLabel>الصورة الرمزية</FormLabel>
+                       <FormControl>
+                        <div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <ImageUp className="ms-2 h-4 w-4" />
+                                اختر صورة
+                            </Button>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                ref={fileInputRef}
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    field.onChange(file);
+                                }}
+                            />
+                            {selectedFileName && <span className="text-sm text-muted-foreground me-2">{selectedFileName}</span>}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? (
                     <Loader2 className="ms-2 h-4 w-4 animate-spin" />
@@ -180,7 +217,7 @@ export default function AccountManagement() {
             <CardDescription>
               قم بإدارة إعدادات الأمان الخاصة بحسابك.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>

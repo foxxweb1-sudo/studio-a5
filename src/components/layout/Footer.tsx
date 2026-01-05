@@ -82,7 +82,6 @@ export default function Footer() {
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
                 <Phone />
               </div>
-              <h3 className="text-xl font-bold">نموذج الاتصال</h3>
             </div>
 
 
@@ -131,7 +130,7 @@ export default function Footer() {
                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
                   <Share2 />
                 </div>
-               <h3 className="text-xl font-bold">تواصل معنا</h3>
+               <h3 className="text-xl font-bold">تابعنا</h3>
             </div>
             
             <div className="pt-8 flex flex-col items-center justify-center gap-4">

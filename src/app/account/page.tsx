@@ -22,7 +22,7 @@ export default function AccountPage() {
             قم بتحديث معلومات ملفك الشخصي وكلمة المرور.
           </PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" onClick={() => router.back()} className="rounded-md">
           <ArrowLeft className="ms-2 h-4 w-4" />
           رجوع
         </Button>

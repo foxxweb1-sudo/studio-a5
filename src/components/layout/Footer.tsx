@@ -88,8 +88,8 @@ export default function Footer() {
   const socialLinksRow2 = socialLinks.slice(4);
 
   return (
-    <footer className="bg-card text-card-foreground border-t mt-12 py-12">
-      <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8">
+    <footer className="bg-card text-card-foreground border-t mt-12">
+      <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           {/* Contact Form Side */}
           <div className="space-y-6">
@@ -177,6 +177,11 @@ export default function Footer() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="border-t border-border mt-8 py-6">
+        <p className="text-center text-xs text-muted-foreground">
+            جميع الحقوق محفوظه©تقنيات 2026
+        </p>
       </div>
       <div className="fixed bottom-4 left-4 z-50">
         <Button

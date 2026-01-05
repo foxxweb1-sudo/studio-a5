@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { CheckCircle, UserPlus, Loader2 } from 'lucide-react';
+import { CheckCircle, UserPlus, Loader2, PartyPopper } from 'lucide-react';
 import Link from 'next/link';
 import {
   Table,
@@ -43,7 +43,12 @@ export default function AttendanceRecorder() {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const student = students.find((s) => s.id === values.studentCode);
+    // Try to find by sequential ID first, then by actual ID
+    let student = students.find((s, index) => (index + 1).toString() === values.studentCode);
+    if (!student) {
+        student = students.find(s => s.id === values.studentCode);
+    }
+    
     if (!student) {
       toast({
         variant: 'destructive',
@@ -54,22 +59,22 @@ export default function AttendanceRecorder() {
     }
 
     const alreadyAttended = attendance.some(
-      (a) => a.studentId === student.id && a.date === today
+      (a) => a.studentId === student!.id && a.date === today
     );
 
     if (alreadyAttended) {
       toast({
         title: 'تم التسجيل مسبقاً',
-        description: `تم تسجيل حضور الطالب ${student.name} اليوم بالفعل.`,
+        description: `تم تسجيل حضور الطالب ${student!.name} اليوم بالفعل.`,
       });
       return;
     }
 
-    addAttendance(student.id);
-    setLastAttended(student.name);
+    addAttendance(student!.id);
+    setLastAttended(student!.name);
     toast({
       title: 'تم تسجيل الحضور',
-      description: `تم تسجيل حضور الطالب ${student.name} بنجاح.`,
+      description: `تم تسجيل حضور الطالب ${student!.name} بنجاح.`,
     });
     form.reset();
   };
@@ -99,21 +104,24 @@ export default function AttendanceRecorder() {
                     <FormItem>
                       <FormLabel>كود الطالب</FormLabel>
                       <FormControl>
-                        <Input placeholder="أدخل الكود هنا..." {...field} autoFocus />
+                        <Input placeholder="أدخل الكود هنا..." {...field} autoFocus className="text-center text-2xl h-16"/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <CheckCircle className="ms-2 h-4 w-4" />}
+                <Button type="submit" className="w-full h-12 text-lg" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="ms-2 h-6 w-6 animate-spin" /> : <CheckCircle className="ms-2 h-6 w-6" />}
                   تسجيل
                 </Button>
               </form>
             </Form>
             {lastAttended && (
-               <div className="mt-4 p-3 bg-accent/20 border border-accent rounded-md text-center">
-                <p className="text-sm text-accent-foreground">آخر من سجل الحضور: <span className="font-bold">{lastAttended}</span></p>
+               <div className="mt-4 p-4 bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700 rounded-lg text-center">
+                <div className="flex justify-center items-center gap-2">
+                  <PartyPopper className="h-6 w-6 text-green-600 dark:text-green-400"/>
+                  <p className="text-green-800 dark:text-green-200">آخر من سجل: <span className="font-bold">{lastAttended}</span></p>
+                </div>
                </div>
             )}
           </CardContent>

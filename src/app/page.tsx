@@ -36,16 +36,16 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-8">
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1">
         {mainLinks.map((link) => (
-          <Link href={link.href} key={link.name} className="group sm:col-span-2 lg:col-span-3">
-             <Card className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-              <CardContent className="flex flex-col items-center justify-center p-8 gap-4">
-                  <div className="flex items-center justify-center w-24 h-24 rounded-full bg-primary-foreground/10 border-4 border-primary-foreground/20">
+          <Link href={link.href} key={link.name} className="group">
+             <Card className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg">
+              <CardContent className="flex flex-col items-center justify-center p-10 gap-4">
+                  <div className="flex items-center justify-center w-24 h-24 rounded-full bg-primary-foreground/10 border-4 border-primary-foreground/20 transform group-hover:scale-110 transition-transform">
                     <link.icon className="w-12 h-12 text-primary-foreground" />
                   </div>
-                  <h2 className="text-2xl font-bold text-center">{link.name}</h2>
-                  <p className="text-sm text-primary-foreground/80">{link.description}</p>
+                  <h2 className="text-3xl font-bold text-center">{link.name}</h2>
+                  <p className="text-base text-primary-foreground/80">{link.description}</p>
               </CardContent>
             </Card>
           </Link>
@@ -61,12 +61,12 @@ export default function Home() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stages.map((stage) => (
           <Link href={`/stage/${stage.slug}`} key={stage.slug} className="group">
-            <Card className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <Card className="hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300">
               <CardContent className="flex flex-col items-center justify-center p-8 gap-4">
-                <div className="flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 border-4 border-primary/20 group-hover:bg-primary/20 transition-colors">
+                <div className="flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 border-4 border-primary/20 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
                   <stage.icon className="w-12 h-12 text-primary" />
                 </div>
-                <h2 className="text-xl font-bold text-center">{stage.name}</h2>
+                <h2 className="text-2xl font-bold text-center">{stage.name}</h2>
               </CardContent>
             </Card>
           </Link>

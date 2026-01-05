@@ -39,11 +39,6 @@ const formSchema = z.object({
   parentPhone: z.string().optional(),
 });
 
-type SelectedStudent = {
-  student: Student;
-  sequentialId: string;
-};
-
 export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
@@ -51,7 +46,7 @@ export default function StudentManagement() {
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStudentForQR, setSelectedStudentForQR] = useState<SelectedStudent | null>(null);
+  const [selectedStudentForQR, setSelectedStudentForQR] = useState<{ student: Student; sequentialId: string } | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -122,7 +117,6 @@ export default function StudentManagement() {
 
   const filteredStudents = students.filter(student => 
     (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (student.id && student.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
     student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (!gradeFromUrl || student.grade === gradeFromUrl)
   );
@@ -166,7 +160,7 @@ export default function StudentManagement() {
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={(!gradeFromUrl && !editingStudent) || isLoading}>
-                  <UserPlus className="ms-2 h-4 w-4" />
+                  {isLoading ? <Loader2 className="animate-spin" /> : <UserPlus className="ms-2 h-4 w-4" />}
                   {editingStudent ? 'حفظ التعديلات' : 'إضافة طالب'}
                 </Button>
                  {editingStudent && <Button variant="ghost" className="w-full" onClick={() => setEditingStudent(null)}>إلغاء التعديل</Button>}
@@ -186,7 +180,7 @@ export default function StudentManagement() {
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالاسم أو الكود..."
+                placeholder="ابحث بالاسم..."
                 className="pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -214,12 +208,12 @@ export default function StudentManagement() {
                         const sequentialId = (index + 1).toString();
                         return (
                         <TableRow key={student.id}>
-                          <TableCell className="font-mono text-sm">{student.id}</TableCell>
+                          <TableCell className="font-mono text-sm">{sequentialId}</TableCell>
                           <TableCell className="font-medium">{student.name}</TableCell>
                            {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
                           <TableCell>{student.parentPhone || 'لا يوجد'}</TableCell>
                           <TableCell className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR({ student, sequentialId: student.id })}>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR({ student, sequentialId })}>
                               <QrCode className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>

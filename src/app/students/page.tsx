@@ -2,7 +2,7 @@ import StudentManagement from "@/components/features/students/StudentManagement"
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Suspense } from "react";
 
 function StudentManagementPage() {
@@ -15,10 +15,10 @@ function StudentManagementPage() {
             إضافة طلاب جدد، تعديل بياناتهم، وعرض أكوادهم الخاصة.
           </PageHeaderDescription>
         </PageHeader>
-         <Button variant="link" asChild className="p-0">
+         <Button variant="outline" asChild>
           <Link href="/">
-            <ArrowRight className="ms-2 h-4 w-4" />
-            العودة إلى لوحة التحكم
+            <ArrowLeft className="ms-2 h-4 w-4" />
+            العودة للرئيسية
           </Link>
         </Button>
       </div>

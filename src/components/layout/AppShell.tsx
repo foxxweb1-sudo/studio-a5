@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
-          <div className="mr-4 flex items-center">
+          <div className="mr-auto flex items-center">
             <Link href="/" className="flex items-center gap-2">
                <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -38,7 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </h1>
             </Link>
           </div>
-          <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2">
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/">
                     <Home />
@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+      <main className="container py-4 sm:py-6 lg:py-8">{children}</main>
     </div>
   );
 }

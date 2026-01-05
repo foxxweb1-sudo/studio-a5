@@ -3,8 +3,9 @@
 import { useParams } from 'next/navigation';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, CalendarCheck, FileText, CreditCard } from 'lucide-react';
+import { Users, CalendarCheck, FileText, CreditCard, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function GradeDashboardPage() {
   const params = useParams();
@@ -47,9 +48,12 @@ export default function GradeDashboardPage() {
             اختر أحد الخيارات لإدارة الحضور والطلاب.
           </PageHeaderDescription>
         </PageHeader>
-        <Link href={`/stage/${stageName}`} className="text-primary hover:underline whitespace-nowrap pt-2">
-          &larr; العودة إلى اختيار الصف
-        </Link>
+        <Button variant="outline" asChild>
+          <Link href={`/stage/${stageName}`}>
+            <ArrowLeft className="ms-2 h-4 w-4" />
+            العودة لاختيار الصف
+          </Link>
+        </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {dashboardItems.map((item) => (

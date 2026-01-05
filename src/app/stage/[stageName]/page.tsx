@@ -3,8 +3,9 @@
 import { useParams, useRouter } from 'next/navigation';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const stageData: Record<string, { name: string; grades: string[] }> = {
   primary: {
@@ -48,9 +49,12 @@ export default function StagePage() {
           <PageHeaderTitle>{stage.name}</PageHeaderTitle>
           <PageHeaderDescription>اختر الصف لعرض لوحة التحكم الخاصة به.</PageHeaderDescription>
         </PageHeader>
-        <Link href="/" className="text-primary hover:underline whitespace-nowrap pt-2">
-          &larr; العودة إلى المراحل الدراسية
-        </Link>
+        <Button variant="outline" asChild>
+          <Link href="/">
+             <ArrowLeft className="ms-2 h-4 w-4" />
+            العودة للمراحل
+          </Link>
+        </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stage.grades.map((grade) => (

@@ -41,9 +41,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between max-w-screen-2xl">
+        <div className="container flex h-14 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2">
               <h1 className="font-headline text-xl font-bold text-primary">
                 تطبيق الحضور
@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="container py-4 sm:py-6 lg:py-8 max-w-screen-2xl">{children}</main>
+      <main className="container py-4 sm:py-6 lg:py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }

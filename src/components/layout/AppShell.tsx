@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
+        <div className="container flex h-14 items-center max-w-screen-2xl">
           <div className="mr-auto flex items-center">
             <Link href="/" className="flex items-center gap-2">
                <svg
@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="container py-4 sm:py-6 lg:py-8">{children}</main>
+      <main className="container py-4 sm:py-6 lg:py-8 max-w-screen-2xl">{children}</main>
     </div>
   );
 }

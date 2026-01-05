@@ -63,6 +63,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 تطبيق الحضور
               </h1>
             </Link>
+             <Button variant="ghost" size="icon" asChild>
+                <Link href="/">
+                    <Home />
+                    <span className="sr-only">الرئيسية</span>
+                </Link>
+            </Button>
           </div>
 
           <div className="hidden sm:flex flex-col items-center justify-center">
@@ -79,12 +85,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-                <Link href="/">
-                    <Home />
-                    <span className="sr-only">الرئيسية</span>
-                </Link>
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">

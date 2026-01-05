@@ -19,7 +19,7 @@ import {
 import { FaWhatsapp, FaFacebook, FaTelegram, FaPinterest, FaTumblr, FaTwitter } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, Firestore } from 'firebase/firestore';
 
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
@@ -46,7 +46,7 @@ export default function Footer() {
     setContactForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, db: Firestore) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.email || !contactForm.message) {
       toast({
@@ -59,7 +59,10 @@ export default function Footer() {
     
     setIsSubmitting(true);
     try {
-        const messagesCollection = collection(firestore, 'contactMessages');
+        if (!db) {
+            throw new Error("Firestore is not initialized");
+        }
+        const messagesCollection = collection(db, 'contactMessages');
         await addDoc(messagesCollection, {
             ...contactForm,
             createdAt: serverTimestamp(),
@@ -115,7 +118,7 @@ export default function Footer() {
             </div>
 
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={(e) => handleSubmit(e, firestore)}>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
@@ -150,7 +153,7 @@ export default function Footer() {
                    disabled={isSubmitting}
                 />
               </div>
-               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity" disabled={isSubmitting}>
+               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity" disabled={isSubmitting || !firestore}>
                 {isSubmitting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Send className="ms-2 h-4 w-4" />}
                 إرسال الرسالة
               </Button>

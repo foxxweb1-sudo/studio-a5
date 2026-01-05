@@ -20,6 +20,16 @@ import {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { user } = useUser();
+  const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
+
+  React.useEffect(() => {
+    setCurrentDateTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
 
   const handleSignOut = () => {
     signOut(auth);
@@ -49,6 +59,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 تطبيق الحضور
               </h1>
             </Link>
+          </div>
+
+          <div className="hidden sm:flex flex-col items-center justify-center">
+            {currentDateTime && (
+              <>
+                <div className="text-sm font-medium text-foreground">
+                  {new Intl.DateTimeFormat('ar-EG', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).format(currentDateTime)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {new Intl.DateTimeFormat('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentDateTime)}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

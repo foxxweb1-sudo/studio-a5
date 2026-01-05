@@ -174,19 +174,18 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-border mt-8 py-6">
-        <p className="text-center text-xs text-muted-foreground">
-          جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
-        </p>
-      </div>
-      <div className="fixed bottom-4 left-4 z-50">
+      <div className="border-t border-border mt-8 py-6 text-center">
         <Button
           size="icon"
-          className="rounded-full h-12 w-12 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+          variant="ghost"
+          className="rounded-full h-12 w-12 shadow-lg bg-muted hover:bg-muted/90 text-muted-foreground mx-auto mb-4"
           onClick={scrollToTop}
         >
           <ChevronUp className="h-6 w-6" />
         </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
+        </p>
       </div>
     </footer>
   );

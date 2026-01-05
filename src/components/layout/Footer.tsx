@@ -14,9 +14,12 @@ import {
   Share2,
   Globe,
   Send,
+  Loader2,
 } from 'lucide-react';
 import { FaWhatsapp, FaFacebook, FaTelegram, FaPinterest, FaTumblr, FaTwitter } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
@@ -30,6 +33,8 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
@@ -41,7 +46,7 @@ export default function Footer() {
     setContactForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.email || !contactForm.message) {
       toast({
@@ -51,13 +56,31 @@ export default function Footer() {
       });
       return;
     }
-
-    const subject = encodeURIComponent(`رسالة من ${contactForm.name} عبر الموقع`);
-    const body = encodeURIComponent(`الاسم: ${contactForm.name}\nالبريد الإلكتروني: ${contactForm.email}\n\nالرسالة:\n${contactForm.message}`);
     
-    window.location.href = `mailto:admin@gmail.com?subject=${subject}&body=${body}`;
+    setIsSubmitting(true);
+    try {
+        const messagesCollection = collection(firestore, 'contactMessages');
+        await addDoc(messagesCollection, {
+            ...contactForm,
+            createdAt: serverTimestamp(),
+        });
+        
+        toast({
+            title: 'تم إرسال الرسالة',
+            description: 'شكراً لتواصلك معنا، سنرد عليك قريباً.',
+        });
+        setContactForm({ name: '', email: '', message: '' });
 
-    setContactForm({ name: '', email: '', message: '' });
+    } catch (error) {
+        console.error("Error sending message:", error);
+        toast({
+            variant: 'destructive',
+            title: 'خطأ في الإرسال',
+            description: 'حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
 
@@ -102,6 +125,7 @@ export default function Footer() {
                   className="pl-12"
                   value={contactForm.email}
                   onChange={handleInputChange}
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="relative">
@@ -112,6 +136,7 @@ export default function Footer() {
                   className="pl-12"
                   value={contactForm.name}
                   onChange={handleInputChange}
+                   disabled={isSubmitting}
                 />
               </div>
               <div className="relative">
@@ -122,10 +147,11 @@ export default function Footer() {
                   className="pl-12 min-h-[100px]"
                   value={contactForm.message}
                   onChange={handleInputChange}
+                   disabled={isSubmitting}
                 />
               </div>
-               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity">
-                <Send className="ms-2 h-4 w-4" />
+               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Send className="ms-2 h-4 w-4" />}
                 إرسال الرسالة
               </Button>
             </form>

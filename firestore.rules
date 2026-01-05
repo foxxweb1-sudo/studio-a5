@@ -23,5 +23,12 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
+
+    // Rules for contact messages
+    match /contactMessages/{messageId} {
+      allow read: if isAdmin();
+      allow create: if true; // Anyone can send a message
+      allow update, delete: if false; // No one can update or delete messages
+    }
   }
 }

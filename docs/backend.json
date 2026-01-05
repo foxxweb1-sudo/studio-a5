@@ -106,6 +106,32 @@
         }
       },
       "required": ["studentId", "amount", "month", "date"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "type": "object",
+      "description": "Represents a message sent through the contact form.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The sender's name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The sender's email address."
+        },
+        "message": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the message was sent."
+        }
+      },
+      "required": ["name", "email", "message", "createdAt"]
     }
   },
   "auth": {
@@ -143,6 +169,16 @@
             "$ref": "#/backend/entities/Payment"
           },
           "description": "Stores payment records for all students of a specific user."
+        }
+      },
+      {
+        "path": "/contactMessages/{messageId}",
+        "definition": {
+          "entityName": "ContactMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ContactMessage"
+          },
+          "description": "Stores messages sent via the contact form."
         }
       }
     ]

@@ -9,9 +9,8 @@ import {
   PageHeaderDescription,
 } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Users } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useStudents } from '@/hooks/use-app-data';
 import {
   Table,
   TableBody,
@@ -22,6 +21,10 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 // IMPORTANT: Replace with your actual Admin UID
 const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
@@ -33,6 +36,7 @@ function AllStudentsList() {
 
   useEffect(() => {
     const fetchAllStudents = async () => {
+      setLoading(true);
       try {
         const usersSnapshot = await getDocs(collection(firestore, 'users'));
         let studentsList: any[] = [];
@@ -57,7 +61,9 @@ function AllStudentsList() {
       }
     };
 
-    fetchAllStudents();
+    if(firestore) {
+      fetchAllStudents();
+    }
   }, [firestore]);
 
   if (loading) {
@@ -116,6 +122,83 @@ function AllStudentsList() {
   );
 }
 
+
+function ContactMessagesList() {
+    const firestore = useFirestore();
+    const [messages, setMessages] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            setLoading(true);
+            try {
+                const messagesQuery = query(collection(firestore, 'contactMessages'), orderBy('createdAt', 'desc'));
+                const messagesSnapshot = await getDocs(messagesQuery);
+                const messagesData = messagesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                setMessages(messagesData);
+            } catch (error) {
+                console.error("Error fetching contact messages:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if(firestore) {
+            fetchMessages();
+        }
+
+    }, [firestore]);
+    
+    if (loading) {
+        return (
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        );
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>الرسائل الواردة ({messages.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="max-h-[60vh] overflow-auto">
+                    {messages.length > 0 ? (
+                        <div className="space-y-4">
+                            {messages.map(msg => (
+                                <Card key={msg.id} className="bg-muted/50">
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-lg">{msg.name}</CardTitle>
+                                                <p className="text-sm text-muted-foreground">{msg.email}</p>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                {msg.createdAt ? format(msg.createdAt.toDate(), 'd MMMM yyyy, hh:mm a', { locale: ar }) : ''}
+                                            </p>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="whitespace-pre-wrap">{msg.message}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                         <div className="h-24 text-center flex items-center justify-center">
+                            <p className="text-muted-foreground">لا توجد رسائل واردة.</p>
+                         </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
@@ -143,7 +226,7 @@ export default function AdminPage() {
         <PageHeader>
           <PageHeaderTitle>لوحة تحكم المشرف</PageHeaderTitle>
           <PageHeaderDescription>
-            عرض جميع الطلاب المسجلين في النظام.
+            إدارة الطلاب والرسائل الواردة في النظام.
           </PageHeaderDescription>
         </PageHeader>
         <Button variant="outline" onClick={() => router.back()}>
@@ -151,7 +234,24 @@ export default function AdminPage() {
           رجوع
         </Button>
       </div>
-      <AllStudentsList />
+       <Tabs defaultValue="students" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="students">
+                    <Users className="ms-2 h-4 w-4" />
+                    إدارة الطلاب
+                </TabsTrigger>
+                <TabsTrigger value="messages">
+                    <Mail className="ms-2 h-4 w-4" />
+                    الرسائل الواردة
+                </TabsTrigger>
+            </TabsList>
+            <TabsContent value="students" className="mt-6">
+                <AllStudentsList />
+            </TabsContent>
+            <TabsContent value="messages" className="mt-6">
+                <ContactMessagesList />
+            </TabsContent>
+        </Tabs>
     </div>
   );
 }

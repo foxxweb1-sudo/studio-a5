@@ -45,15 +45,14 @@ export default function AttendanceRecorder() {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const recordAttendance = (studentCode: string) => {
-    // Check if the code is a sequential number first for manual entry
-    const sequentialId = parseInt(studentCode, 10);
-    let student;
-    if (!isNaN(sequentialId) && sequentialId > 0 && sequentialId <= students.length) {
-       // It's a valid sequential ID, get the student by index
-       student = students[sequentialId - 1];
-    } else {
-       // It's not a sequential ID, assume it's the actual document ID (from QR scan)
-       student = students.find(s => s.id === studentCode);
+    let student = students.find(s => s.id === studentCode);
+
+    // Fallback for manual entry with sequential code
+    if (!student) {
+      const sequentialId = parseInt(studentCode, 10);
+      if (!isNaN(sequentialId) && sequentialId > 0 && sequentialId <= students.length) {
+        student = students[sequentialId - 1];
+      }
     }
     
     if (!student) {
@@ -169,7 +168,7 @@ export default function AttendanceRecorder() {
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>الحضور اليوم ({attendedToday.length})</CardTitle>
+            <CardTitle>الحاضرون اليوم ({attendedToday.length})</CardTitle>
             <CardDescription>قائمة الطلاب الذين سجلوا حضورهم اليوم.</CardDescription>
           </CardHeader>
           <CardContent>

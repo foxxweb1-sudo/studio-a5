@@ -66,7 +66,7 @@ export default function Footer() {
   };
 
   const socialLinks = [
-     { name: 'واتساب', icon: FaWhatsapp, href: 'https://wa.me/YOUR_NUMBER' },
+     { name: 'واتساب', icon: FaWhatsapp, href: 'https://whatsapp.com/channel/0029Vb6jCdZHLHQVARrm8n3e' },
      { name: 'فيسبوك', icon: FaFacebook, href: 'https://facebook.com/YOUR_PAGE' },
      { name: 'تليجرام', icon: TelegramIcon, href: 'https://t.me/YOUR_CHANNEL' },
      { name: 'بنترست', icon: FaPinterest, href: 'https://pinterest.com/YOUR_PROFILE' },

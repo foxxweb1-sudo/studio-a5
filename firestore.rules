@@ -10,7 +10,7 @@ service cloud.firestore {
     
     // IMPORTANT: Replace with your actual Admin UID
     function isAdmin() {
-      return request.auth.uid == 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
+      return request.auth != null && request.auth.uid == 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
     }
 
     // Rules for all users collection
@@ -26,9 +26,12 @@ service cloud.firestore {
 
     // Rules for contact messages
     match /contactMessages/{messageId} {
+      // Only the admin can read messages.
       allow read: if isAdmin();
-      allow create: if true; // Anyone can send a message
-      allow update, delete: if false; // No one can update or delete messages
+      // Anyone can create a message (submit the contact form).
+      allow create: if true; 
+      // No one can update or delete messages through the client SDK.
+      allow update, delete: if false; 
     }
   }
 }

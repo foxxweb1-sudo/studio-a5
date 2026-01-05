@@ -109,7 +109,7 @@ export default function StudentProfilePage() {
                         <TableBody>
                         {studentAttendance.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => (
                             <TableRow key={record.id}>
-                            <TableCell>{format(new Date(record.date), 'd MMMM yyyy', { locale: ar })}</TableCell>
+                            <TableCell>{format(new Date(record.date), 'eeee, d MMMM yyyy', { locale: ar })}</TableCell>
                             <TableCell>
                                 <Badge variant="default" className="bg-green-500">حاضر</Badge>
                             </TableCell>
@@ -160,5 +160,3 @@ export default function StudentProfilePage() {
     </div>
   );
 }
-
-    

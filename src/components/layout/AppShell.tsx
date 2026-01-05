@@ -2,11 +2,20 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home } from 'lucide-react';
+import { LogOut, Home, UserCircle2 } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useUser } from '@/firebase';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -14,6 +23,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = () => {
     signOut(auth);
+  };
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    const names = name.split(' ');
+    if (names.length > 1) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   if (!user) {
@@ -45,10 +63,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <span className="sr-only">الرئيسية</span>
                 </Link>
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
-              <LogOut />
-              <span className="sr-only">تسجيل الخروج</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
+                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                   <Link href="/account">
+                    <UserCircle2 className="ms-2 h-4 w-4" />
+                    <span>إدارة الحساب</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="ms-2 h-4 w-4" />
+                  <span>تسجيل الخروج</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

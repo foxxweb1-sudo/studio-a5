@@ -59,7 +59,7 @@ export default function StagePage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stage.grades.map((grade) => (
           <Link href={`/stage/${stageName}/${encodeURIComponent(grade)}`} key={grade}>
-            <Card className="hover:shadow-lg hover:border-primary transition-all duration-300">
+            <Card className="hover:shadow-lg hover:border-primary transition-all duration-300 rounded-full">
               <CardContent className="flex items-center justify-between p-6">
                 <h3 className="text-lg font-semibold">{grade}</h3>
                 <ArrowRight className="w-5 h-5 text-muted-foreground" />

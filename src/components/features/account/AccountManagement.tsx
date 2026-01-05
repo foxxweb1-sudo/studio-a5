@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useState } from 'react';
@@ -92,6 +92,15 @@ export default function AccountManagement() {
     } finally {
       setIsSendingEmail(false);
     }
+  };
+  
+  const handleCopyUid = () => {
+    if (!user?.uid) return;
+    navigator.clipboard.writeText(user.uid);
+    toast({
+      title: 'تم نسخ معرف المستخدم',
+      description: 'تم نسخ UID بنجاح.',
+    });
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -172,7 +181,7 @@ export default function AccountManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="font-medium">كلمة المرور</h4>
                 <p className="text-sm text-muted-foreground">
@@ -191,6 +200,18 @@ export default function AccountManagement() {
                 )}
                 إرسال رابط التعيين
               </Button>
+            </div>
+            <div className="border-t pt-4">
+                 <h4 className="font-medium">معرف المستخدم (UID)</h4>
+                 <p className="text-sm text-muted-foreground mb-2">
+                    هذا هو المعرف الفريد الخاص بك. قد تحتاجه لأغراض إدارية.
+                 </p>
+                 <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                   <Input readOnly value={user?.uid ?? ''} className="flex-grow bg-transparent border-0 font-mono text-xs"/>
+                   <Button variant="ghost" size="icon" onClick={handleCopyUid}>
+                    <Copy className="h-4 w-4"/>
+                   </Button>
+                 </div>
             </div>
           </CardContent>
         </Card>

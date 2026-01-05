@@ -217,7 +217,7 @@ export default function AccountManagement() {
             <CardDescription>
               قم بإدارة إعدادات الأمان الخاصة بحسابك.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>

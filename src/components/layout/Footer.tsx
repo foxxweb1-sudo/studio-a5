@@ -55,7 +55,7 @@ export default function Footer() {
     const subject = encodeURIComponent(`رسالة من ${contactForm.name} عبر الموقع`);
     const body = encodeURIComponent(`الاسم: ${contactForm.name}\nالبريد الإلكتروني: ${contactForm.email}\n\nالرسالة:\n${contactForm.message}`);
     
-    window.location.href = `mailto:x7oud3@gmail.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:admin@gmail.com?subject=${subject}&body=${body}`;
 
     setContactForm({ name: '', email: '', message: '' });
   };

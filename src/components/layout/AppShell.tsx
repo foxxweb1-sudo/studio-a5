@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, UserCircle2, Palette } from 'lucide-react';
+import { LogOut, Home, UserCircle2, Palette, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useUser } from '@/firebase';
@@ -22,10 +22,16 @@ import {
 import { ModeToggle, ThemeMenuItems } from './ModeToggle';
 import Footer from './Footer';
 
+// IMPORTANT: Replace with your actual Admin UID
+const ADMIN_UID = 'IClp2T5A6iSj1Q8GfJ3bWkYxN2y0';
+
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { user } = useUser();
   const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
+
+  const isAdmin = React.useMemo(() => user?.uid === ADMIN_UID, [user]);
 
   React.useEffect(() => {
     setCurrentDateTime(new Date());
@@ -104,6 +110,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <ShieldCheck className="ms-2 h-4 w-4" />
+                      <span>لوحة تحكم المشرف</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                    <Link href="/account">
                     <UserCircle2 className="ms-2 h-4 w-4" />

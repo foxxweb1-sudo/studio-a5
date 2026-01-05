@@ -8,9 +8,20 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // IMPORTANT: Replace with your actual Admin UID
+    function isAdmin() {
+      return request.auth.uid == 'IClp2T5A6iSj1Q8GfJ3bWkYxN2y0';
+    }
+
+    // Rules for all users collection
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow write: if false; // No one can write directly to the user doc list
+    }
+    
     // Rules for user-specific data
     match /users/{userId}/{document=**} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
   }
 }

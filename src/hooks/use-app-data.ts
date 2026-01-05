@@ -1,9 +1,8 @@
 "use client";
 
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy } from "firebase/firestore";
-import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { format } from 'date-fns';
 
 // --- Students Hook ---
@@ -24,19 +23,45 @@ export function useStudents() {
       ...studentData,
       createdAt: serverTimestamp(),
     };
-    addDocumentNonBlocking(studentCollection, newStudent);
+    addDoc(studentCollection, newStudent).catch(error => {
+      errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: studentCollection.path,
+          operation: 'create',
+          requestResourceData: newStudent,
+        })
+      )
+    });
   };
 
   const updateStudent = (studentId: string, studentData: Partial<Student>) => {
     if (!user) return;
     const studentDoc = doc(firestore, `users/${user.uid}/students`, studentId);
-    updateDocumentNonBlocking(studentDoc, studentData);
+    updateDoc(studentDoc, studentData).catch(error => {
+       errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: studentDoc.path,
+          operation: 'update',
+          requestResourceData: studentData,
+        })
+      )
+    });
   };
   
   const deleteStudent = (studentId: string) => {
     if (!user) return;
     const studentDoc = doc(firestore, `users/${user.uid}/students`, studentId);
-    deleteDocumentNonBlocking(studentDoc);
+    deleteDoc(studentDoc).catch(error => {
+       errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: studentDoc.path,
+          operation: 'delete',
+        })
+      )
+    });
   };
 
   return { students: students || [], isLoading, addStudent, updateStudent, deleteStudent };
@@ -63,7 +88,16 @@ export function useAttendance() {
       status: "present",
       createdAt: serverTimestamp(),
     };
-    addDocumentNonBlocking(attendanceCollection, newRecord);
+    addDoc(attendanceCollection, newRecord).catch(error => {
+      errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: attendanceCollection.path,
+          operation: 'create',
+          requestResourceData: newRecord,
+        })
+      )
+    });
   };
   
   return { attendance: attendance || [], isLoading, addAttendance };
@@ -88,10 +122,17 @@ export function usePayments() {
             date: format(new Date(), 'yyyy-MM-dd'),
             createdAt: serverTimestamp(),
         };
-        addDocumentNonBlocking(paymentCollection, newPayment);
+        addDoc(paymentCollection, newPayment).catch(error => {
+            errorEmitter.emit(
+                'permission-error',
+                new FirestorePermissionError({
+                path: paymentCollection.path,
+                operation: 'create',
+                requestResourceData: newPayment,
+                })
+            )
+        });
     };
 
     return { payments: payments || [], isLoading, addPayment };
 }
-
-    

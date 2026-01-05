@@ -14,10 +14,10 @@ import {
   Send,
   Loader2,
 } from 'lucide-react';
-import { FaWhatsapp, FaFacebook, FaTelegram, FaPinterest, FaTumblr, FaTwitter } from 'react-icons/fa';
+import { FaWhatsapp, FaFacebook, FaTumblr, FaTwitter, FaPinterest } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp, Firestore } from 'firebase/firestore';
+import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
@@ -55,34 +55,53 @@ export default function Footer() {
     }
     
     setIsSubmitting(true);
-    try {
-        if (!firestore) {
-            throw new Error("Firestore is not initialized");
-        }
-        const messagesCollection = collection(firestore, 'contactMessages');
-        await addDoc(messagesCollection, {
-            name: contactForm.name,
-            message: contactForm.message,
-            email: 'N/A', // Email is removed from form
-            createdAt: serverTimestamp(),
+    
+    if (!firestore) {
+        toast({
+            variant: 'destructive',
+            title: 'خطأ في الاتصال',
+            description: 'لا يمكن الاتصال بقاعدة البيانات. يرجى المحاولة مرة أخرى لاحقًا.',
         });
-        
+        setIsSubmitting(false);
+        return;
+    }
+
+    const messagesCollection = collection(firestore, 'contactMessages');
+    const newMessage = {
+        name: contactForm.name,
+        message: contactForm.message,
+        email: 'N/A', // Email is removed from form
+        createdAt: serverTimestamp(),
+    };
+
+    addDoc(messagesCollection, newMessage)
+      .then(() => {
         toast({
             title: 'تم إرسال الرسالة',
             description: 'شكراً لتواصلك معنا، سنرد عليك قريباً.',
         });
         setContactForm({ name: '', message: '' });
-
-    } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error sending message:", error);
+        
+        const contextualError = new FirestorePermissionError({
+            path: messagesCollection.path,
+            operation: 'create',
+            requestResourceData: newMessage
+        });
+
+        errorEmitter.emit('permission-error', contextualError);
+
         toast({
             variant: 'destructive',
             title: 'خطأ في الإرسال',
             description: 'حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.',
         });
-    } finally {
+      })
+      .finally(() => {
         setIsSubmitting(false);
-    }
+      });
   };
 
 

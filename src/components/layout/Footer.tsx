@@ -43,7 +43,7 @@ export default function Footer() {
     setContactForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.message) {
       toast({
@@ -92,12 +92,6 @@ export default function Footer() {
         });
 
         errorEmitter.emit('permission-error', contextualError);
-
-        toast({
-            variant: 'destructive',
-            title: 'خطأ في الإرسال',
-            description: 'حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.',
-        });
       })
       .finally(() => {
         setIsSubmitting(false);

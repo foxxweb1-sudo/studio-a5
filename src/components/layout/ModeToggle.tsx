@@ -12,9 +12,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export function ModeToggle() {
+export function ThemeMenuItems() {
   const { setTheme } = useTheme()
+  return (
+    <>
+      <DropdownMenuItem onClick={() => setTheme("light")}>
+        فاتح
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setTheme("dark")}>
+        داكن
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => setTheme("system")}>
+        النظام
+      </DropdownMenuItem>
+    </>
+  )
+}
 
+export function ModeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,15 +40,7 @@ export function ModeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          فاتح
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          داكن
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          النظام
-        </DropdownMenuItem>
+        <ThemeMenuItems />
       </DropdownMenuContent>
     </DropdownMenu>
   )

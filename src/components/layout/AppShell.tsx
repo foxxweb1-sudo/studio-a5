@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, UserCircle2 } from 'lucide-react';
+import { LogOut, Home, UserCircle2, Palette } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useUser } from '@/firebase';
@@ -15,8 +15,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu"
-import { ModeToggle } from './ModeToggle';
+import { ModeToggle, ThemeMenuItems } from './ModeToggle';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -76,7 +79,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2">
-             <ModeToggle />
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/">
                     <Home />
@@ -107,6 +109,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <span>إدارة الحساب</span>
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Palette className="ms-2 h-4 w-4" />
+                    <span>تغيير المظهر</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <ThemeMenuItems />
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="ms-2 h-4 w-4" />

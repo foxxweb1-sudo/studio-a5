@@ -25,6 +25,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
 import Image from "next/image";
+import { ModeToggle } from "@/components/layout/ModeToggle";
 
 const formSchema = z.object({
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
@@ -63,6 +64,9 @@ export default function SignUp() {
         priority
       />
       <div className="absolute inset-0 bg-black/60 z-10" />
+      <div className="absolute top-4 right-4 z-20">
+        <ModeToggle />
+      </div>
       <Card className="w-full max-w-md mx-auto z-20 bg-card/80 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>

@@ -20,6 +20,7 @@ import {
   DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu"
 import { ModeToggle, ThemeMenuItems } from './ModeToggle';
+import Footer from './Footer';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -53,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           
@@ -128,7 +129,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="container py-4 sm:py-6 lg:py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</main>
+      <main className="container flex-grow py-4 sm:py-6 lg:py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</main>
+      <Footer />
     </div>
   );
 }

@@ -34,7 +34,7 @@ const profileFormSchema = z.object({
 });
 
 export default function AccountManagement() {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, reloadUser } = useUser();
   const auth = useAuth();
   const storage = useStorage();
   const { toast } = useToast();
@@ -67,6 +67,10 @@ export default function AccountManagement() {
         displayName: values.displayName,
         photoURL: photoURL,
       });
+
+      // Reload user to get fresh data
+      await reloadUser();
+
       toast({
         title: 'تم الحفظ بنجاح',
         description: 'تم تحديث معلومات ملفك الشخصي.',
@@ -80,6 +84,9 @@ export default function AccountManagement() {
     } finally {
       setIsSaving(false);
       form.reset({ displayName: values.displayName, photoFile: undefined });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 

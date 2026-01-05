@@ -71,7 +71,7 @@ export default function Footer() {
      { name: 'تليجرام', icon: TelegramIcon, href: 'https://t.me/YOUR_CHANNEL' },
      { name: 'بنترست', icon: FaPinterest, href: 'https://pinterest.com/YOUR_PROFILE' },
      { name: 'تمبلر', icon: FaTumblr, href: 'https://www.tumblr.com/YOUR_BLOG' },
-     { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://your-website.com' },
+     { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://tech-p1.blogspot.com' },
   ]
   
   const socialLinksRow1 = socialLinks.slice(0, 4);

@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import Link from 'next/link';
 
 const formSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
@@ -205,11 +206,15 @@ export default function StudentManagement() {
                   <TableBody>
                     {filteredStudents.length > 0 ? (
                       filteredStudents.map((student, index) => {
-                        const sequentialId = (index + 1).toString();
+                        const sequentialId = (students.findIndex(s => s.id === student.id) + 1).toString();
                         return (
                         <TableRow key={student.id}>
                           <TableCell className="font-mono text-sm">{sequentialId}</TableCell>
-                          <TableCell className="font-medium">{student.name}</TableCell>
+                          <TableCell className="font-medium">
+                             <Link href={`/students/${student.id}`} className="hover:underline text-primary">
+                              {student.name}
+                            </Link>
+                          </TableCell>
                            {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
                           <TableCell>{student.parentPhone || 'لا يوجد'}</TableCell>
                           <TableCell className="flex gap-1">
@@ -268,3 +273,5 @@ export default function StudentManagement() {
     </div>
   );
 }
+
+    

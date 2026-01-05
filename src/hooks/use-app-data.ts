@@ -2,7 +2,7 @@
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment } from "@/lib/definitions";
-import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy } from "firebase/firestore";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { format } from 'date-fns';
 
@@ -12,7 +12,7 @@ export function useStudents() {
   const { user } = useUser();
 
   const studentsQuery = useMemoFirebase(() => 
-    user ? collection(firestore, `users/${user.uid}/students`) : null,
+    user ? query(collection(firestore, `users/${user.uid}/students`), orderBy("createdAt", "asc")) : null,
   [user, firestore]);
 
   const { data: students, isLoading } = useCollection<Student>(studentsQuery);
@@ -93,3 +93,5 @@ export function usePayments() {
 
     return { payments: payments || [], isLoading, addPayment };
 }
+
+    

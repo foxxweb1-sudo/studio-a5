@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -12,8 +13,11 @@ import {
   ChevronUp,
   Share2,
   Globe,
+  Send,
 } from 'lucide-react';
 import { FaWhatsapp, FaFacebook, FaTelegram } from 'react-icons/fa';
+import { useToast } from '@/hooks/use-toast';
+
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
 const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -25,6 +29,38 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 export default function Footer() {
+  const { toast } = useToast();
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    message: '',
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setContactForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+      toast({
+        variant: 'destructive',
+        title: 'حقول فارغة',
+        description: 'الرجاء ملء جميع الحقول قبل الإرسال.',
+      });
+      return;
+    }
+
+    const subject = encodeURIComponent(`رسالة من ${contactForm.name} عبر الموقع`);
+    const body = encodeURIComponent(`الاسم: ${contactForm.name}\nالبريد الإلكتروني: ${contactForm.email}\n\nالرسالة:\n${contactForm.message}`);
+    
+    window.location.href = `mailto:x7oud3@gmail.com?subject=${subject}&body=${body}`;
+
+    setContactForm({ name: '', email: '', message: '' });
+  };
+
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -63,26 +99,42 @@ export default function Footer() {
               </div>
             </div>
 
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="email"
+                  name="email"
                   placeholder="بريد إلكتروني"
                   className="pl-12"
+                  value={contactForm.email}
+                  onChange={handleInputChange}
                 />
               </div>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input placeholder="الاسم" className="pl-12" />
+                <Input
+                  name="name"
+                  placeholder="الاسم"
+                  className="pl-12"
+                  value={contactForm.name}
+                  onChange={handleInputChange}
+                />
               </div>
               <div className="relative">
                 <MessageSquare className="absolute left-4 top-5 h-5 w-5 text-muted-foreground" />
                 <Textarea
-                  placeholder="وو رسالة"
+                  name="message"
+                  placeholder="رسالتك"
                   className="pl-12 min-h-[100px]"
+                  value={contactForm.message}
+                  onChange={handleInputChange}
                 />
               </div>
+               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity">
+                <Send className="ms-2 h-4 w-4" />
+                إرسال الرسالة
+              </Button>
             </form>
           </div>
 

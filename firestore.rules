@@ -10,7 +10,7 @@ service cloud.firestore {
     
     // IMPORTANT: Replace with your actual Admin UID
     function isAdmin() {
-      return request.auth.uid == 'IClp2T5A6iSj1Q8GfJ3bWkYxN2y0';
+      return request.auth.uid == 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
     }
 
     // Rules for all users collection

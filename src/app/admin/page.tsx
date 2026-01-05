@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
 // IMPORTANT: Replace with your actual Admin UID
-const ADMIN_UID = 'IClp2T5A6iSj1Q8GfJ3bWkYxN2y0';
+const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
 
 function AllStudentsList() {
   const firestore = useFirestore();

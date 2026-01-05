@@ -58,9 +58,9 @@ export default function Home() {
           حدد المرحلة التي تريد عرض الصفوف الخاصة بها.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-col sm:flex-row items-center justify-around gap-6">
         {stages.map((stage) => (
-          <Link href={`/stage/${stage.slug}`} key={stage.slug} className="group">
+          <Link href={`/stage/${stage.slug}`} key={stage.slug} className="group w-full max-w-xs sm:max-w-none">
             <Card className="hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-full aspect-square flex items-center justify-center">
               <CardContent className="flex flex-col items-center justify-center p-6 sm:p-8 gap-4">
                 <div className="flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 border-4 border-primary/20 group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">

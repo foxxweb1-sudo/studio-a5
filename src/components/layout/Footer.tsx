@@ -17,8 +17,6 @@ import {
 } from 'lucide-react';
 import { FaWhatsapp, FaFacebook, FaTumblr, FaTwitter, FaPinterest } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
 const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -31,7 +29,6 @@ const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function Footer() {
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -43,46 +40,29 @@ export default function Footer() {
     setContactForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.message) {
       toast({
         variant: 'destructive',
         title: 'حقول فارغة',
-        description: 'الرجاء ملء جميع الحقول قبل الإرسال.',
+        description: 'الرجاء ملء الاسم والرسالة قبل الإرسال.',
       });
       return;
     }
-    
-    setIsSubmitting(true);
-    
-    try {
-        const messagesCollection = collection(firestore, 'contactMessages');
-        const newMessage = {
-            name: contactForm.name,
-            message: contactForm.message,
-            email: 'N/A',
-            createdAt: serverTimestamp(),
-        }
-        
-        await addDoc(messagesCollection, newMessage);
 
-        toast({
-            title: 'تم إرسال رسالتك بنجاح!',
-            description: 'شكراً لتواصلك معنا. سنقوم بالرد في أقرب وقت ممكن.',
-        });
-        setContactForm({ name: '', message: '' });
+    const recipient = '201121473424';
+    const text = `رسالة من: ${contactForm.name}\n\n${contactForm.message}`;
+    const whatsappUrl = `https://wa.me/${recipient}?text=${encodeURIComponent(text)}`;
 
-    } catch (error) {
-        console.error("Error sending message:", error);
-        toast({
-            variant: 'destructive',
-            title: 'حدث خطأ',
-            description: 'فشل إرسال الرسالة. يرجى المحاولة مرة أخرى.',
-        });
-    } finally {
-        setIsSubmitting(false);
-    }
+    window.open(whatsappUrl, '_blank');
+
+    toast({
+        title: 'جاهز للإرسال!',
+        description: 'سيتم فتح واتساب لإرسال رسالتك.',
+    });
+
+    setContactForm({ name: '', message: '' });
   };
 
 
@@ -110,7 +90,7 @@ export default function Footer() {
           {/* Contact Form Side */}
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white">
                 <Mail />
               </div>
                <h3 className="text-xl font-bold">تواصل معنا</h3>
@@ -140,9 +120,9 @@ export default function Footer() {
                    disabled={isSubmitting}
                 />
               </div>
-               <Button type="submit" className="w-full bg-gradient-to-r from-red-500 to-purple-600 text-white hover:opacity-90 transition-opacity" disabled={isSubmitting}>
+               <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent text-white hover:opacity-90 transition-opacity" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Send className="ms-2 h-4 w-4" />}
-                إرسال الرسالة
+                إرسال عبر واتساب
               </Button>
             </form>
           </div>
@@ -150,7 +130,7 @@ export default function Footer() {
           {/* Social Media Side */}
           <div className="space-y-6">
              <div className="flex items-center gap-4">
-               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-purple-600 flex items-center justify-center text-white">
+               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white">
                   <Share2 />
                 </div>
                <h3 className="text-xl font-bold">تابعنا</h3>
@@ -196,13 +176,13 @@ export default function Footer() {
       </div>
       <div className="border-t border-border mt-8 py-6">
         <p className="text-center text-xs text-muted-foreground">
-          جميع الحقوق محفوظة © {new Date().getFullYear()}، شركة تقنيات.
+          جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
         </p>
       </div>
       <div className="fixed bottom-4 left-4 z-50">
         <Button
           size="icon"
-          className="rounded-md bg-red-600 hover:bg-red-700 text-white"
+          className="rounded-full h-12 w-12 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
           onClick={scrollToTop}
         >
           <ChevronUp className="h-6 w-6" />

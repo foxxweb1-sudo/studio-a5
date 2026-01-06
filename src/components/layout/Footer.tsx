@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import AiAssistant from './AiAssistant';
+import AdBanner from './AdBanner';
 
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
@@ -90,7 +91,8 @@ export default function Footer() {
 
   return (
     <footer className="bg-card text-card-foreground border-t mt-12">
-      <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+        <AdBanner />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           {/* Contact Form Side */}
           <div className="space-y-6">
@@ -183,12 +185,12 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-border mt-8">
+      <div className="border-t border-border">
         <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
             <div className="flex-1">
                 {/* Empty div for spacing */}
             </div>
-            <p className="text-xs text-muted-foreground text-center flex-shrink-0">
+            <p className="text-xs text-muted-foreground text-center flex-shrink-0 px-4">
             جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
             </p>
             <div className="flex-1 flex justify-end">

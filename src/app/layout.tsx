@@ -5,6 +5,8 @@ import { FirebaseClientProvider } from '@/firebase';
 import AuthGuard from '@/components/layout/AuthGuard';
 import { AppShell } from '@/components/layout/AppShell';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
+import { AdProvider } from '@/context/AdProvider';
+import InterstitialAd from '@/components/layout/InterstitialAd';
 
 export const metadata: Metadata = {
   title: 'الحضور',
@@ -38,9 +40,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <AuthGuard>
-              <AppShell>{children}</AppShell>
-            </AuthGuard>
+            <AdProvider>
+              <AuthGuard>
+                <AppShell>{children}</AppShell>
+              </AuthGuard>
+              <InterstitialAd />
+            </AdProvider>
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>

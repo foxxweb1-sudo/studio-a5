@@ -6,7 +6,6 @@ import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components
 import { Card, CardContent } from '@/components/ui/card';
 import { GraduationCap, School, Building, CalendarCheck, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import AdBanner from '@/components/layout/AdBanner';
 
 const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
 
@@ -83,8 +82,6 @@ export default function Home() {
           </Link>
         ))}
       </div>
-
-      <AdBanner />
 
       <PageHeader>
         <PageHeaderTitle>او اختر المرحلة الدراسية</PageHeaderTitle>

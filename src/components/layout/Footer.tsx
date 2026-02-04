@@ -20,7 +20,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import AiAssistant from './AiAssistant';
-import AdBanner from './AdBanner';
 
 
 // A simple SVG icon for Telegram if react-icons is not preferred.
@@ -83,7 +82,7 @@ export default function Footer() {
      { name: 'X', icon: FaTwitter, href: 'https://x.com/tqnyt170296' },
      { name: 'بنترست', icon: FaPinterest, href: 'https://www.pinterest.com/7oud3/' },
      { name: 'تمبلر', icon: FaTumblr, href: 'https://www.tumblr.com/blog/mahmoudmostafa2009' },
-     { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://tech-p1.blogspot.com' },
+     { name: 'الموقع الإلكتروني', icon: Globe, href: 'https://audien.netlify.app/' },
   ]
   
   const socialLinksRow1 = socialLinks.slice(0, 4);
@@ -92,7 +91,6 @@ export default function Footer() {
   return (
     <footer className="bg-card text-card-foreground border-t mt-12">
       <div className="container max-w-screen-xl px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-        <AdBanner />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           {/* Contact Form Side */}
           <div className="space-y-6">

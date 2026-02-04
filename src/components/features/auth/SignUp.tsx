@@ -57,13 +57,15 @@ export default function SignUp() {
       });
       // onAuthStateChanged will handle the redirect via AuthGuard
     } catch (error: any) {
-      let description = "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
-      if (error.code === 'auth/email-already-in-use') {
+      let description;
+       if (error.code === 'auth/email-already-in-use') {
         description = "هذا البريد الإلكتروني مسجل بالفعل.";
       } else if (error.code === 'auth/invalid-email') {
         description = "صيغة البريد الإلكتروني غير صالحة.";
       } else if (error.code === 'auth/weak-password') {
         description = "كلمة المرور ضعيفة جدًا. يجب أن تكون 6 أحرف على الأقل.";
+      } else {
+        description = error.message || "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
       }
       toast({
         variant: "destructive",

@@ -57,11 +57,13 @@ export default function Login() {
       });
       // onAuthStateChanged will handle the redirect via AuthGuard
     } catch (error: any) {
-      let description = "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
+      let description;
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
       } else if (error.code === 'auth/invalid-email') {
         description = "صيغة البريد الإلكتروني غير صالحة.";
+      } else {
+        description = error.message || "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
       }
       toast({
         variant: "destructive",

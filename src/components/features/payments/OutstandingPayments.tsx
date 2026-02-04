@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { subMonths, format, parse } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ar } from 'date-fns/locale';
@@ -20,12 +20,17 @@ interface OutstandingPaymentsProps {
   gradeFilter?: string;
 }
 
-// Function to get the last N months
-const getLastNMonths = (n: number): string[] => {
+// Function to get months from February of the current year until the current month
+const getRequiredMonths = (): string[] => {
   const months: string[] = [];
   const today = new Date();
-  for (let i = 0; i < n; i++) {
-    months.push(format(subMonths(today, i), 'yyyy-MM'));
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-11
+
+  // Start from February (month index 1) of the current year
+  for (let m = 1; m <= currentMonth; m++) {
+    const date = new Date(currentYear, m, 1);
+    months.push(format(date, 'yyyy-MM'));
   }
   return months;
 };
@@ -60,7 +65,7 @@ export default function OutstandingPayments({ gradeFilter }: OutstandingPayments
     ? allStudents.filter(s => s.grade === gradeFilter)
     : allStudents;
 
-  const requiredMonths = getLastNMonths(3); // Check last 3 months for payment
+  const requiredMonths = getRequiredMonths();
   const outstandingStudents = getOutstandingStudents(
     students,
     payments,

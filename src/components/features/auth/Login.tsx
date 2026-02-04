@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,12 +21,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth, initiateEmailSignIn } from "@/firebase";
+import { useAuth } from "@/firebase";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn } from "lucide-react";
+import { LogIn, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const formSchema = z.object({
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
@@ -35,6 +37,7 @@ const formSchema = z.object({
 export default function Login() {
   const auth = useAuth();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,14 +47,30 @@ export default function Login() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    initiateEmailSignIn(auth, values.email, values.password);
-    // The onAuthStateChanged listener in FirebaseProvider will handle successful login
-    // and the AuthGuard will redirect. We can show a toast for feedback.
-    toast({
-      title: "جاري تسجيل الدخول...",
-      description: "يرجى الانتظار.",
-    });
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "تم تسجيل الدخول بنجاح",
+        description: "جاري توجيهك...",
+      });
+      // onAuthStateChanged will handle the redirect via AuthGuard
+    } catch (error: any) {
+      let description = "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        description = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+      } else if (error.code === 'auth/invalid-email') {
+        description = "صيغة البريد الإلكتروني غير صالحة.";
+      }
+      toast({
+        variant: "destructive",
+        title: "فشل تسجيل الدخول",
+        description: description,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -113,8 +132,12 @@ export default function Login() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                <LogIn className="ms-2 h-4 w-4" />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                 {isLoading ? (
+                    <Loader2 className="ms-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogIn className="ms-2 h-4 w-4" />
+                  )}
                 تسجيل الدخول
               </Button>
             </form>

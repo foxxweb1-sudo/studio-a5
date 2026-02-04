@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,12 +21,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth, initiateEmailSignUp } from "@/firebase";
+import { useAuth } from "@/firebase";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const formSchema = z.object({
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
@@ -35,6 +37,7 @@ const formSchema = z.object({
 export default function SignUp() {
   const auth = useAuth();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,12 +47,32 @@ export default function SignUp() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    initiateEmailSignUp(auth, values.email, values.password);
-     toast({
-      title: "جاري إنشاء الحساب...",
-      description: "سيتم توجيهك قريباً.",
-    });
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "تم إنشاء الحساب بنجاح",
+        description: "جاري توجيهك...",
+      });
+      // onAuthStateChanged will handle the redirect via AuthGuard
+    } catch (error: any) {
+      let description = "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
+      if (error.code === 'auth/email-already-in-use') {
+        description = "هذا البريد الإلكتروني مسجل بالفعل.";
+      } else if (error.code === 'auth/invalid-email') {
+        description = "صيغة البريد الإلكتروني غير صالحة.";
+      } else if (error.code === 'auth/weak-password') {
+        description = "كلمة المرور ضعيفة جدًا. يجب أن تكون 6 أحرف على الأقل.";
+      }
+      toast({
+        variant: "destructive",
+        title: "فشل إنشاء الحساب",
+        description: description,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -111,8 +134,12 @@ export default function SignUp() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                <UserPlus className="ms-2 h-4 w-4" />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                    <Loader2 className="ms-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <UserPlus className="ms-2 h-4 w-4" />
+                )}
                 إنشاء حساب
               </Button>
             </form>

@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, UserCircle2, Palette, ShieldCheck, School } from 'lucide-react';
+import { LogOut, UserCircle2, Palette, ShieldCheck, School, Settings } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
@@ -121,6 +121,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                      <Link href="/account">
                       <span className="font-bold">إدارة الحساب</span>
                       <UserCircle2 className="mr-2 h-4 w-4 text-primary" />
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
+                     <Link href="/settings">
+                      <span className="font-bold">الإعدادات</span>
+                      <Settings className="mr-2 h-4 w-4 text-primary" />
                     </Link>
                   </DropdownMenuItem>
                 </div>

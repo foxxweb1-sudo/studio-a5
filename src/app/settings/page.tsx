@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -22,7 +23,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'image';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -35,11 +36,9 @@ export default function SettingsPage() {
   const techStoreUrl = 'https://techstore-servers.vercel.app/';
   const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
   
-  // الروابط المحدثة
-  const facebookUrl = 'https://web.facebook.com/share/g/18Ky7vbzqF/'; 
-  const twitterUrl = 'https://x.com/tqnyt170296';  
-  const telegramUrl = 'https://t.me/TqnyatStore'; 
-  const whatsappChannelUrl = 'https://whatsapp.com/channel/0029VbCCufAGOj9nfuY9o93L';
+  const facebookUrl = '#'; 
+  const twitterUrl = '#';  
+  const telegramUrl = '#'; 
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -220,7 +219,7 @@ export default function SettingsPage() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5">
-                <a href={whatsappChannelUrl} target="_blank" rel="noopener noreferrer">
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="h-6 w-6 text-emerald-600" />
                   <span className="text-xs font-bold">واتساب</span>
                 </a>

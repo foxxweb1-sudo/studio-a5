@@ -78,7 +78,7 @@ export default function SettingsPage() {
                 <Github className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">الإصدار</span>
               </div>
-              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v1.0.0</span>
+              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v3.68.0</span>
             </div>
           </CardContent>
         </Card>

@@ -18,17 +18,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, Camera, User as UserIcon } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, Image as ImageIcon, User as UserIcon, ExternalLink } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'الاسم مطلوب.'),
+  photoURL: z.string().url('الرجاء إدخال رابط صالح (يبدأ بـ http).').optional().or(z.string().length(0)),
 });
 
 export default function AccountManagement() {
@@ -37,13 +39,12 @@ export default function AccountManagement() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     values: {
       displayName: user?.displayName ?? '',
+      photoURL: user?.photoURL ?? '',
     },
   });
 
@@ -53,16 +54,20 @@ export default function AccountManagement() {
     try {
       await updateProfile(user, {
         displayName: values.displayName,
+        photoURL: values.photoURL || null,
       });
 
       await reloadUser();
 
       toast({
         title: 'تم الحفظ بنجاح',
-        description: 'تم تحديث معلومات ملفك الشخصي.',
+        description: 'تم تحديث معلومات ملفك الشخصي وصورتك.',
       });
 
-      form.reset({ displayName: values.displayName });
+      form.reset({ 
+        displayName: values.displayName,
+        photoURL: values.photoURL 
+      });
 
     } catch (error: any) {
       toast({
@@ -72,46 +77,6 @@ export default function AccountManagement() {
       });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    // التحقق من حجم الملف (أقل من 1 ميجا للتوافق مع التحديث السريع)
-    if (file.size > 1024 * 1024) {
-      toast({
-        variant: 'destructive',
-        title: 'الملف كبير جداً',
-        description: 'يرجى اختيار صورة بحجم أقل من 1 ميجابايت.',
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Image = e.target?.result as string;
-        await updateProfile(user, {
-          photoURL: base64Image,
-        });
-        await reloadUser();
-        toast({
-          title: 'تم تحديث الصورة',
-          description: 'تم تغيير صورتك الشخصية بنجاح.',
-        });
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'خطأ',
-        description: 'فشل رفع الصورة. يرجى المحاولة مرة أخرى.',
-      });
-      setIsUploading(false);
     }
   };
 
@@ -172,21 +137,6 @@ export default function AccountManagement() {
                     {getInitials(user?.displayName)}
                 </AvatarFallback>
             </Avatar>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="absolute bottom-2 right-2 p-3 bg-primary text-white rounded-2xl shadow-lg hover:bg-primary/90 transition-all transform active:scale-95 disabled:opacity-50"
-              title="تغيير الصورة"
-            >
-              {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
-            </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleFileChange} 
-            />
         </div>
         <div className="text-center space-y-1">
             <h2 className="text-2xl font-black tracking-tight">{user?.displayName || 'مستخدم جديد'}</h2>
@@ -201,7 +151,7 @@ export default function AccountManagement() {
               تعديل الملف الشخصي
             </CardTitle>
             <CardDescription>
-              قم بتحديث اسمك الذي يظهر للجميع.
+              قم بتحديث اسمك وصورتك الشخصية.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
@@ -223,8 +173,39 @@ export default function AccountManagement() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="photoURL"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold text-sm">رابط الصورة الشخصية</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex gap-2">
+                            <Input 
+                              placeholder="https://example.com/photo.jpg" 
+                              className="h-12 rounded-xl bg-muted/50 border-0 focus-visible:ring-primary flex-grow" 
+                              {...field} 
+                            />
+                            <Button asChild variant="outline" className="h-12 rounded-xl border-dashed border-primary/40 hover:bg-primary/5 shrink-0 px-4">
+                              <a href="https://top4top.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                                <ExternalLink className="h-4 w-4" />
+                                <span className="hidden sm:inline">رفع خارجي</span>
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormDescription className="text-[10px] leading-tight">
+                        يمكنك استخدام موقع <span className="font-bold text-primary">top4top</span> لرفع صورتك ولصق "رابط الصورة المباشر" هنا.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <Button type="submit" disabled={isSaving} className="h-12 px-8 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20">
+                <Button type="submit" disabled={isSaving} className="w-full h-12 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20">
                   {isSaving ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (

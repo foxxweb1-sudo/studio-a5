@@ -32,7 +32,7 @@ export default function AboutPage() {
           <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden shadow-2xl border-4 border-primary/20">
             <Image 
               src="https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19"
-              alt="TECH Logo"
+              alt="Logo"
               fill
               className="object-contain p-4"
             />

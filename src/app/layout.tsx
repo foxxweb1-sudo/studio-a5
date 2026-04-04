@@ -9,6 +9,10 @@ import { ThemeProvider } from '@/components/layout/ThemeProvider';
 export const metadata: Metadata = {
   title: 'الحضور',
   description: 'تطبيق لتسجيل حضور الطلاب والمدفوعات',
+  icons: {
+    icon: 'https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19',
+    apple: 'https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19',
+  },
 };
 
 export default function RootLayout({

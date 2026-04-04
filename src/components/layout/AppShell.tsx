@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, UserCircle2, Palette, ShieldCheck, Users } from 'lucide-react';
+import { LogOut, Home, UserCircle2, Palette, ShieldCheck, Users, Menu } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
@@ -22,9 +22,7 @@ import {
 import { ThemeMenuItems } from './ModeToggle';
 import Footer from './Footer';
 
-// IMPORTANT: Replace with your actual Admin UID
 const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
-
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -41,7 +39,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
 
   const handleSignOut = () => {
     signOut(auth);
@@ -61,94 +58,107 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background">
+      <header className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-background/80 backdrop-blur-xl">
+        <div className="container flex h-16 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              <h1 className="font-headline text-xl font-bold text-primary">
-                تطبيق الحضور
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <School className="text-white w-6 h-6" />
+              </div>
+              <h1 className="font-bold text-xl tracking-tight hidden md:block">
+                الحضور الذكي
               </h1>
             </Link>
-             <Button variant="ghost" size="icon" asChild>
-                <Link href="/">
-                    <Home />
-                    <span className="sr-only">الرئيسية</span>
-                </Link>
-            </Button>
           </div>
 
-          <div className="hidden sm:flex flex-col items-center justify-center">
-            {currentDateTime && (
-              <>
-                <div className="text-sm font-medium text-foreground">
-                  {new Intl.DateTimeFormat('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentDateTime)}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {new Intl.DateTimeFormat('ar-EG', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).format(currentDateTime)}
-                </div>
-              </>
-            )}
+          <div className="hidden lg:flex items-center gap-1 bg-muted/50 p-1 rounded-2xl">
+              <Button variant="ghost" className="rounded-xl font-bold" asChild>
+                <Link href="/">الرئيسية</Link>
+              </Button>
+              <Button variant="ghost" className="rounded-xl font-bold" asChild>
+                <Link href="/attendance">الحضور</Link>
+              </Button>
+              <Button variant="ghost" className="rounded-xl font-bold" asChild>
+                <Link href="/payments">المدفوعات</Link>
+              </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex flex-col items-end px-3 border-r mr-3">
+              {currentDateTime && (
+                <>
+                  <div className="text-xs font-bold text-primary">
+                    {new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(currentDateTime)}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">
+                    {new Intl.DateTimeFormat('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }).format(currentDateTime)}
+                  </div>
+                </>
+              )}
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl bg-muted p-0 border hover:bg-muted/80 overflow-hidden">
+                  <Avatar className="h-full w-full rounded-none">
+                    <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-bold">
+                      {getInitials(user.displayName)}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel className="font-normal">
+              <DropdownMenuContent className="w-64 rounded-2xl p-2" align="end">
+                <DropdownMenuLabel className="p-4">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin">
-                      <ShieldCheck className="ms-2 h-4 w-4" />
-                      <span>لوحة تحكم المشرف</span>
+                <div className="p-1 space-y-1">
+                  {isAdmin && (
+                    <DropdownMenuItem asChild className="rounded-xl p-3">
+                      <Link href="/admin">
+                        <ShieldCheck className="ms-2 h-4 w-4 text-primary" />
+                        <span className="font-bold">لوحة تحكم المشرف</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem asChild className="rounded-xl p-3">
+                     <Link href="/account">
+                      <UserCircle2 className="ms-2 h-4 w-4 text-primary" />
+                      <span className="font-bold">إدارة الحساب</span>
                     </Link>
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem asChild>
-                   <Link href="/account">
-                    <UserCircle2 className="ms-2 h-4 w-4" />
-                    <span>إدارة الحساب</span>
-                  </Link>
-                </DropdownMenuItem>
-                 <DropdownMenuItem disabled>
-                    <Users className="ms-2 h-4 w-4" />
-                    <span>عدد الطلاب: {students.length}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Palette className="ms-2 h-4 w-4" />
-                    <span>تغيير المظهر</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <ThemeMenuItems />
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="ms-2 h-4 w-4" />
-                  <span>تسجيل الخروج</span>
-                </DropdownMenuItem>
+                <div className="p-1 space-y-1">
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="rounded-xl p-3 font-bold">
+                      <Palette className="ms-2 h-4 w-4 text-primary" />
+                      <span>المظهر</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="rounded-xl">
+                      <ThemeMenuItems />
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive focus:text-destructive">
+                    <LogOut className="ms-2 h-4 w-4" />
+                    <span className="font-bold">تسجيل الخروج</span>
+                  </DropdownMenuItem>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </header>
-      <main className="container flex-grow py-4 sm:py-6 lg:py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</main>
+      <main className="container flex-grow py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+        {children}
+      </main>
       <Footer />
     </div>
   );

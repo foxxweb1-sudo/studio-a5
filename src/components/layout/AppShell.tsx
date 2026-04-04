@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, UserCircle2, Palette, ShieldCheck, Users, Menu } from 'lucide-react';
+import { LogOut, Home, UserCircle2, Palette, ShieldCheck, Users, Menu, School } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';

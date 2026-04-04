@@ -1,13 +1,16 @@
+
 'use client';
 
 import ReportsDashboard from "@/components/features/reports/ReportsDashboard";
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 
 export default function ReportsPage() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-start">
@@ -17,11 +20,13 @@ export default function ReportsPage() {
             عرض تقارير الغياب اليومية وتحليلات الحضور الأسبوعية.
           </PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" asChild className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all">
-          <Link href="/">
-            <ArrowLeft className="ms-2 h-4 w-4" />
-            رجوع
-          </Link>
+        <Button 
+          variant="outline" 
+          onClick={() => router.back()}
+          className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all"
+        >
+          <ArrowLeft className="ms-2 h-4 w-4" />
+          رجوع
         </Button>
       </div>
       <ReportsDashboard />

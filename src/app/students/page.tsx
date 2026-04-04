@@ -1,3 +1,4 @@
+
 'use client';
 
 import StudentManagement from "@/components/features/students/StudentManagement";
@@ -5,10 +6,12 @@ import { PageHeader, PageHeaderTitle, PageHeaderDescription } from "@/components
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Suspense } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 
 function StudentManagementPage() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col gap-4">
        <div className="flex justify-between items-start">
@@ -18,11 +21,13 @@ function StudentManagementPage() {
             إضافة طلاب جدد، تعديل بياناتهم، وعرض أكوادهم الخاصة.
           </PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" asChild className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all">
-          <Link href="/">
-            <ArrowLeft className="ms-2 h-4 w-4" />
-            رجوع
-          </Link>
+        <Button 
+          variant="outline" 
+          onClick={() => router.back()}
+          className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all"
+        >
+          <ArrowLeft className="ms-2 h-4 w-4" />
+          رجوع
         </Button>
       </div>
       <StudentManagement />

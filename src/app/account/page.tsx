@@ -1,3 +1,4 @@
+
 'use client';
 
 import AccountManagement from '@/components/features/account/AccountManagement';
@@ -8,9 +9,11 @@ import {
 } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function AccountPage() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex justify-between items-start">
@@ -22,13 +25,11 @@ export default function AccountPage() {
         </PageHeader>
         <Button 
           variant="outline" 
-          asChild
+          onClick={() => router.back()}
           className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all"
         >
-          <Link href="/">
-            <ArrowLeft className="ms-2 h-4 w-4" />
-            رجوع
-          </Link>
+          <ArrowLeft className="ms-2 h-4 w-4" />
+          رجوع
         </Button>
       </div>
       <AccountManagement />

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
@@ -229,11 +230,13 @@ export default function AdminPage() {
             إدارة الطلاب والرسائل الواردة في النظام.
           </PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" asChild className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all">
-          <Link href="/">
-            <ArrowLeft className="ms-2 h-4 w-4" />
-            رجوع
-          </Link>
+        <Button 
+          variant="outline" 
+          onClick={() => router.back()}
+          className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all"
+        >
+          <ArrowLeft className="ms-2 h-4 w-4" />
+          رجوع
         </Button>
       </div>
        <Tabs defaultValue="students" className="w-full">

@@ -46,7 +46,7 @@ export default function Home() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const currentMonth = format(new Date(), 'yyyy-MM');
 
-  // إحصائيات
+  // إحصائيات ذكية
   const stats = useMemo(() => {
     const totalStudents = students.length;
     const attendedToday = attendance.filter(a => a.date === today).length;

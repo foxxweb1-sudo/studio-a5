@@ -74,15 +74,17 @@ export default function SplashScreen() {
       
       {/* حاوية المحتوى - طبقة فوق الخلفية */}
       <div className="relative z-10 flex flex-col items-center gap-6 max-w-xs w-full text-center">
-        {/* اللوجو مع تأثير ظل مشع خلفي */}
-        <div className="relative w-32 h-32 mb-4 animate-bounce duration-[2000ms]">
-          <Image
-            src="https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19"
-            alt="Logo"
-            fill
-            className="object-contain drop-shadow-[0_0_25px_rgba(34,197,94,0.7)]"
-            priority
-          />
+        {/* اللوجو داخل دائرة مع تأثير ظل مشع خلفي */}
+        <div className="relative w-36 h-36 mb-4 animate-bounce duration-[2000ms] rounded-full p-1 bg-gradient-to-tr from-green-500/50 to-emerald-500/20 shadow-[0_0_30px_rgba(34,197,94,0.4)] border border-white/10 backdrop-blur-md overflow-hidden flex items-center justify-center">
+          <div className="relative w-full h-full rounded-full bg-white/5 overflow-hidden p-4">
+            <Image
+              src="https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19"
+              alt="Logo"
+              fill
+              className="object-contain scale-90"
+              priority
+            />
+          </div>
         </div>
 
         {/* اسم التطبيق والوصف مع لمسة تقنية */}

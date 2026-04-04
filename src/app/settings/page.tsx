@@ -4,7 +4,7 @@
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Info, Share2, MessageCircle, Palette, Github, AppWindow } from 'lucide-react';
+import { ArrowLeft, Info, Share2, MessageCircle, Palette, Github, AppWindow, Facebook, Twitter, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,9 @@ export default function SettingsPage() {
 
   const appUrl = 'https://tqnyatstore.vercel.app/apps/revkekjiJOW9ogkglocG';
   const whatsappUrl = 'https://wa.me/201121473424';
+  const facebookUrl = '#'; // يمكنك استبدالها برابط صفحتك
+  const twitterUrl = '#';  // يمكنك استبدالها برابط حسابك
+  const telegramUrl = '#'; // يمكنك استبدالها برابط قناتك
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -38,7 +41,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+    <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-12">
       <div className="flex justify-between items-start">
         <PageHeader>
           <PageHeaderTitle>الإعدادات</PageHeaderTitle>
@@ -115,6 +118,46 @@ export default function SettingsPage() {
                 className="rounded-xl font-bold"
               >
                 النظام
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* تابعونا */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                <Share2 className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-xl">تابعونا</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5">
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-6 w-6 text-emerald-600" />
+                  <span className="text-xs font-bold">واتساب</span>
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-blue-600/20 hover:bg-blue-600/5">
+                <a href={facebookUrl} target="_blank" rel="noopener noreferrer">
+                  <Facebook className="h-6 w-6 text-blue-600" />
+                  <span className="text-xs font-bold">فيسبوك</span>
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-slate-900/20 hover:bg-slate-900/5">
+                <a href={twitterUrl} target="_blank" rel="noopener noreferrer">
+                  <Twitter className="h-6 w-6 text-slate-900 dark:text-white" />
+                  <span className="text-xs font-bold">تويتر X</span>
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-sky-500/20 hover:bg-sky-500/5">
+                <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
+                  <Send className="h-6 w-6 text-sky-500" />
+                  <span className="text-xs font-bold">تلجرام</span>
+                </a>
               </Button>
             </div>
           </CardContent>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -35,7 +34,6 @@ export default function SettingsPage() {
   const techStoreUrl = 'https://techstore-servers.vercel.app/';
   const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
   
-  // الروابط الجديدة التي زودتني بها
   const whatsappChannelUrl = 'https://whatsapp.com/channel/0029VbCCufAGOj9nfuY9o93L';
   const facebookUrl = 'https://web.facebook.com/share/g/18Ky7vbzqF/'; 
   const twitterUrl = 'https://x.com/tqnyt170296';  
@@ -103,7 +101,7 @@ export default function SettingsPage() {
                 <Github className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">الإصدار</span>
               </div>
-              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v3.68.0</span>
+              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v3.77.0</span>
             </div>
             
             <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-primary/5 to-emerald-500/5 rounded-2xl border border-primary/10">

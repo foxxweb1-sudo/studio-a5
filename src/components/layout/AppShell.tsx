@@ -3,11 +3,12 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, UserCircle2, ShieldCheck, School, Settings } from 'lucide-react';
+import { LogOut, UserCircle2, ShieldCheck, Settings } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import {
   DropdownMenu,
@@ -61,8 +62,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <School className="text-white w-6 h-6" />
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white">
+                <Image 
+                  src="https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
               <h1 className="font-bold text-xl tracking-tight hidden md:block">
                 الحضور

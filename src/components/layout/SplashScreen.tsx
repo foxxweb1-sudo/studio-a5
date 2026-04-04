@@ -77,7 +77,7 @@ export default function SplashScreen() {
         {/* اللوجو مع تأثير ظل مشع خلفي */}
         <div className="relative w-32 h-32 mb-4 animate-bounce duration-[2000ms]">
           <Image
-            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiHaE3dKYhmGfFicg0_Wc4yKmAKiknwqbFwh4CaXUApy6y16_SgI-bDb77phbVKGS1IrV0vcYiWX_rSew-KHwSj4R12fnKgG536WQumeihlf752GG9CmFfXHvuRd1GLH_JcVNZ5Ly0vzkRTKFERkywLRImcZL4PsuXaLMG32V-9y-ZVQN2ASSktDxpz6I4/s256/150.png"
+            src="https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19"
             alt="Logo"
             fill
             className="object-contain drop-shadow-[0_0_25px_rgba(34,197,94,0.7)]"
@@ -88,7 +88,7 @@ export default function SplashScreen() {
         {/* اسم التطبيق والوصف مع لمسة تقنية */}
         <div className="space-y-2">
           <h1 className="text-4xl font-extrabold tracking-tighter text-green-500 animate-in slide-in-from-bottom-4 duration-700 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-            تطبيق الحضور
+            الحضور
           </h1>
           <p className="text-green-100/90 font-medium text-sm animate-in slide-in-from-bottom-2 duration-1000 delay-200">
             نظام إدارة الطلاب والمدفوعات الذكي

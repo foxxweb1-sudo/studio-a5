@@ -4,10 +4,11 @@
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Info, Share2, MessageCircle, Palette, Github, AppWindow, Facebook, Twitter, Send } from 'lucide-react';
+import { ArrowLeft, Info, Share2, MessageCircle, Palette, Github, AppWindow, Facebook, Twitter, Send, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -16,9 +17,12 @@ export default function SettingsPage() {
 
   const appUrl = 'https://tqnyatstore.vercel.app/apps/revkekjiJOW9ogkglocG';
   const whatsappUrl = 'https://wa.me/201121473424';
-  const facebookUrl = '#'; // يمكنك استبدالها برابط صفحتك
-  const twitterUrl = '#';  // يمكنك استبدالها برابط حسابك
-  const telegramUrl = '#'; // يمكنك استبدالها برابط قناتك
+  const techStoreUrl = 'https://techstore-servers.vercel.app/';
+  const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
+  
+  const facebookUrl = '#'; 
+  const twitterUrl = '#';  
+  const telegramUrl = '#'; 
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -82,6 +86,31 @@ export default function SettingsPage() {
                 <span className="font-medium">الإصدار</span>
               </div>
               <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v3.68.0</span>
+            </div>
+            
+            <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-primary/5 to-emerald-500/5 rounded-2xl border border-primary/10">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-800">
+                            <Image 
+                                src={techStoreLogo}
+                                alt="TECH STORE"
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">المصدر الرسمي</span>
+                            <span className="font-bold text-sm">تم التحميل من TECH STORE</span>
+                        </div>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="rounded-xl border-primary/20 hover:bg-primary hover:text-white transition-all">
+                        <a href={techStoreUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                            <ExternalLink className="h-3 w-3" />
+                            زيارة المتجر
+                        </a>
+                    </Button>
+                </div>
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -9,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, ArrowRightCircle } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-
-const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
+import { ADMIN_UID } from '@/lib/constants';
 
 const stages = [
   {

@@ -18,8 +18,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import Footer from './Footer';
-
-const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
+import { ADMIN_UID } from '@/lib/constants';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();

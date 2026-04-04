@@ -8,7 +8,8 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // IMPORTANT: Replace with your actual Admin UID
+    // IMPORTANT: Replace this UID with your own UID to become the Admin.
+    // You can find your UID in the "Account Management" page.
     function isAdmin() {
       return request.auth != null && request.auth.uid == 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
     }

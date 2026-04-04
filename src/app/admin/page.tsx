@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
@@ -25,10 +24,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-
-// IMPORTANT: Replace with your actual Admin UID
-const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
+import { ADMIN_UID } from '@/lib/constants';
 
 function AllStudentsList() {
   const firestore = useFirestore();

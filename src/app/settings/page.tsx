@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -178,23 +179,29 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-2">
-            <Button variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              الخصوصية
-            </Button>
-            <Button variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
-              <FileText className="h-5 w-5 text-primary" />
-              اتفاقية الاستخدام
-            </Button>
-            <Button variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
-              <Users className="h-5 w-5 text-primary" />
-              من نحن
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
+              <Link href="/privacy">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                الخصوصية
+              </Link>
             </Button>
             <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <Link href="/terms">
+                <FileText className="h-5 w-5 text-primary" />
+                اتفاقية الاستخدام
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
+              <Link href="/about">
+                <Users className="h-5 w-5 text-primary" />
+                من نحن
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold text-emerald-600">
+              <Link href="/contact">
                 <MessageCircle className="h-5 w-5 text-emerald-500" />
                 تواصل معنا
-              </a>
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -263,10 +270,10 @@ export default function SettingsPage() {
               variant="outline"
               className="w-full h-14 rounded-2xl border-2 border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 font-bold gap-3"
             >
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <Link href="/contact">
                 <MessageCircle className="h-5 w-5" />
                 التواصل مع فريق TECH
-              </a>
+              </Link>
             </Button>
           </CardContent>
         </Card>

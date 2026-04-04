@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <School className="text-white w-6 h-6" />
               </div>
               <h1 className="font-bold text-xl tracking-tight hidden md:block">
-                الحضور الذكي
+                الحضور
               </h1>
             </Link>
           </div>

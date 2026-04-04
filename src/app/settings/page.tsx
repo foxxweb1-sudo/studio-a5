@@ -28,8 +28,8 @@ export default function SettingsPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'تطبيق الحضور الذكي',
-          text: 'قم بتحميل تطبيق الحضور الذكي لإدارة الطلاب والمدفوعات بسهولة.',
+          title: 'تطبيق الحضور',
+          text: 'قم بتحميل تطبيق الحضور لإدارة الطلاب والمدفوعات بسهولة.',
           url: appUrl,
         });
       } catch (error) {
@@ -78,7 +78,7 @@ export default function SettingsPage() {
                 <AppWindow className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">اسم التطبيق</span>
               </div>
-              <span className="font-bold text-primary">الحضور الذكي</span>
+              <span className="font-bold text-primary">الحضور</span>
             </div>
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
               <div className="flex items-center gap-2">

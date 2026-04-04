@@ -101,7 +101,7 @@ export default function SettingsPage() {
                 <Github className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">الإصدار</span>
               </div>
-              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v3.68.0</span>
+              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v3.77.0</span>
             </div>
             
             <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-primary/5 to-emerald-500/5 rounded-2xl border border-primary/10">

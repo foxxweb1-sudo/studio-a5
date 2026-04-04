@@ -2,9 +2,24 @@
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Info, Share2, MessageCircle, Palette, Github, AppWindow, Facebook, Twitter, Send, ExternalLink } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  Info, 
+  Share2, 
+  MessageCircle, 
+  Palette, 
+  Github, 
+  AppWindow, 
+  Facebook, 
+  Twitter, 
+  Send, 
+  ExternalLink,
+  ShieldCheck,
+  FileText,
+  Users
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
@@ -149,6 +164,38 @@ export default function SettingsPage() {
                 النظام
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* قانوني ومعلومات */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-slate-500/10 text-slate-500 rounded-xl">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-xl">قانوني ومعلومات</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-2">
+            <Button variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              الخصوصية
+            </Button>
+            <Button variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
+              <FileText className="h-5 w-5 text-primary" />
+              اتفاقية الاستخدام
+            </Button>
+            <Button variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
+              <Users className="h-5 w-5 text-primary" />
+              من نحن
+            </Button>
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-5 w-5 text-emerald-500" />
+                تواصل معنا
+              </a>
+            </Button>
           </CardContent>
         </Card>
 

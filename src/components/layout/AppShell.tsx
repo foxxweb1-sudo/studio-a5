@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, UserCircle2, ShieldCheck, Settings } from 'lucide-react';
+import { LogOut, UserCircle2, ShieldCheck, Settings, Home } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
@@ -59,7 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 md:gap-6">
             <Link href="/" className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white">
                 <Image 
@@ -69,10 +69,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="object-contain"
                 />
               </div>
-              <h1 className="font-bold text-xl tracking-tight hidden md:block">
+              <h1 className="font-bold text-xl tracking-tight hidden sm:block">
                 الحضور
               </h1>
             </Link>
+            
+            <Button asChild variant="ghost" className="hidden md:flex gap-2 font-bold rounded-xl hover:bg-primary/5 transition-all text-muted-foreground hover:text-primary">
+              <Link href="/">
+                <Home className="h-4 w-4" />
+                الرئيسية
+              </Link>
+            </Button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -111,6 +118,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="p-1 space-y-1">
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10 md:hidden">
+                    <Link href="/">
+                      <span className="font-bold">الرئيسية</span>
+                      <Home className="mr-2 h-4 w-4 text-primary" />
+                    </Link>
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
                       <Link href="/admin">

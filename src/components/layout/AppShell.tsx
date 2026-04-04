@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, UserCircle2, Palette, ShieldCheck, Users, Menu, School } from 'lucide-react';
+import { LogOut, UserCircle2, Palette, ShieldCheck, School } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
@@ -58,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background">
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background text-right" dir="rtl">
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           
@@ -73,20 +73,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          <div className="hidden lg:flex items-center gap-1 bg-muted/50 p-1 rounded-2xl">
-              <Button variant="ghost" className="rounded-xl font-bold" asChild>
-                <Link href="/">الرئيسية</Link>
-              </Button>
-              <Button variant="ghost" className="rounded-xl font-bold" asChild>
-                <Link href="/attendance">الحضور</Link>
-              </Button>
-              <Button variant="ghost" className="rounded-xl font-bold" asChild>
-                <Link href="/payments">المدفوعات</Link>
-              </Button>
-          </div>
-
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex flex-col items-end px-3 border-r mr-3">
+            <div className="hidden sm:flex flex-col items-end px-3 border-l ml-3">
               {currentDateTime && (
                 <>
                   <div className="text-xs font-bold text-primary">
@@ -109,8 +97,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 rounded-2xl p-2" align="end">
-                <DropdownMenuLabel className="p-4">
+              <DropdownMenuContent className="w-64 rounded-2xl p-2" align="start">
+                <DropdownMenuLabel className="p-4 text-right">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
                     <p className="text-xs leading-none text-muted-foreground">
@@ -121,34 +109,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuSeparator />
                 <div className="p-1 space-y-1">
                   {isAdmin && (
-                    <DropdownMenuItem asChild className="rounded-xl p-3">
+                    <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
                       <Link href="/admin">
-                        <ShieldCheck className="ms-2 h-4 w-4 text-primary" />
                         <span className="font-bold">لوحة تحكم المشرف</span>
+                        <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild className="rounded-xl p-3">
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
                      <Link href="/account">
-                      <UserCircle2 className="ms-2 h-4 w-4 text-primary" />
                       <span className="font-bold">إدارة الحساب</span>
+                      <UserCircle2 className="mr-2 h-4 w-4 text-primary" />
                     </Link>
                   </DropdownMenuItem>
                 </div>
                 <DropdownMenuSeparator />
                 <div className="p-1 space-y-1">
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="rounded-xl p-3 font-bold">
-                      <Palette className="ms-2 h-4 w-4 text-primary" />
+                    <DropdownMenuSubTrigger className="rounded-xl p-3 font-bold justify-end">
                       <span>المظهر</span>
+                      <Palette className="mr-2 h-4 w-4 text-primary" />
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="rounded-xl">
                       <ThemeMenuItems />
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
-                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive focus:text-destructive">
-                    <LogOut className="ms-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive focus:text-destructive justify-end">
                     <span className="font-bold">تسجيل الخروج</span>
+                    <LogOut className="mr-2 h-4 w-4" />
                   </DropdownMenuItem>
                 </div>
               </DropdownMenuContent>

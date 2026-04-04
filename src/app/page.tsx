@@ -46,7 +46,6 @@ export default function Home() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const currentMonth = format(new Date(), 'yyyy-MM');
 
-  // إحصائيات ذكية
   const stats = useMemo(() => {
     const totalStudents = students.length;
     const attendedToday = attendance.filter(a => a.date === today).length;
@@ -89,7 +88,6 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-10 py-4">
       
-      {/* Hero Dashboard Section */}
       <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 md:p-12 text-white shadow-2xl">
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-primary/20 rounded-full blur-[100px]" />
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px]" />
@@ -124,7 +122,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4 w-full lg:w-auto">
             {stats.map((stat, idx) => (
               <div key={idx} className="bg-white/5 border border-white/10 p-6 rounded-[2rem] backdrop-blur-xl flex flex-col items-center lg:items-end gap-2 group hover:bg-white/10 transition-all">
@@ -139,7 +136,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stages Navigation */}
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-2">
           <div className="text-center md:text-right">
@@ -174,7 +170,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Quick Tools */}
       <section className="bg-primary/5 rounded-[2.5rem] p-8 border border-primary/10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">

@@ -18,7 +18,7 @@ export default function AttendancePage() {
             أدخل كود الطالب أو امسح QR Code لتسجيل حضوره.
           </PageHeaderDescription>
         </PageHeader>
-         <Button variant="outline" onClick={() => router.back()}>
+         <Button variant="outline" onClick={() => router.back()} type="button">
             <ArrowLeft className="ms-2 h-4 w-4" />
             رجوع
         </Button>

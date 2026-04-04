@@ -229,7 +229,7 @@ export default function AdminPage() {
             إدارة الطلاب والرسائل الواردة في النظام.
           </PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" onClick={() => router.back()}>
+        <Button variant="outline" onClick={() => router.back()} type="button">
           <ArrowLeft className="ms-2 h-4 w-4" />
           رجوع
         </Button>

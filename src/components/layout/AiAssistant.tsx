@@ -56,10 +56,10 @@ export default function AiAssistant() {
       <Button
         onClick={() => setIsOpen(true)}
         variant="outline"
-        className="rounded-full h-16 w-16 border-2 border-primary/50 text-primary shadow-lg hover:bg-primary/10"
+        className="rounded-full h-10 w-10 border border-primary/30 text-primary shadow-sm hover:bg-primary/10 p-0"
         aria-label="مساعد الذكاء الاصطناعي"
       >
-        <Bot className="h-8 w-8" />
+        <Bot className="h-5 w-5" />
       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md flex flex-col h-[70vh]">

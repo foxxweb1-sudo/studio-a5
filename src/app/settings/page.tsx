@@ -32,13 +32,15 @@ export default function SettingsPage() {
   const { toast } = useToast();
 
   const appUrl = 'https://tqnyatstore.vercel.app/apps/revkekjiJOW9ogkglocG';
-  const whatsappUrl = 'https://wa.me/201121473424';
   const techStoreUrl = 'https://techstore-servers.vercel.app/';
   const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
   
-  const facebookUrl = '#'; 
-  const twitterUrl = '#';  
-  const telegramUrl = '#'; 
+  // الروابط الجديدة التي زودتني بها
+  const whatsappChannelUrl = 'https://whatsapp.com/channel/0029VbCCufAGOj9nfuY9o93L';
+  const facebookUrl = 'https://web.facebook.com/share/g/18Ky7vbzqF/'; 
+  const twitterUrl = 'https://x.com/tqnyt170296';  
+  const telegramUrl = 'https://t.me/TqnyatStore'; 
+  const contactWhatsApp = 'https://wa.me/201121473424';
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -219,7 +221,7 @@ export default function SettingsPage() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5">
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <a href={whatsappChannelUrl} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="h-6 w-6 text-emerald-600" />
                   <span className="text-xs font-bold">واتساب</span>
                 </a>
@@ -270,10 +272,10 @@ export default function SettingsPage() {
               variant="outline"
               className="w-full h-14 rounded-2xl border-2 border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 font-bold gap-3"
             >
-              <Link href="/contact">
+              <a href={contactWhatsApp} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-5 w-5" />
                 التواصل مع فريق TECH
-              </Link>
+              </a>
             </Button>
           </CardContent>
         </Card>

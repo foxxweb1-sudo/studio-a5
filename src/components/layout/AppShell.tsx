@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -9,7 +8,7 @@ import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,19 +91,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl bg-muted p-0 border hover:bg-muted/80 overflow-hidden">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl bg-muted p-0 border hover:bg-muted/80 overflow-hidden shadow-sm">
                   <Avatar className="h-full w-full rounded-none">
+                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} className="object-cover" />
                     <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-bold">
                       {getInitials(user.displayName)}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 rounded-2xl p-2" align="start">
+              <DropdownMenuContent className="w-64 rounded-2xl p-2 shadow-2xl border-primary/10" align="start">
                 <DropdownMenuLabel className="p-4 text-right">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-xs leading-none text-muted-foreground truncate">
                       {user.email}
                     </p>
                   </div>
@@ -112,20 +112,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuSeparator />
                 <div className="p-1 space-y-1">
                   {isAdmin && (
-                    <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
+                    <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
                       <Link href="/admin">
                         <span className="font-bold">لوحة تحكم المشرف</span>
                         <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
                      <Link href="/account">
                       <span className="font-bold">إدارة الحساب</span>
                       <UserCircle2 className="mr-2 h-4 w-4 text-primary" />
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
                      <Link href="/settings">
                       <span className="font-bold">الإعدادات</span>
                       <Settings className="mr-2 h-4 w-4 text-primary" />
@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <DropdownMenuSeparator />
                 <div className="p-1 space-y-1">
-                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive focus:text-destructive justify-end">
+                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive focus:text-destructive focus:bg-destructive/10 justify-end">
                     <span className="font-bold">تسجيل الخروج</span>
                     <LogOut className="mr-2 h-4 w-4" />
                   </DropdownMenuItem>

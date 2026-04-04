@@ -22,10 +22,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, Camera, User as UserIcon } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState, useRef } from 'react';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'الاسم مطلوب.'),
@@ -37,6 +37,8 @@ export default function AccountManagement() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -70,6 +72,46 @@ export default function AccountManagement() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // التحقق من حجم الملف (أقل من 1 ميجا للتوافق مع التحديث السريع)
+    if (file.size > 1024 * 1024) {
+      toast({
+        variant: 'destructive',
+        title: 'الملف كبير جداً',
+        description: 'يرجى اختيار صورة بحجم أقل من 1 ميجابايت.',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Image = e.target?.result as string;
+        await updateProfile(user, {
+          photoURL: base64Image,
+        });
+        await reloadUser();
+        toast({
+          title: 'تم تحديث الصورة',
+          description: 'تم تغيير صورتك الشخصية بنجاح.',
+        });
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: 'فشل رفع الصورة. يرجى المحاولة مرة أخرى.',
+      });
+      setIsUploading(false);
     }
   };
 
@@ -122,50 +164,71 @@ export default function AccountManagement() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-      <div className="md:col-span-1 flex flex-col items-center gap-4">
-         <Avatar className="h-32 w-32 border-4 border-primary">
-            <AvatarFallback className="text-4xl bg-muted">
-                {getInitials(user?.displayName)}
-            </AvatarFallback>
-        </Avatar>
-        <div className="text-center">
-            <h2 className="text-2xl font-bold">{user?.displayName}</h2>
-            <p className="text-muted-foreground">{user?.email}</p>
+      <div className="md:col-span-1 flex flex-col items-center gap-6">
+         <div className="relative group">
+            <Avatar className="h-40 w-40 border-4 border-white dark:border-slate-800 shadow-2xl transition-transform group-hover:scale-105 duration-300">
+                <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || ''} className="object-cover" />
+                <AvatarFallback className="text-5xl bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-bold">
+                    {getInitials(user?.displayName)}
+                </AvatarFallback>
+            </Avatar>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="absolute bottom-2 right-2 p-3 bg-primary text-white rounded-2xl shadow-lg hover:bg-primary/90 transition-all transform active:scale-95 disabled:opacity-50"
+              title="تغيير الصورة"
+            >
+              {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleFileChange} 
+            />
+        </div>
+        <div className="text-center space-y-1">
+            <h2 className="text-2xl font-black tracking-tight">{user?.displayName || 'مستخدم جديد'}</h2>
+            <p className="text-sm text-muted-foreground font-medium">{user?.email}</p>
         </div>
       </div>
       <div className="md:col-span-2 space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>تعديل الملف الشخصي</CardTitle>
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900">
+          <CardHeader className="bg-primary/5 border-b border-primary/10">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <UserIcon className="h-5 w-5 text-primary" />
+              تعديل الملف الشخصي
+            </CardTitle>
             <CardDescription>
-              قم بتغيير اسمك هنا.
+              قم بتحديث اسمك الذي يظهر للجميع.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onProfileSubmit)}
-                className="space-y-4"
+                className="space-y-6"
               >
                 <FormField
                   control={form.control}
                   name="displayName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>الأسم</FormLabel>
+                      <FormLabel className="font-bold text-sm">الأسم الكامل</FormLabel>
                       <FormControl>
-                        <Input placeholder="اسمك الكامل" {...field} />
+                        <Input placeholder="أدخل اسمك هنا" className="h-12 rounded-xl bg-muted/50 border-0 focus-visible:ring-primary" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 
-                <Button type="submit" disabled={isSaving}>
+                <Button type="submit" disabled={isSaving} className="h-12 px-8 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20">
                   {isSaving ? (
-                    <Loader2 className="ms-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Save className="ms-2 h-4 w-4" />
+                    <Save className="h-4 w-4" />
                   )}
                   حفظ التغييرات
                 </Button>
@@ -173,42 +236,45 @@ export default function AccountManagement() {
             </Form>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>الأمان</CardTitle>
+
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900">
+          <CardHeader className="bg-emerald-500/5 border-b border-emerald-500/10">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-emerald-500" />
+              الأمان والخصوصية
+            </CardTitle>
             <CardDescription>
-              قم بإدارة إعدادات الأمان الخاصة بحسابك.
+              إدارة كلمة المرور والمعلومات التقنية لحسابك.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="font-medium">كلمة المرور</h4>
-                <p className="text-sm text-muted-foreground">
-                  أرسل رابطًا إلى بريدك الإلكتروني لتغيير كلمة المرور.
+          <CardContent className="pt-6 space-y-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-muted/30 rounded-2xl gap-4">
+              <div className="text-center sm:text-right">
+                <h4 className="font-bold">تغيير كلمة المرور</h4>
+                <p className="text-xs text-muted-foreground">
+                  سيتم إرسال رابط آمن إلى بريدك الإلكتروني.
                 </p>
               </div>
               <Button
                 variant="outline"
                 onClick={handlePasswordReset}
                 disabled={isSendingEmail}
+                className="rounded-xl border-emerald-500/20 hover:bg-emerald-500/5 font-bold"
               >
                 {isSendingEmail ? (
-                  <Loader2 className="ms-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <KeyRound className="ms-2 h-4 w-4" />
                 )}
-                إرسال رابط التعيين
+                طلب رابط التغيير
               </Button>
             </div>
-            <div className="border-t pt-4">
-                 <h4 className="font-medium">معرف المستخدم (UID)</h4>
-                 <p className="text-sm text-muted-foreground mb-2">
-                    هذا هو المعرف الفريد الخاص بك. قد تحتاجه لأغراض إدارية.
-                 </p>
-                 <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                   <Input readOnly value={user?.uid ?? ''} className="flex-grow bg-transparent border-0 font-mono text-xs"/>
-                   <Button variant="ghost" size="icon" onClick={handleCopyUid}>
+            
+            <div className="pt-4 border-t border-dashed">
+                 <h4 className="font-bold text-sm mb-2">معرف المستخدم التقني (UID)</h4>
+                 <div className="flex items-center gap-2 p-3 bg-slate-900 text-slate-100 rounded-xl">
+                   <Input readOnly value={user?.uid ?? ''} className="flex-grow bg-transparent border-0 font-mono text-[10px] sm:text-xs tracking-tighter text-emerald-400 focus-visible:ring-0 h-auto p-0"/>
+                   <Button variant="ghost" size="icon" onClick={handleCopyUid} className="h-8 w-8 hover:bg-white/10 text-slate-300">
                     <Copy className="h-4 w-4"/>
                    </Button>
                  </div>

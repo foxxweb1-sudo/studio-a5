@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, UserCircle2, Palette, ShieldCheck, School, Settings } from 'lucide-react';
+import { LogOut, UserCircle2, ShieldCheck, School, Settings } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
@@ -15,12 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { ThemeMenuItems } from './ModeToggle';
 import Footer from './Footer';
 
 const ADMIN_UID = 'IBEGODeNmLPG7x2u39LO4L9JQVi2';
@@ -132,15 +128,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <DropdownMenuSeparator />
                 <div className="p-1 space-y-1">
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="rounded-xl p-3 font-bold justify-end">
-                      <span>المظهر</span>
-                      <Palette className="mr-2 h-4 w-4 text-primary" />
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="rounded-xl">
-                      <ThemeMenuItems />
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
                   <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive focus:text-destructive justify-end">
                     <span className="font-bold">تسجيل الخروج</span>
                     <LogOut className="mr-2 h-4 w-4" />

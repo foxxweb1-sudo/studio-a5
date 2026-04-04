@@ -4,12 +4,12 @@ import PaymentsDashboard from "@/components/features/payments/PaymentsDashboard"
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
 
 
 function PaymentsPageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
 
@@ -22,9 +22,11 @@ function PaymentsPageContent() {
             {gradeFromUrl ? `عرض مدفوعات صف: ${gradeFromUrl}` : 'تتبع مدفوعات الطلاب واعرض الرسوم المستحقة.'}
           </PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" onClick={() => router.back()} type="button">
+        <Button variant="outline" asChild className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all">
+          <Link href="/">
             <ArrowLeft className="ms-2 h-4 w-4" />
-             رجوع
+            رجوع
+          </Link>
         </Button>
       </div>
       <PaymentsDashboard gradeFilter={gradeFromUrl} />

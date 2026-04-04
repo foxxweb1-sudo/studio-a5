@@ -5,12 +5,10 @@ import { PageHeader, PageHeaderTitle, PageHeaderDescription } from "@/components
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Suspense } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 
 function StudentManagementPage() {
-  const router = useRouter();
-
   return (
     <div className="flex flex-col gap-4">
        <div className="flex justify-between items-start">
@@ -20,10 +18,12 @@ function StudentManagementPage() {
             إضافة طلاب جدد، تعديل بياناتهم، وعرض أكوادهم الخاصة.
           </PageHeaderDescription>
         </PageHeader>
-         <Button variant="outline" onClick={() => router.back()} type="button">
+        <Button variant="outline" asChild className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all">
+          <Link href="/">
             <ArrowLeft className="ms-2 h-4 w-4" />
             رجوع
-          </Button>
+          </Link>
+        </Button>
       </div>
       <StudentManagement />
     </div>

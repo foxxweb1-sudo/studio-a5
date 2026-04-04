@@ -8,11 +8,9 @@ import {
 } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function AccountPage() {
-  const router = useRouter();
-
   return (
     <div className="flex flex-col gap-8">
       <div className="flex justify-between items-start">
@@ -24,12 +22,13 @@ export default function AccountPage() {
         </PageHeader>
         <Button 
           variant="outline" 
-          onClick={() => router.back()} 
-          className="rounded-md"
-          type="button"
+          asChild
+          className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all"
         >
-          <ArrowLeft className="ms-2 h-4 w-4" />
-          رجوع
+          <Link href="/">
+            <ArrowLeft className="ms-2 h-4 w-4" />
+            رجوع
+          </Link>
         </Button>
       </div>
       <AccountManagement />

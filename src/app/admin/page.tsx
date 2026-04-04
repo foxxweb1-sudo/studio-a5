@@ -229,9 +229,11 @@ export default function AdminPage() {
             إدارة الطلاب والرسائل الواردة في النظام.
           </PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" onClick={() => router.back()} type="button">
-          <ArrowLeft className="ms-2 h-4 w-4" />
-          رجوع
+        <Button variant="outline" asChild className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all">
+          <Link href="/">
+            <ArrowLeft className="ms-2 h-4 w-4" />
+            رجوع
+          </Link>
         </Button>
       </div>
        <Tabs defaultValue="students" className="w-full">

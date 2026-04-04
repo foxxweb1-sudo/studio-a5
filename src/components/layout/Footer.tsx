@@ -20,7 +20,7 @@ export default function Footer() {
           </div>
           
           <p className="text-[10px] md:text-xs text-muted-foreground text-center flex-shrink-0 px-4 font-medium">
-          جميع الحقوق محفوظة © {new Date().getFullYear()} لشركة تقنيات.
+          جميع الحقوق محفوظة © 2026 لفريق TECH.
           </p>
           
           <div className="flex-1 flex justify-end">

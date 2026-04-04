@@ -48,6 +48,7 @@ export default function ContactPage() {
   const onSubmit = async (values: z.infer<typeof contactFormSchema>) => {
     setIsSubmitting(true);
     try {
+      // حفظ الرسالة في قاعدة البيانات ليراها المدير في لوحة التحكم
       await addDoc(collection(firestore, 'contactMessages'), {
         ...values,
         createdAt: serverTimestamp(),

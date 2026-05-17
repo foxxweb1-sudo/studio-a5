@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -23,10 +24,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, ExternalLink, LogOut, Trash2, AlertTriangle } from 'lucide-react';
-import { updateProfile, sendPasswordResetEmail, signOut, deleteUser } from 'firebase/auth';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, ExternalLink, LogOut, Trash2, AlertTriangle, Clock } from 'lucide-react';
+import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,10 +49,15 @@ const profileFormSchema = z.object({
 export default function AccountManagement() {
   const { user, isUserLoading, reloadUser } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
+
+  // جلب بيانات الحذف من الفايرستور
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: profile } = useDoc<any>(userRef);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -117,31 +124,31 @@ export default function AccountManagement() {
     signOut(auth);
   };
 
-  const handleDeleteAccount = async () => {
-    if (!user) return;
-    setIsDeleting(true);
+  const handleRequestDeletion = async () => {
+    if (!user || !firestore) return;
+    setIsRequestingDeletion(true);
     try {
-      await deleteUser(user);
+      const uRef = doc(firestore, 'users', user.uid);
+      await setDoc(uRef, { 
+        deletionRequestedAt: serverTimestamp() 
+      }, { merge: true });
+
       toast({
-        title: 'تم حذف الحساب',
-        description: 'تم حذف حسابك نهائياً من النظام.',
+        title: 'تم جدولة الحذف',
+        description: 'سيتم حذف حسابك نهائياً بعد 7 أيام. يمكنك إلغاء الطلب ببساطة عن طريق تسجيل الدخول مرة أخرى في أي وقت قبل انتهاء المدة.',
       });
+      
+      // تسجيل الخروج بعد طلب الحذف
+      setTimeout(() => signOut(auth), 2000);
+
     } catch (error: any) {
-      if (error.code === 'auth/requires-recent-login') {
-        toast({
-          variant: 'destructive',
-          title: 'إعادة تسجيل الدخول مطلوبة',
-          description: 'لحذف الحساب، يجب عليك تسجيل الخروج ثم الدخول مرة أخرى لإثبات هويتك.',
-        });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'خطأ',
-          description: error.message || 'فشل حذف الحساب. يرجى المحاولة مرة أخرى.',
-        });
-      }
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: error.message || 'فشل طلب حذف الحساب.',
+      });
     } finally {
-      setIsDeleting(false);
+      setIsRequestingDeletion(false);
     }
   };
   
@@ -319,6 +326,18 @@ export default function AccountManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
+             {profile?.deletionRequestedAt && (
+                <div className="p-4 mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-amber-900 dark:text-amber-100">طلب حذف نشط</p>
+                    <p className="text-[10px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                      لقد طلبت حذف حسابك. سيتم التنفيذ بعد 7 أيام من تاريخ الطلب. تسجيل دخولك التالي سيلغي هذا الطلب تلقائياً.
+                    </p>
+                  </div>
+                </div>
+              )}
+
             <Button
               variant="outline"
               onClick={handleSignOut}
@@ -333,21 +352,21 @@ export default function AccountManagement() {
                 <Button
                   variant="destructive"
                   className="w-full h-12 rounded-xl font-bold gap-2 shadow-lg shadow-rose-500/20"
-                  disabled={isDeleting}
+                  disabled={isRequestingDeletion || !!profile?.deletionRequestedAt}
                 >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  حذف الحساب نهائياً
+                  {isRequestingDeletion ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {profile?.deletionRequestedAt ? "جاري انتظار الحذف..." : "حذف الحساب نهائياً"}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="rounded-[2.5rem]">
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-right">هل أنت متأكد تماماً؟</AlertDialogTitle>
+                  <AlertDialogTitle className="text-right">تأكيد طلب الحذف</AlertDialogTitle>
                   <AlertDialogDescription className="text-right">
-                    هذا الإجراء لا يمكن التراجع عنه. سيتم حذف كافة بياناتك وسجلاتك من النظام نهائياً.
+                    سيتم وضع حسابك في حالة "انتظار الحذف" لمدة 7 أيام. إذا لم تقم بتسجيل الدخول خلال هذه المدة، فسيتم مسح بياناتك نهائياً.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-row-reverse gap-2">
-                  <AlertDialogAction onClick={handleDeleteAccount} className="bg-rose-600 hover:bg-rose-700 rounded-xl">نعم، احذف حسابي</AlertDialogAction>
+                  <AlertDialogAction onClick={handleRequestDeletion} className="bg-rose-600 hover:bg-rose-700 rounded-xl">نعم، ابدأ فترة الـ 7 أيام</AlertDialogAction>
                   <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
                 </AlertDialogFooter>
               </AlertDialogContent>

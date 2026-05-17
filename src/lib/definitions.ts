@@ -9,6 +9,7 @@ export type UserProfile = {
   photoURL?: string;
   isBlocked?: boolean;
   lastLogin?: FieldValue;
+  deletionRequestedAt?: any; // تم إضافة حقل تاريخ طلب الحذف
 };
 
 export type Student = {

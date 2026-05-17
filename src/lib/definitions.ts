@@ -47,5 +47,12 @@ export type GlobalConfig = {
   appLogo?: string;
   loginBg?: string;
   signupBg?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  whatsappChannel?: string;
+  facebook?: string;
+  twitter?: string;
+  telegram?: string;
+  techStoreUrl?: string;
   lastRulesUpdate?: FieldValue;
 };

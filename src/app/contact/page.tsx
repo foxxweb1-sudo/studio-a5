@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
+import { useAppConfig } from '@/hooks/use-app-config';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
@@ -34,6 +35,7 @@ export default function ContactPage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { config } = useAppConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof contactFormSchema>>({
@@ -48,7 +50,6 @@ export default function ContactPage() {
   const onSubmit = async (values: z.infer<typeof contactFormSchema>) => {
     setIsSubmitting(true);
     try {
-      // حفظ الرسالة في قاعدة البيانات ليراها المدير في لوحة التحكم
       await addDoc(collection(firestore, 'contactMessages'), {
         ...values,
         createdAt: serverTimestamp(),
@@ -70,7 +71,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-12">
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-12 px-4">
       <div className="flex justify-between items-start">
         <PageHeader>
           <PageHeaderTitle>تواصل معنا</PageHeaderTitle>
@@ -91,36 +92,36 @@ export default function ContactPage() {
           <Card className="border-0 shadow-lg rounded-[2rem] bg-white dark:bg-slate-900 p-6 space-y-6">
             <div className="space-y-2">
               <h3 className="font-bold text-xl">معلومات التواصل</h3>
-              <p className="text-sm text-muted-foreground">يسعدنا تلقي اقتراحاتكم أو بلاغات الأعطال عبر القنوات التالية:</p>
+              <p className="text-sm text-muted-foreground text-right">يسعدنا تلقي اقتراحاتكم عبر القنوات التالية:</p>
             </div>
             
             <div className="space-y-3">
                <Button asChild variant="outline" className="w-full justify-start h-14 rounded-2xl gap-3 border-emerald-500/20 hover:bg-emerald-500/5">
-                <a href="https://wa.me/201121473424" target="_blank" rel="noopener noreferrer">
+                <a href={`https://wa.me/${config.contactPhone}`} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-5 w-5 text-emerald-600" />
                     <div className="flex flex-col items-start">
                         <span className="text-xs font-bold">واتساب فريق TECH</span>
-                        <span className="text-[10px] text-muted-foreground text-left font-mono">201121473424+</span>
+                        <span className="text-[10px] text-muted-foreground text-left font-mono">{config.contactPhone}+</span>
                     </div>
                 </a>
               </Button>
 
               <Button asChild variant="outline" className="w-full justify-start h-14 rounded-2xl gap-3 border-primary/20 hover:bg-primary/5">
-                <a href="mailto:techstore.eg.app@gmail.com">
+                <a href={`mailto:${config.contactEmail}`}>
                     <Mail className="h-5 w-5 text-primary" />
                     <div className="flex flex-col items-start">
                         <span className="text-xs font-bold">البريد الإلكتروني</span>
-                        <span className="text-[10px] text-muted-foreground">techstore.eg.app@gmail.com</span>
+                        <span className="text-[10px] text-muted-foreground truncate w-full max-w-[150px]">{config.contactEmail}</span>
                     </div>
                 </a>
               </Button>
 
               <Button asChild variant="outline" className="w-full justify-start h-14 rounded-2xl gap-3 border-amber-500/20 hover:bg-amber-500/5">
-                <a href="https://tqnyatstore.vercel.app/contact" target="_blank" rel="noopener noreferrer">
+                <a href={config.techStoreUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-5 w-5 text-amber-600" />
                     <div className="flex flex-col items-start text-right">
-                        <span className="text-xs font-bold">نموذج تواصل خارجي</span>
-                        <span className="text-[10px] text-muted-foreground">زيارة صفحة الدعم الفني</span>
+                        <span className="text-xs font-bold">متجر التطبيقات</span>
+                        <span className="text-[10px] text-muted-foreground">زيارة TECH STORE</span>
                     </div>
                 </a>
               </Button>
@@ -133,7 +134,7 @@ export default function ContactPage() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-6 text-primary">
                 <MessageSquare className="h-5 w-5" />
-                <h3 className="font-bold">أرسل لنا رسالة مباشرة</h3>
+                <h3 className="font-bold text-right w-full">أرسل لنا رسالة مباشرة</h3>
               </div>
               
               <Form {...form}>
@@ -144,9 +145,9 @@ export default function ContactPage() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>الاسم</FormLabel>
+                          <FormLabel className="text-right block">الاسم</FormLabel>
                           <FormControl>
-                            <Input placeholder="أدخل اسمك" className="rounded-xl h-12" {...field} />
+                            <Input placeholder="أدخل اسمك" className="rounded-xl h-12 text-right" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -157,9 +158,9 @@ export default function ContactPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>البريد الإلكتروني</FormLabel>
+                          <FormLabel className="text-right block">البريد الإلكتروني</FormLabel>
                           <FormControl>
-                            <Input placeholder="name@example.com" className="rounded-xl h-12" {...field} />
+                            <Input placeholder="name@example.com" className="rounded-xl h-12 text-right font-mono" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -171,11 +172,11 @@ export default function ContactPage() {
                     name="message"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>الرسالة</FormLabel>
+                        <FormLabel className="text-right block">الرسالة</FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="كيف يمكننا مساعدتك؟" 
-                            className="rounded-xl min-h-[150px] resize-none" 
+                            className="rounded-xl min-h-[150px] resize-none text-right" 
                             {...field} 
                           />
                         </FormControl>
@@ -183,8 +184,8 @@ export default function ContactPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={isSubmitting} className="w-full h-12 rounded-xl font-bold gap-2">
-                    {isSubmitting ? <span className="animate-spin">⌛</span> : <Send className="h-4 w-4" />}
+                  <Button type="submit" disabled={isSubmitting} className="w-full h-12 rounded-xl font-bold gap-2 bg-primary text-white">
+                    {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
                     إرسال الرسالة
                   </Button>
                 </form>

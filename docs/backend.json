@@ -156,6 +156,13 @@
         "appLogo": { "type": "string" },
         "loginBg": { "type": "string" },
         "signupBg": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "whatsappChannel": { "type": "string" },
+        "facebook": { "type": "string" },
+        "twitter": { "type": "string" },
+        "telegram": { "type": "string" },
+        "techStoreUrl": { "type": "string" },
         "lastRulesUpdate": { "type": "string", "format": "date-time" }
       }
     }

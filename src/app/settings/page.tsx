@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -24,28 +25,21 @@ import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAppConfig } from '@/hooks/use-app-config';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-
-  const appUrl = 'https://tqnyatstore.vercel.app/apps/revkekjiJOW9ogkglocG';
-  const techStoreUrl = 'https://techstore-servers.vercel.app/';
-  const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
-  
-  const whatsappChannelUrl = 'https://whatsapp.com/channel/0029VbCCufAGOj9nfuY9o93L';
-  const facebookUrl = 'https://web.facebook.com/share/g/18Ky7vbzqF/'; 
-  const twitterUrl = 'https://x.com/tqnyt170296';  
-  const telegramUrl = 'https://t.me/TqnyatStore'; 
-  const contactWhatsApp = 'https://wa.me/201121473424';
+  const { config } = useAppConfig();
 
   const handleShare = async () => {
+    const appUrl = config.techStoreUrl;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'تطبيق الحضور',
-          text: 'قم بتحميل تطبيق الحضور لإدارة الطلاب والمدفوعات بسهولة.',
+          title: config.appName,
+          text: `قم بتحميل تطبيق ${config.appName} لإدارة الطلاب والمدفوعات بسهولة.`,
           url: appUrl,
         });
       } catch (error) {
@@ -55,10 +49,12 @@ export default function SettingsPage() {
       navigator.clipboard.writeText(appUrl);
       toast({
         title: 'تم نسخ الرابط',
-        description: 'تم نسخ رابط التطبيق إلى الحافظة.',
+        description: 'تم نسخ رابط المتجر إلى الحافظة.',
       });
     }
   };
+
+  const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
 
   return (
     <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-12">
@@ -94,7 +90,7 @@ export default function SettingsPage() {
                 <AppWindow className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">اسم التطبيق</span>
               </div>
-              <span className="font-bold text-primary">الحضور</span>
+              <span className="font-bold text-primary">{config.appName}</span>
             </div>
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
               <div className="flex items-center gap-2">
@@ -117,11 +113,11 @@ export default function SettingsPage() {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">المصدر الرسمي</span>
-                            <span className="font-bold text-sm">تم التحميل من TECH STORE</span>
+                            <span className="font-bold text-sm">TECH STORE</span>
                         </div>
                     </div>
                     <Button asChild variant="outline" size="sm" className="rounded-xl border-primary/20 hover:bg-primary hover:text-white transition-all">
-                        <a href={techStoreUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                        <a href={config.techStoreUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                             <ExternalLink className="h-3 w-3" />
                             زيارة المتجر
                         </a>
@@ -219,25 +215,25 @@ export default function SettingsPage() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5">
-                <a href={whatsappChannelUrl} target="_blank" rel="noopener noreferrer">
+                <a href={config.whatsappChannel} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="h-6 w-6 text-emerald-600" />
                   <span className="text-xs font-bold">واتساب</span>
                 </a>
               </Button>
               <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-blue-600/20 hover:bg-blue-600/5">
-                <a href={facebookUrl} target="_blank" rel="noopener noreferrer">
+                <a href={config.facebook} target="_blank" rel="noopener noreferrer">
                   <Facebook className="h-6 w-6 text-blue-600" />
                   <span className="text-xs font-bold">فيسبوك</span>
                 </a>
               </Button>
               <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-slate-900/20 hover:bg-slate-900/5">
-                <a href={twitterUrl} target="_blank" rel="noopener noreferrer">
+                <a href={config.twitter} target="_blank" rel="noopener noreferrer">
                   <Twitter className="h-6 w-6 text-slate-900 dark:text-white" />
                   <span className="text-xs font-bold">تويتر X</span>
                 </a>
               </Button>
               <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-sky-500/20 hover:bg-sky-500/5">
-                <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
+                <a href={config.telegram} target="_blank" rel="noopener noreferrer">
                   <Send className="h-6 w-6 text-sky-500" />
                   <span className="text-xs font-bold">تلجرام</span>
                 </a>
@@ -270,7 +266,7 @@ export default function SettingsPage() {
               variant="outline"
               className="w-full h-14 rounded-2xl border-2 border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 font-bold gap-3"
             >
-              <a href={contactWhatsApp} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/${config.contactPhone}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-5 w-5" />
                 التواصل مع فريق TECH
               </a>

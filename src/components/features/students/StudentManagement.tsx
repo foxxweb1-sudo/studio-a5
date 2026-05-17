@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, Share2, MessageCircle } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, Share2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -86,7 +86,7 @@ export default function StudentManagement() {
         toast({
             variant: "destructive",
             title: 'خطأ',
-            description: 'لم يتم تحديد الصف الدراسي. يرجى الوصول لهذه الصفحة من خلال لوحة التحكم الخاصة بالصف.',
+            description: 'لم يتم تحديد الصف الدراسي للإضافة. يرجى اختيار صف أولاً.',
         });
         return;
     }
@@ -151,7 +151,7 @@ export default function StudentManagement() {
           <CardHeader className="bg-primary/5 border-b">
             <CardTitle>{editingStudent ? 'تعديل بيانات الطالب' : 'تسجيل طالب جديد'}</CardTitle>
              {gradeFromUrl && !editingStudent && <CardDescription>الصف: {gradeFromUrl}</CardDescription>}
-             {editingStudent && <CardDescription>تعديل بيانات: {editingStudent.name}</CardDescription>}
+             {!gradeFromUrl && !editingStudent && <CardDescription className="text-amber-600 font-bold">يرجى اختيار صف من الصفحة الرئيسية لإضافة طلاب جدد.</CardDescription>}
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...form}>
@@ -187,7 +187,6 @@ export default function StudentManagement() {
                   {editingStudent ? 'حفظ التعديلات' : 'إضافة طالب'}
                 </Button>
                  {editingStudent && <Button variant="ghost" className="w-full rounded-xl" onClick={() => setEditingStudent(null)}>إلغاء التعديل</Button>}
-                 {!gradeFromUrl && !editingStudent && <p className="text-xs text-destructive text-center font-bold">الرجاء اختيار صف دراسي أولاً.</p>}
               </form>
             </Form>
           </CardContent>
@@ -197,13 +196,13 @@ export default function StudentManagement() {
         <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
           <CardHeader className="bg-slate-50 border-b">
             <CardTitle>قائمة الطلاب {gradeFromUrl ? `(${filteredStudents.length})` : `(${students.length})`}</CardTitle>
-            <CardDescription>{gradeFromUrl ? `عرض طلاب صف: ${gradeFromUrl}` : 'عرض وبحث الطلاب المسجلين.'}</CardDescription>
+            <CardDescription>{gradeFromUrl ? `عرض طلاب صف: ${gradeFromUrl}` : 'عرض وبحث في جميع الطلاب المسجلين بكافة الصفوف.'}</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="relative mb-6">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالاسم..."
+                placeholder="ابحث بالاسم أو الصف..."
                 className="pr-10 h-12 rounded-xl"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -233,7 +232,7 @@ export default function StudentManagement() {
                               {student.name}
                             </Link>
                           </TableCell>
-                           {!gradeFromUrl && <TableCell className="text-xs">{student.grade}</TableCell>}
+                           {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
                           <TableCell className="flex justify-center gap-1">
                             <Button variant="ghost" size="icon" className="rounded-xl text-emerald-600 hover:bg-emerald-50" onClick={() => handleShareParentLink(student)}>
                                 <Share2 className="h-4 w-4" />
@@ -271,7 +270,7 @@ export default function StudentManagement() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={gradeFromUrl ? 3 : 3} className="h-24 text-center text-muted-foreground font-bold italic">
-                          {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على نتائج."}
+                          {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على نتائج للبحث."}
                         </TableCell>
                       </TableRow>
                     )}

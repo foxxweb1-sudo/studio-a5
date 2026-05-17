@@ -6,7 +6,7 @@ import { useUser } from '@/firebase';
 import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, ArrowRightCircle, Calendar } from 'lucide-react';
+import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from '@/lib/constants';
@@ -48,13 +48,12 @@ export default function Home() {
   const stats = useMemo(() => {
     const totalStudents = students.length;
     const attendedToday = attendance.filter(a => a.date === today).length;
-    const paidThisMonth = payments.filter(p => p.month === currentMonth).length;
     
     return [
       { label: 'إجمالي الطلاب', value: totalStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
       { label: 'حضور اليوم', value: attendedToday, icon: CalendarCheck, color: 'text-emerald-600', bg: 'bg-emerald-100' },
       { label: 'غياب اليوم', value: totalStudents - attendedToday, icon: Clock, color: 'text-rose-600', bg: 'bg-rose-100' },
-      { label: 'مدفوعات الشهر', value: paidThisMonth, icon: Wallet, color: 'text-amber-600', bg: 'bg-amber-100' },
+      { label: 'مدفوعات الشهر', value: payments.filter(p => p.month === currentMonth).length, icon: Wallet, color: 'text-amber-600', bg: 'bg-amber-100' },
     ];
   }, [students, attendance, payments, today, currentMonth]);
 
@@ -102,8 +101,14 @@ export default function Home() {
                   تسجيل الحضور الآن
                 </button>
               </Link>
-              <Link href="/schedule">
+              <Link href="/students">
                 <button className="px-8 py-4 bg-white/10 text-white border border-white/20 rounded-2xl font-bold shadow-lg hover:bg-white/20 transition-all flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  عرض جميع الطلاب
+                </button>
+              </Link>
+              <Link href="/schedule">
+                <button className="px-8 py-4 bg-slate-800 text-slate-300 border border-slate-700 rounded-2xl font-bold shadow-lg hover:bg-slate-700 transition-all flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   مواعيد العمل
                 </button>

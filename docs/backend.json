@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -17,6 +18,19 @@
         "displayName": {
           "type": "string",
           "description": "The user's display name."
+        },
+        "isBlocked": {
+          "type": "boolean",
+          "description": "Whether the user is blocked from accessing the site."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL to the user's profile photo."
+        },
+        "lastLogin": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last successful login."
         }
       },
       "required": ["uid", "email"]
@@ -141,6 +155,16 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores core profile data for each user."
+        }
+      },
       {
         "path": "/users/{userId}/students/{studentId}",
         "definition": {

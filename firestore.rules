@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -14,9 +15,9 @@ service cloud.firestore {
 
     // Rules for all users collection
     match /users/{userId} {
-      // الأدمن يقرأ الجميع، والمستخدم يقرأ ويحدث بياناته الخاصة فقط
+      // الأدمن يقرأ الجميع ويعدل الحالة، والمستخدم يقرأ بياناته ويحدثها (إلا إذا كان محظوراً لكن نكتفي بالتحقق من الأدمن هنا)
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
     
     // Rules for user-specific data (students, attendance, payments)
@@ -24,8 +25,14 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
-    // Collection Group Rule for Students (Allows Admin to query across all users)
+    // Collection Group Rules
     match /{path=**}/students/{studentId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/attendance/{attendanceId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/payments/{paymentId} {
       allow read: if isAdmin();
     }
 

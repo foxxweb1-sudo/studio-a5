@@ -1,4 +1,15 @@
+
 import { FieldValue } from "firebase/firestore";
+
+export type UserProfile = {
+  id: string;
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  isBlocked?: boolean;
+  lastLogin?: FieldValue;
+};
 
 export type Student = {
   id: string;

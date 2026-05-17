@@ -1,9 +1,40 @@
+
 "use client";
 
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment } from "@/lib/definitions";
+import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy } from "firebase/firestore";
 import { format } from 'date-fns';
+
+// --- Users Hook (For Admin) ---
+export function useAllUsers() {
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const isAdmin = user?.uid === 'dr8wgLhCfRSGyjVR8Au5KxwUj0v1';
+
+  const usersQuery = useMemoFirebase(() => 
+    isAdmin ? query(collection(firestore, 'users'), orderBy("displayName", "asc")) : null,
+  [isAdmin, firestore]);
+
+  const { data: users, isLoading } = useCollection<UserProfile>(usersQuery);
+
+  const toggleUserBlock = (userId: string, currentStatus: boolean) => {
+    if (!isAdmin) return;
+    const userDoc = doc(firestore, 'users', userId);
+    updateDoc(userDoc, { isBlocked: !currentStatus }).catch(error => {
+       errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: userDoc.path,
+          operation: 'update',
+          requestResourceData: { isBlocked: !currentStatus },
+        })
+      )
+    });
+  };
+
+  return { users: users || [], isLoading, toggleUserBlock };
+}
 
 // --- Students Hook ---
 export function useStudents() {

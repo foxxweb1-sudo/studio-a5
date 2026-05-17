@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Award } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -37,7 +37,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 
 const GRADES = [
   'الصف الأول الابتدائي', 'الصف الثاني الابتدائي', 'الصف الثالث الابتدائي', 'الصف الرابع الابتدائي', 'الصف الخامس الابتدائي', 'الصف السادس الابتدائي',
@@ -45,18 +44,10 @@ const GRADES = [
   'الصف الأول الثانوي', 'الصف الثاني الثانوي', 'الصف الثالث الثانوي'
 ];
 
-const AVAILABLE_BADGES = [
-    { id: 'متفوق', label: 'طالب متفوق', color: 'text-amber-600 bg-amber-50' },
-    { id: 'منضبط', label: 'طالب منضبط', color: 'text-blue-600 bg-blue-50' },
-    { id: 'مشارك', label: 'مشارك متميز', color: 'text-emerald-600 bg-emerald-50' },
-    { id: 'مبادر', label: 'طالب مبادر', color: 'text-purple-600 bg-purple-50' },
-];
-
 const formSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
   grade: z.string().min(1, 'يرجى اختيار الصف الدراسي.'),
   parentPhone: z.string().optional(),
-  badges: z.array(z.string()).optional(),
 });
 
 export default function StudentManagement() {
@@ -76,7 +67,6 @@ export default function StudentManagement() {
       name: '',
       grade: gradeFromUrl || '',
       parentPhone: '',
-      badges: [],
     },
   });
 
@@ -92,14 +82,12 @@ export default function StudentManagement() {
         name: editingStudent.name,
         grade: editingStudent.grade,
         parentPhone: editingStudent.parentPhone || '',
-        badges: editingStudent.badges || [],
       });
     } else {
       form.reset({
         name: '',
         grade: gradeFromUrl || '',
         parentPhone: '',
-        badges: [],
       });
     }
   }, [editingStudent, form, gradeFromUrl]);
@@ -116,7 +104,7 @@ export default function StudentManagement() {
         description: `تم إضافة الطالب ${values.name} بنجاح.`,
       });
     }
-    form.reset({ name: '', grade: gradeFromUrl || '', parentPhone: '', badges: [] });
+    form.reset({ name: '', grade: gradeFromUrl || '', parentPhone: '' });
   };
   
   const handleDelete = (studentId: string) => {
@@ -206,38 +194,6 @@ export default function StudentManagement() {
                   )}
                 />
 
-                <div className="space-y-2">
-                    <FormLabel className="font-bold text-xs flex items-center gap-2">
-                        <Award className="h-3 w-3 text-amber-500" /> أوسمة التميز لهذا الطالب
-                    </FormLabel>
-                    <div className="grid grid-cols-2 gap-2">
-                        {AVAILABLE_BADGES.map((badge) => (
-                            <FormField
-                                key={badge.id}
-                                control={form.control}
-                                name="badges"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-xl border p-2 bg-slate-50/50">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value?.includes(badge.id)}
-                                                onCheckedChange={(checked) => {
-                                                    return checked
-                                                        ? field.onChange([...(field.value || []), badge.id])
-                                                        : field.onChange(field.value?.filter((value) => value !== badge.id))
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormLabel className="font-bold text-[10px] cursor-pointer">
-                                            {badge.label}
-                                        </FormLabel>
-                                    </FormItem>
-                                )}
-                            />
-                        ))}
-                    </div>
-                </div>
-
                 <Button type="submit" className="w-full h-12 rounded-xl font-bold gap-2" disabled={isLoading}>
                   {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : editingStudent ? <Edit className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
                   {editingStudent ? 'حفظ التعديلات' : 'إضافة طالب للمنظومة'}
@@ -289,13 +245,6 @@ export default function StudentManagement() {
                                     <GraduationCap className="h-4 w-4 opacity-50" />
                                     {student.name}
                                 </Link>
-                                <div className="flex flex-wrap gap-1">
-                                    {student.badges?.map(b => (
-                                        <Badge key={b} variant="outline" className="text-[8px] h-4 rounded-md border-amber-200 text-amber-600 bg-amber-50">
-                                            {AVAILABLE_BADGES.find(ab => ab.id === b)?.label}
-                                        </Badge>
-                                    ))}
-                                </div>
                              </div>
                           </TableCell>
                            {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}

@@ -31,13 +31,6 @@ import { useAppConfig } from '@/hooks/use-app-config';
 import { useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 
-const BADGE_MAP: Record<string, { label: string; color: string; icon: any }> = {
-    'متفوق': { label: 'طالب متفوق', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Trophy },
-    'منضبط': { label: 'طالب منضبط', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: CheckCircle2 },
-    'مشارك': { label: 'مشارك متميز', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Sparkles },
-    'مبادر': { label: 'طالب مبادر', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Award },
-};
-
 export default function ParentPortalPage() {
   const params = useParams();
   const teacherId = params.teacherId as string;
@@ -142,30 +135,6 @@ export default function ParentPortalPage() {
                 <span className="text-sm font-black tracking-tight">التقرير محدث لحظياً</span>
             </div>
         </div>
-
-        {/* قسم الأوسمة والتميز */}
-        {student.badges && student.badges.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 animate-in slide-in-from-bottom-4 duration-700">
-                <div className="flex items-center gap-2 px-4">
-                    <Trophy className="h-5 w-5 text-amber-500" />
-                    <h3 className="font-black text-lg text-slate-800">إنجازات الطالب المتميزة</h3>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                    {student.badges.map(badgeId => {
-                        const info = BADGE_MAP[badgeId];
-                        if (!info) return null;
-                        return (
-                            <div key={badgeId} className={`flex items-center gap-3 px-6 py-4 rounded-[2rem] border-2 shadow-sm ${info.color} border-current/10 hover-lift`}>
-                                <div className="p-2 bg-white/50 rounded-xl">
-                                    <info.icon className="h-6 w-6" />
-                                </div>
-                                <span className="font-black text-sm">{info.label}</span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-primary text-primary-foreground overflow-hidden relative group">

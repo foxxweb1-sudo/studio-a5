@@ -58,7 +58,6 @@ export type Student = {
   grade: string;
   phone?: string;
   parentPhone?: string;
-  badges?: string[];
   createdAt: FieldValue;
 };
 

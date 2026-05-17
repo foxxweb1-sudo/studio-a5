@@ -135,6 +135,10 @@
           "format": "email",
           "description": "The sender's email address."
         },
+        "whatsapp": {
+          "type": "string",
+          "description": "The sender's WhatsApp number."
+        },
         "message": {
           "type": "string",
           "description": "The content of the message."

@@ -20,7 +20,9 @@ import {
   Fingerprint,
   Settings,
   RefreshCw,
-  Database
+  Database,
+  ExternalLink,
+  ChevronRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -70,6 +72,7 @@ export default function AdminPage() {
         const teacherUid = pathSegments[1]; 
         return { id: doc.id, teacherUid, ...doc.data() };
       });
+      allStudents.length === 0 && setAllStudents(list); // Prevent redundant sets if needed
       setAllStudents(list);
       setLoading(false);
     });
@@ -314,23 +317,51 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="messages">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {messages.map(msg => (
-                        <Card key={msg.id} className="border-0 shadow-sm p-6 bg-white">
-                              <div className="flex justify-between items-start mb-4">
-                                <div>
-                                  <h4 className="font-bold text-primary">{msg.name}</h4>
-                                  <p className="text-xs text-slate-400">{msg.email}</p>
+                        <Card 
+                          key={msg.id} 
+                          className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer bg-white group rounded-[1.5rem] overflow-hidden"
+                          onClick={() => router.push(`/admin/messages/${msg.id}`)}
+                        >
+                          <CardContent className="p-5 flex flex-col h-full">
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-2 bg-primary/5 rounded-lg text-primary">
+                                    <MessageSquare className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-sm text-slate-800 line-clamp-1">{msg.name}</h4>
+                                    <p className="text-[10px] text-slate-400 font-mono">{msg.email}</p>
+                                  </div>
                                 </div>
-                                <div className="text-[10px] text-slate-300">
-                                  {new Date(msg.createdAt?.toDate()).toLocaleDateString('ar-EG')}
+                                <div className="text-[9px] text-slate-300 font-bold">
+                                  {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
                                 </div>
                               </div>
-                              <div className="bg-slate-50 p-4 rounded-xl text-slate-600 text-sm italic">
+                              <div className="flex-grow bg-slate-50 p-3 rounded-xl text-slate-500 text-xs italic line-clamp-2 border border-slate-100">
                                 "{msg.message}"
                               </div>
+                              <div className="mt-4 flex justify-between items-center pt-3 border-t border-slate-50">
+                                <span className="text-[10px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                  عرض التفاصيل
+                                  <ChevronRight className="h-3 w-3" />
+                                </span>
+                                {msg.whatsapp && (
+                                  <Badge variant="outline" className="text-[9px] border-emerald-100 text-emerald-600 bg-emerald-50 rounded-md px-2">
+                                    WhatsApp
+                                  </Badge>
+                                )}
+                              </div>
+                          </CardContent>
                         </Card>
                     ))}
+                    {messages.length === 0 && (
+                      <div className="col-span-full py-20 text-center text-slate-400">
+                         <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                         <p className="font-bold">لا توجد رسائل تواصل حالياً</p>
+                      </div>
+                    )}
                 </div>
             </TabsContent>
         </Tabs>

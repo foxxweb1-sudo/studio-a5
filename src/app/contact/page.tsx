@@ -11,7 +11,9 @@ import {
   ExternalLink, 
   Send,
   MessageSquare,
-  LifeBuoy
+  LifeBuoy,
+  Phone,
+  Loader2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -25,10 +27,13 @@ import { useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { useAppConfig } from '@/hooks/use-app-config';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
   email: z.string().email('البريد الإلكتروني غير صحيح.'),
+  countryCode: z.string().min(1, 'مطلوب'),
+  whatsapp: z.string().min(8, 'رقم الواتساب غير صحيح.'),
   message: z.string().min(10, 'الرسالة يجب أن تكون 10 أحرف على الأقل.'),
 });
 
@@ -44,6 +49,8 @@ export default function ContactPage() {
     defaultValues: {
       name: '',
       email: '',
+      countryCode: '20',
+      whatsapp: '',
       message: '',
     },
   });
@@ -51,10 +58,16 @@ export default function ContactPage() {
   const onSubmit = async (values: z.infer<typeof contactFormSchema>) => {
     setIsSubmitting(true);
     try {
+      const fullWhatsapp = `+${values.countryCode}${values.whatsapp.replace(/\D/g, '')}`;
+      
       await addDoc(collection(firestore, 'contactMessages'), {
-        ...values,
+        name: values.name,
+        email: values.email,
+        whatsapp: fullWhatsapp,
+        message: values.message,
         createdAt: serverTimestamp(),
       });
+      
       toast({
         title: 'تم إرسال رسالتك',
         description: 'شكراً لتواصلك معنا، سنرد عليك في أقرب وقت.',
@@ -178,6 +191,51 @@ export default function ContactPage() {
                       )}
                     />
                   </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <FormField
+                      control={form.control}
+                      name="countryCode"
+                      render={({ field }) => (
+                        <FormItem className="col-span-1">
+                          <FormLabel className="text-right block">الرمز</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="rounded-xl h-12 bg-white font-mono">
+                                <SelectValue placeholder="+20" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="font-mono">
+                              <SelectItem value="20">+20 (مصر)</SelectItem>
+                              <SelectItem value="966">+966 (السعودية)</SelectItem>
+                              <SelectItem value="971">+971 (الإمارات)</SelectItem>
+                              <SelectItem value="965">+965 (الكويت)</SelectItem>
+                              <SelectItem value="212">+212 (المغرب)</SelectItem>
+                              <SelectItem value="213">+213 (الجزائر)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="whatsapp"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel className="text-right block">رقم الواتساب</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                               <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                               <Input placeholder="112147..." className="rounded-xl h-12 pr-10 text-right font-mono" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="message"

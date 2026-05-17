@@ -81,17 +81,29 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!user || !firestore) return;
     setIsFinalizingDeletion(true);
     try {
-      // 1. مسح وثيقة طلب الحذف ووثيقة المستخدم
+      // 1. مسح وثيقة طلب الحذف ووثيقة المستخدم من Firestore (دائماً تنجح)
       await deleteDoc(doc(firestore, 'deletionRequests', user.uid));
       await deleteDoc(doc(firestore, 'users', user.uid));
       
-      // 2. مسح المستخدم من Firebase Auth
-      await deleteUser(user);
-      
-      toast({
-        title: "تم مسح الحساب نهائياً",
-        description: "انتهت فترة السماح وتم مسح كافة بياناتك من النظام.",
-      });
+      // 2. محاولة مسح المستخدم من Firebase Auth (تحتاج دخول حديث)
+      try {
+        await deleteUser(user);
+        toast({
+          title: "تم مسح الحساب نهائياً",
+          description: "انتهت فترة السماح وتم مسح كافة بياناتك من النظام.",
+        });
+      } catch (authError: any) {
+        if (authError.code === 'auth/requires-recent-login') {
+            toast({
+                variant: "destructive",
+                title: "تأكيد أمني مطلوب",
+                description: "يرجى تسجيل الدخول مرة أخرى ثم الذهاب للإعدادات لحذف بريدك نهائياً من سجلات جوجل.",
+            });
+            await signOut(auth);
+        } else {
+            throw authError;
+        }
+      }
     } catch (error: any) {
       console.error("Final deletion failed:", error);
       signOut(auth);
@@ -116,7 +128,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isUserLoading && !showSplash) {
-      // السماح بالمسارات العامة أو مسارات بوابة ولي الأمر (تبدأ بـ /p/)
       const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/p/');
       
       if (user && isPublicRoute && !pathname.startsWith('/p/')) {
@@ -153,7 +164,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // السماح بعرض المحتوى إذا كان المسار يبدأ بـ /p/ حتى لو لم يسجل دخول
   const isParentPortal = pathname.startsWith('/p/');
 
   if (!user && (publicRoutes.includes(pathname) || isParentPortal)) {

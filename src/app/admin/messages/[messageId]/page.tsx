@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
@@ -39,6 +38,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function MessageDetailPage() {
   const params = useParams();
@@ -63,15 +64,22 @@ export default function MessageDetailPage() {
     }
   }, [isAdmin, isUserLoading, router]);
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!firestore || !messageId) return;
-    try {
-      await deleteDoc(doc(firestore, 'contactMessages', messageId));
-      toast({ title: "تم الحذف بنجاح" });
-      router.push('/admin');
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ في الحذف" });
-    }
+    
+    const docRef = doc(firestore, 'contactMessages', messageId);
+    
+    // بدء عملية الحذف (Non-blocking)
+    deleteDoc(docRef).catch(async (error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'delete',
+      }));
+    });
+
+    // التوجيه الفوري لمنع أخطاء "المستند غير موجود"
+    toast({ title: "تم طلب حذف الرسالة بنجاح" });
+    router.push('/admin');
   };
 
   const renderMessageWithLinks = (text: string) => {
@@ -109,7 +117,7 @@ export default function MessageDetailPage() {
     return (
       <div className="text-center py-20 space-y-4">
         <h2 className="text-2xl font-bold">الرسالة غير موجودة</h2>
-        <Button onClick={() => router.back()} className="rounded-xl">رجوع للخلف</Button>
+        <Button onClick={() => router.push('/admin')} className="rounded-xl">العودة للوحة التحكم</Button>
       </div>
     );
   }
@@ -132,7 +140,7 @@ export default function MessageDetailPage() {
               <AlertDialogContent className="rounded-[2.5rem]">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="text-right">حذف هذه الرسالة؟</AlertDialogTitle>
-                  <AlertDialogDescription className="text-right">سيتم حذف الرسالة نهائياً من قاعدة البيانات، هل أنت متأكد؟</AlertDialogDescription>
+                  <AlertDialogDescription className="text-right">سيتم حذف الرسالة نهائياً من قاعدة البيانات، وسيتم توجيهك فوراً للقائمة السابقة.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-row-reverse gap-2">
                   <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 rounded-xl">تأكيد الحذف</AlertDialogAction>
@@ -148,7 +156,6 @@ export default function MessageDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* بطاقة معلومات المرسل */}
         <Card className="lg:col-span-1 border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden h-fit sticky top-24">
           <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -195,7 +202,6 @@ export default function MessageDetailPage() {
           </CardContent>
         </Card>
 
-        {/* بطاقة محتوى الرسالة */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden">
              <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b flex flex-row justify-between items-center p-6">

@@ -31,18 +31,24 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of the last successful login."
-        },
-        "deletionRequestedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when account deletion was requested."
-        },
-        "deletionReason": {
-          "type": "string",
-          "description": "The reason why the user decided to delete their account."
         }
       },
       "required": ["uid", "email"]
+    },
+    "DeletionRequest": {
+      "title": "DeletionRequest",
+      "type": "object",
+      "description": "Represents a user's request to delete their account.",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string" },
+        "studentCount": { "type": "number" }
+      },
+      "required": ["uid", "requestedAt"]
     },
     "Student": {
       "title": "Student",
@@ -201,6 +207,16 @@
             "$ref": "#/backend/entities/User"
           },
           "description": "Stores core profile data for each user."
+        }
+      },
+      {
+        "path": "/deletionRequests/{userId}",
+        "definition": {
+          "entityName": "DeletionRequest",
+          "schema": {
+            "$ref": "#/backend/entities/DeletionRequest"
+          },
+          "description": "Stores active account deletion requests."
         }
       },
       {

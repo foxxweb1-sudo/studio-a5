@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
@@ -39,6 +39,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Info } from 'lucide-react';
+import { DeletionRequest } from '@/lib/definitions';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
@@ -61,6 +62,12 @@ export default function AdminPage() {
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
+  // جلب طلبات الحذف من المجموعة المستقلة
+  const deletionRequestsQuery = useMemoFirebase(() => 
+    firestore ? collection(firestore, 'deletionRequests') : null,
+  [firestore]);
+  const { data: deletionRequests, isLoading: deletionLoading } = useCollection<DeletionRequest>(deletionRequestsQuery);
+
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
   useEffect(() => {
@@ -74,14 +81,10 @@ export default function AdminPage() {
     const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
       const list = snap.docs.map(doc => {
         const pathSegments = doc.ref.path.split('/');
-        // In doc.ref.path like 'users/UID/students/SID', UID is at index 1
         const teacherUid = pathSegments[1]; 
         return { id: doc.id, teacherUid, ...doc.data() };
       });
       setAllStudents(list);
-      setLoadingStudents(false);
-    }, (err) => {
-      console.error("CollectionGroup Students Error:", err);
       setLoadingStudents(false);
     });
 
@@ -111,16 +114,6 @@ export default function AdminPage() {
       setIsProcessingManual(false);
     }
   };
-
-  const deletionRequests = useMemo(() => {
-    if (!users) return [];
-    return users
-      .filter(u => u.deletionRequestedAt !== undefined && u.deletionRequestedAt !== null)
-      .map(u => {
-        const studentCount = allStudents.filter(s => s.teacherUid === u.uid).length;
-        return { ...u, studentCount };
-      });
-  }, [users, allStudents]);
 
   const calculateRemainingTime = (requestedAt: any) => {
     if (!requestedAt) return "غير معروف";
@@ -161,6 +154,8 @@ export default function AdminPage() {
     );
   }
 
+  const activeDeletionCount = deletionRequests?.length || 0;
+
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-7xl mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -185,7 +180,7 @@ export default function AdminPage() {
             { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50', loading: loadingStudents },
             { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50', loading: usersLoading },
             { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50', loading: false },
-            { label: 'طلبات الحذف', value: deletionRequests.length, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: usersLoading },
+            { label: 'طلبات الحذف', value: activeDeletionCount, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: deletionLoading },
         ].map((stat, i) => (
             <Card key={i} className={`border-0 shadow-sm hover-lift`}>
                 <CardContent className="p-6 flex items-center gap-4">
@@ -206,9 +201,9 @@ export default function AdminPage() {
                 <TabsTrigger value="users" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المستخدمين</TabsTrigger>
                 <TabsTrigger value="deletions" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial relative">
                     طلبات الحذف
-                    {deletionRequests.length > 0 && (
+                    {activeDeletionCount > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] text-white">
-                        {deletionRequests.length}
+                        {activeDeletionCount}
                       </span>
                     )}
                 </TabsTrigger>
@@ -271,7 +266,7 @@ export default function AdminPage() {
 
             <TabsContent value="deletions">
                 <div className="space-y-4">
-                  {deletionRequests.length > 0 ? (
+                  {deletionRequests && deletionRequests.length > 0 ? (
                     deletionRequests.map((req) => (
                       <div key={req.uid} className="flex flex-col gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-rose-100 hover:shadow-md transition-all border-r-8 border-r-rose-500">
                         <div className="flex flex-col lg:flex-row items-center gap-6">
@@ -295,7 +290,7 @@ export default function AdminPage() {
                                         <CalendarClock className="h-4 w-4" />
                                         <span>الوقت المتبقي:</span>
                                     </div>
-                                    <span className="font-black text-rose-700 text-xs">{calculateRemainingTime(req.deletionRequestedAt)}</span>
+                                    <span className="font-black text-rose-700 text-xs">{calculateRemainingTime(req.requestedAt)}</span>
                                 </div>
                                 <div className="bg-blue-50 px-4 py-2 rounded-2xl flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-blue-500 font-bold text-xs">
@@ -313,15 +308,15 @@ export default function AdminPage() {
                             </div>
                             <div className="space-y-1">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">سبب الحذف المصرح به:</span>
-                                <p className="text-sm font-bold text-slate-700 leading-relaxed italic">"{req.deletionReason || 'لم يتم ذكر سبب محدد'}"</p>
+                                <p className="text-sm font-bold text-slate-700 leading-relaxed italic">"{req.reason || 'لم يتم ذكر سبب محدد'}"</p>
                             </div>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="py-20 text-center space-y-4 bg-slate-50 rounded-[2rem] border border-dashed">
-                      {usersLoading ? <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary/20" /> : <Trash2 className="h-16 w-16 mx-auto text-slate-200" />}
-                      <p className="text-slate-400 font-black">{usersLoading ? 'جاري جلب الطلبات...' : 'لا توجد طلبات حذف حالياً'}</p>
+                      {deletionLoading ? <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary/20" /> : <Trash2 className="h-16 w-16 mx-auto text-slate-200" />}
+                      <p className="text-slate-400 font-black">{deletionLoading ? 'جاري جلب الطلبات...' : 'لا توجد طلبات حذف حالياً'}</p>
                     </div>
                   )}
                 </div>

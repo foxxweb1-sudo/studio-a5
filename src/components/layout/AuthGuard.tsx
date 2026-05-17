@@ -3,10 +3,10 @@
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import SplashScreen from "./SplashScreen";
-import { doc, setDoc, serverTimestamp, updateDoc, deleteField, deleteDoc } from "firebase/firestore";
-import { Ban, LogOut, Loader2, Trash2 } from "lucide-react";
+import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { Ban, LogOut, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
 import { useAuth } from "@/firebase";
@@ -23,12 +23,19 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [showSplash, setShowSplash] = useState(true);
   const [isFinalizingDeletion, setIsFinalizingDeletion] = useState(false);
+  const hasCheckedDeletion = useRef(false);
 
-  // مراقبة وثيقة المستخدم للتحقق من الحظر والحذف
+  // مراقبة وثيقة المستخدم للتحقق من الحظر
   const userDocRef = useMemoFirebase(() => 
     user ? doc(firestore, 'users', user.uid) : null,
   [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<any>(userDocRef);
+
+  // مراقبة وثيقة طلب الحذف المستقلة
+  const deletionDocRef = useMemoFirebase(() => 
+    user ? doc(firestore, 'deletionRequests', user.uid) : null,
+  [user, firestore]);
+  const { data: deletionRequest, isLoading: isDeletionLoading } = useDoc<any>(deletionDocRef);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -36,42 +43,42 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         setShowSplash(false);
       }
     }, 2500);
-
     return () => clearTimeout(timer);
   }, [isUserLoading]);
 
-  // منطق إلغاء الحذف أو التنفيذ النهائي
+  // منطق إلغاء الحذف (عند تسجيل الدخول الجديد) أو التنفيذ النهائي
   useEffect(() => {
-    if (user && userProfile && firestore) {
-      if (userProfile.deletionRequestedAt) {
-        const requestedAt = userProfile.deletionRequestedAt.toDate();
-        const now = new Date();
-        const diffDays = Math.floor((now.getTime() - requestedAt.getTime()) / (1000 * 60 * 60 * 24));
+    if (user && deletionRequest && !isDeletionLoading && !hasCheckedDeletion.current) {
+      const requestedAt = deletionRequest.requestedAt?.toDate();
+      if (!requestedAt) return;
 
-        if (diffDays < 7) {
-          // إلغاء الحذف لأنه دخل قبل 7 أيام
-          const uRef = doc(firestore, 'users', user.uid);
-          updateDoc(uRef, { deletionRequestedAt: deleteField() });
-          
-          toast({
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - requestedAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 7) {
+        // المستخدم دخل قبل 7 أيام -> إلغاء طلب الحذف
+        const dRef = doc(firestore, 'deletionRequests', user.uid);
+        deleteDoc(dRef).then(() => {
+           toast({
             title: "تم استعادة الحساب!",
             description: "يسعدنا عودتك. تم إلغاء طلب حذف الحساب لأنك سجلت دخولك قبل انتهاء الـ 7 أيام.",
           });
-        } else {
-          // مرّت 7 أيام أو أكثر، تنفيذ الحذف النهائي
-          handleFinalDeletion();
-        }
+        });
+        hasCheckedDeletion.current = true;
+      } else {
+        // مرّت 7 أيام أو أكثر -> تنفيذ الحذف النهائي
+        handleFinalDeletion();
       }
     }
-  }, [user, userProfile, firestore, toast]);
+  }, [user, deletionRequest, isDeletionLoading, firestore, toast]);
 
   const handleFinalDeletion = async () => {
     if (!user || !firestore) return;
     setIsFinalizingDeletion(true);
     try {
-      // 1. مسح وثيقة المستخدم من الفايرستور أولاً
-      const uRef = doc(firestore, 'users', user.uid);
-      await deleteDoc(uRef);
+      // 1. مسح وثيقة المستخدم ووثيقة طلب الحذف
+      await deleteDoc(doc(firestore, 'users', user.uid));
+      await deleteDoc(doc(firestore, 'deletionRequests', user.uid));
       
       // 2. مسح المستخدم من Auth
       await deleteUser(user);
@@ -81,7 +88,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         description: "انتهت فترة الـ 7 أيام وتم مسح بياناتك نهائياً.",
       });
     } catch (error: any) {
-      // إذا فشل بسبب انتهاء الجلسة، تسجيل خروج للمحاولة لاحقاً أو التوجيه لإعادة تسجيل الدخول
       signOut(auth);
     } finally {
       setIsFinalizingDeletion(false);
@@ -117,7 +123,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return <SplashScreen />;
   }
 
-  // شاشة الحذف النهائي (تظهر لحظياً أثناء المعالجة)
   if (isFinalizingDeletion) {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-background text-foreground p-6 text-center">
@@ -128,7 +133,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // شاشة الحظر
   if (user && userProfile?.isBlocked) {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-950 text-white p-6 text-center">

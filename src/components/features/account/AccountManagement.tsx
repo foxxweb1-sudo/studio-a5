@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -19,16 +19,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, ExternalLink, LogOut, Trash2, AlertTriangle, Clock, MessageSquareQuote } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection, getDocs } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,8 +65,9 @@ export default function AccountManagement() {
   const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>(DELETION_REASONS[0]);
 
-  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: profile } = useDoc<any>(userRef);
+  // مراقبة وثيقة طلب الحذف
+  const deletionRequestRef = useMemoFirebase(() => user ? doc(firestore, 'deletionRequests', user.uid) : null, [user, firestore]);
+  const { data: deletionRequest } = useDoc<any>(deletionRequestRef);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -127,11 +127,21 @@ export default function AccountManagement() {
     if (!user || !firestore) return;
     setIsRequestingDeletion(true);
     try {
-      const uRef = doc(firestore, 'users', user.uid);
-      await setDoc(uRef, { 
-        deletionRequestedAt: serverTimestamp(),
-        deletionReason: selectedReason 
-      }, { merge: true });
+      // جلب عدد الطلاب قبل الحذف للعرض لدى المشرف
+      const studentsSnap = await getDocs(collection(firestore, `users/${user.uid}/students`));
+      const studentCount = studentsSnap.size;
+
+      // إنشاء وثيقة في قاعدة طلبات الحذف المستقلة
+      const dRef = doc(firestore, 'deletionRequests', user.uid);
+      await setDoc(dRef, { 
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || 'مستخدم جديد',
+        photoURL: user.photoURL || '',
+        requestedAt: serverTimestamp(),
+        reason: selectedReason,
+        studentCount: studentCount
+      });
 
       toast({
         title: 'تم جدولة الحذف',
@@ -270,7 +280,7 @@ export default function AccountManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
-             {profile?.deletionRequestedAt && (
+             {deletionRequest && (
                 <div className="p-4 mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-3">
                   <Clock className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                   <div className="space-y-1">
@@ -289,9 +299,9 @@ export default function AccountManagement() {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full h-12 rounded-xl font-bold" disabled={isRequestingDeletion || !!profile?.deletionRequestedAt}>
+                <Button variant="destructive" className="w-full h-12 rounded-xl font-bold" disabled={isRequestingDeletion || !!deletionRequest}>
                   {isRequestingDeletion ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  {profile?.deletionRequestedAt ? "جاري انتظار الحذف..." : "حذف الحساب نهائياً"}
+                  {deletionRequest ? "جاري انتظار الحذف..." : "حذف الحساب نهائياً"}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="rounded-[2.5rem] max-w-md">
@@ -315,7 +325,7 @@ export default function AccountManagement() {
 
                 <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 mb-4">
                    <p className="text-[11px] text-rose-700 text-right leading-relaxed font-bold">
-                     * سيتم إخفاء حسابك ووضعه في وضع "الانتظار" لمدة 7 أيام قبل الحذف النهائي.
+                     * سيتم وضع حسابك في وضع "الانتظار" لمدة 7 أيام قبل الحذف النهائي.
                    </p>
                 </div>
 

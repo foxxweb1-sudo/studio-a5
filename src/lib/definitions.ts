@@ -9,8 +9,17 @@ export type UserProfile = {
   photoURL?: string;
   isBlocked?: boolean;
   lastLogin?: FieldValue;
-  deletionRequestedAt?: any;
-  deletionReason?: string; // إضافة حقل سبب الحذف
+};
+
+export type DeletionRequest = {
+  id: string;
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  requestedAt: any;
+  reason: string;
+  studentCount: number;
 };
 
 export type Student = {

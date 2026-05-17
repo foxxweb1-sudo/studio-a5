@@ -17,7 +17,8 @@ import {
   Users, 
   Trash2,
   Copy,
-  GraduationCap
+  GraduationCap,
+  AlertTriangle
 } from 'lucide-react';
 import {
   Table,
@@ -41,6 +42,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function TeacherStudentsPage() {
   const params = useParams();
@@ -79,14 +82,38 @@ export default function TeacherStudentsPage() {
     return () => unsub();
   }, [firestore, isAdmin, isUserLoading, router, teacherUid]);
 
-  const handleDeleteStudent = async (studentId: string) => {
+  const handleDeleteStudent = (studentId: string) => {
     if (!firestore || !isAdmin) return;
-    try {
-      await deleteDoc(doc(firestore, `users/${teacherUid}/students`, studentId));
-      toast({ title: "تم الحذف", description: "تم حذف الطالب بنجاح." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل الحذف." });
-    }
+    const docRef = doc(firestore, `users/${teacherUid}/students`, studentId);
+    deleteDoc(docRef)
+      .then(() => {
+        toast({ title: "تم الحذف", description: "تم حذف الطالب بنجاح." });
+      })
+      .catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete',
+        }));
+      });
+  };
+
+  const handleDeleteAllStudents = () => {
+    if (!firestore || !isAdmin || students.length === 0) return;
+    
+    students.forEach((student) => {
+      const docRef = doc(firestore, `users/${teacherUid}/students`, student.id);
+      deleteDoc(docRef).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete',
+        }));
+      });
+    });
+
+    toast({ 
+      title: "جاري حذف الكل", 
+      description: `يتم الآن حذف ${students.length} طالب من هذا الحساب.` 
+    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -121,13 +148,44 @@ export default function TeacherStudentsPage() {
              </div>
           </div>
         </PageHeader>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  disabled={students.length === 0}
+                  className="rounded-xl h-12 font-bold px-6 gap-2 shadow-lg shadow-rose-500/20"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  حذف الكل
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-[2.5rem] border-0 shadow-2xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-2xl font-black text-right">حذف كافة الطلاب؟</AlertDialogTitle>
+                  <AlertDialogDescription className="text-base text-right">
+                    أنت على وشك حذف <span className="font-bold text-rose-600">{students.length}</span> طالب بشكل نهائي من هذا الحساب. هذا الإجراء سيقوم بتصفير قائمة الطلاب تماماً.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-3 flex-row-reverse">
+                  <AlertDialogAction 
+                    className="rounded-2xl h-12 font-bold bg-rose-600 hover:bg-rose-700 flex-1" 
+                    onClick={handleDeleteAllStudents}
+                  >
+                    تأكيد حذف الكل
+                  </AlertDialogAction>
+                  <AlertDialogCancel className="rounded-2xl h-12 font-bold flex-1">إلغاء</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             <Button variant="secondary" onClick={() => copyToClipboard(teacherUid)} className="rounded-xl h-12 font-bold px-4">
                 <Copy className="h-4 w-4" />
             </Button>
+            
             <Button variant="outline" onClick={() => router.back()} className="rounded-xl h-12 font-bold px-6 border-primary/20 hover:bg-primary/5 transition-all">
                 <ArrowLeft className="ms-2 h-5 w-5" />
-                رجوع للوحة التحكم
+                رجوع
             </Button>
         </div>
       </div>

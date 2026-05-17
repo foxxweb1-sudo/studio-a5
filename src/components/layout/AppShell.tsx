@@ -95,12 +95,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
-                     <Link href="/account">
-                      <span className="font-bold">إدارة الحساب</span>
-                      <UserCircle2 className="mr-2 h-4 w-4 text-primary" />
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
                      <Link href="/settings">
                       <span className="font-bold">الإعدادات</span>
                       <Settings className="mr-2 h-4 w-4 text-primary" />

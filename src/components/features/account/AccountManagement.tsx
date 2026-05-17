@@ -187,8 +187,8 @@ export default function AccountManagement() {
                 </AvatarFallback>
             </Avatar>
             {userProfile?.isVerified && (
-                <div className="absolute bottom-2 right-2 bg-white dark:bg-slate-900 rounded-full p-1 shadow-lg border-2 border-slate-50 dark:border-slate-800 animate-in zoom-in duration-700">
-                    <BadgeCheck className="h-8 w-8 text-blue-500 fill-current" />
+                <div className="absolute bottom-2 right-2 bg-white dark:bg-slate-900 rounded-full p-0 shadow-lg border-2 border-slate-50 dark:border-slate-800 animate-in zoom-in duration-700">
+                    <BadgeCheck className="h-10 w-10 fill-blue-500 text-white" />
                 </div>
             )}
         </div>
@@ -196,7 +196,7 @@ export default function AccountManagement() {
             <h2 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
                 {user?.displayName || 'مستخدم جديد'}
                 {userProfile?.isVerified && (
-                    <BadgeCheck className="h-6 w-6 text-blue-500 fill-current animate-in zoom-in duration-500" />
+                    <BadgeCheck className="h-6 w-6 fill-blue-500 text-white animate-in zoom-in duration-500" />
                 )}
             </h2>
             <div className="flex flex-col gap-1 items-center">

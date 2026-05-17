@@ -103,8 +103,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </Avatar>
                   </Button>
                   {userProfile?.isVerified && (
-                    <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5 shadow-md z-10 animate-in zoom-in duration-300">
-                      <BadgeCheck className="h-4 w-4 text-blue-500 fill-current" />
+                    <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0 shadow-md z-10 animate-in zoom-in duration-300">
+                      <BadgeCheck className="h-4.5 w-4.5 fill-blue-500 text-white" />
                     </div>
                   )}
                 </div>
@@ -115,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
                       {userProfile?.isVerified && (
-                        <BadgeCheck className="h-4 w-4 text-blue-500 fill-current" />
+                        <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />
                       )}
                     </div>
                     <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>

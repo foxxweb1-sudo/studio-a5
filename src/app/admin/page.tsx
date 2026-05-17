@@ -349,15 +349,15 @@ export default function AdminPage() {
                                         <ShieldAlert className="h-3 w-3" />
                                     </div>
                                 ) : u.isVerified && (
-                                    <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5 shadow-md z-10">
-                                        <BadgeCheck className="h-5 w-5 text-blue-500 fill-current" />
+                                    <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0 shadow-md z-10">
+                                        <BadgeCheck className="h-5 w-5 fill-blue-500 text-white" />
                                     </div>
                                 )}
                               </div>
                               <div className="w-full overflow-hidden">
                                 <h4 className="font-bold text-sm truncate flex items-center justify-center gap-1">
                                     {u.displayName || 'مستخدم'}
-                                    {u.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500 fill-current" />}
+                                    {u.isVerified && <BadgeCheck className="h-3.5 w-3.5 fill-blue-500 text-white" />}
                                 </h4>
                                 <p className="text-[10px] text-muted-foreground font-mono truncate w-full">{u.email}</p>
                                 <code className="text-[8px] opacity-40 select-all block mt-1">{u.uid}</code>

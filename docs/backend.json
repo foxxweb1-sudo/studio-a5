@@ -31,6 +31,15 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of the last successful login."
+        },
+        "deletionRequestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when account deletion was requested."
+        },
+        "deletionReason": {
+          "type": "string",
+          "description": "The reason why the user decided to delete their account."
         }
       },
       "required": ["uid", "email"]

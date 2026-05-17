@@ -4,7 +4,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
+    // وظائف مساعدة
     function isSignedIn() {
       return request.auth != null;
     }
@@ -14,55 +14,58 @@ service cloud.firestore {
              request.auth.token.email.lower() == 'tech.support.app@gmail.com';
     }
 
-    // Rules for all users collection
+    // قواعد مجموعة المستخدمين والبيانات التابعة لهم
     match /users/{userId} {
-      allow read: if true; // Allow public read for parent portal to see teacher name
+      // السماح بالقراءة العامة لدعم بوابة ولي الأمر ورؤية اسم المدرس
+      allow read: if true; 
+      // المدرس أو المسؤول فقط يمكنهم التعديل
       allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+
+      // الطلاب التابعين للمعلم
+      match /students/{studentId} {
+        allow read: if true; // وصول عام لولي الأمر
+        allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      }
+
+      // سجلات الحضور
+      match /attendance/{attendanceId} {
+        allow read: if true; // وصول عام لولي الأمر
+        allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      }
+
+      // سجلات المدفوعات
+      match /payments/{paymentId} {
+        allow read: if true; // وصول عام لولي الأمر
+        allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      }
+
+      // الإعدادات الخاصة (مثل جدول المواعيد)
+      match /config/{document=**} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      }
     }
     
-    // Rules for deletion requests
+    // طلبات حذف الحساب
     match /deletionRequests/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow create, update, delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
-    // Rules for review permissions
+    // أذونات التقييم
     match /reviewPermissions/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow create, update: if isAdmin();
       allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
-    // Rules for reviews
+    // التقييمات العامة
     match /reviews/{reviewId} {
-      allow read: if true;
+      allow read, list: if true;
       allow create: if isSignedIn();
-      allow list: if true; 
       allow delete: if isAdmin();
     }
-    
-    // Rules for student-specific data (parent portal support)
-    match /users/{userId}/students/{studentId} {
-      allow read: if true; // Public read for parent portal via direct ID
-      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-    }
 
-    match /users/{userId}/attendance/{attendanceId} {
-      allow read, list: if true; // Allow anyone (parents) to see attendance lists
-      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-    }
-
-    match /users/{userId}/payments/{paymentId} {
-      allow read, list: if true; // Allow anyone (parents) to see payment lists
-      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-    }
-
-    // Rules for other user config
-    match /users/{userId}/config/{document=**} {
-      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-    }
-
-    // Collection Group Rules (keeping for admin overview)
+    // قواعد المجموعات (للإدارة العامة)
     match /{path=**}/students/{studentId} {
       allow read: if isAdmin();
     }
@@ -73,13 +76,13 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // Rules for contact messages
+    // رسائل اتصل بنا
     match /contactMessages/{messageId} {
       allow read, write, delete: if isAdmin();
       allow create: if true; 
     }
 
-    // Rules for global app configuration
+    // إعدادات التطبيق العامة
     match /appConfig/{configId} {
       allow read: if true;
       allow write: if isAdmin();

@@ -96,6 +96,11 @@
           "type": "string",
           "description": "Contact information for the student's parent or guardian."
         },
+        "badges": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Achievement badges assigned to the student."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",

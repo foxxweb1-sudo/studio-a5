@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, BadgeCheck, Clock, UserX, AlertCircle, Calendar } from 'lucide-react';
+import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, BadgeCheck, Clock, UserX, AlertCircle, Calendar, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import {
   Table,
@@ -66,10 +66,8 @@ export default function AttendanceRecorder() {
   const todayDate = new Date();
   const todayStr = format(todayDate, 'yyyy-MM-dd');
   const currentDayName = format(todayDate, 'EEEE');
-  // المقارنة تتم بصيغة 24 ساعة لضمان الصحة برمجياً
   const currentTimeStr = liveTime ? format(liveTime, 'HH:mm') : format(todayDate, 'HH:mm');
 
-  // الحصص النشطة الآن
   const activeSessionsNow = useMemo(() => {
     if (!schedule?.isActive || !schedule.sessions) return [];
     return schedule.sessions.filter(s => 
@@ -79,7 +77,6 @@ export default function AttendanceRecorder() {
     );
   }, [schedule, currentDayName, currentTimeStr]);
 
-  // الحصص التي انتهت اليوم (لتسجيل الغياب)
   const finishedSessionsToday = useMemo(() => {
     if (!schedule?.isActive || !schedule.sessions) return [];
     return schedule.sessions.filter(s => 
@@ -148,6 +145,17 @@ export default function AttendanceRecorder() {
     }
   };
 
+  const sendAttendanceWhatsapp = (student: any) => {
+    if (!student.parentPhone) {
+        toast({ variant: "destructive", title: "خطأ", description: "لا يوجد رقم هاتف لولي الأمر." });
+        return;
+    }
+    const msg = encodeURIComponent(`نحيطكم علماً بأن الطالب/ة ${student.name} قد وصل بسلام إلى الدرس اليوم بتاريخ ${todayStr} الساعة ${liveTime ? format(liveTime, 'hh:mm a', { locale: ar }) : ''}. نتمنى له دوام التوفيق.`);
+    const phone = student.parentPhone.replace(/\D/g, '');
+    const url = `https://wa.me/${phone.startsWith('20') ? phone : '20' + phone}?text=${msg}`;
+    window.open(url, '_blank');
+  };
+
   const onSubmit = (values: z.infer<typeof formSchema>) => recordAttendance(values.studentCode);
   
   const recordsToday = attendance.filter((a) => a.date === todayStr);
@@ -165,7 +173,6 @@ export default function AttendanceRecorder() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* شريط المواعيد والحالة مع الساعة الحية */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className={`lg:col-span-3 p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeSessionsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
             <div className="flex items-center gap-4 w-full md:w-auto text-center md:text-right">
@@ -212,7 +219,6 @@ export default function AttendanceRecorder() {
           </Card>
       </div>
 
-      {/* قسم الحصص المنتهية لتسجيل الغياب */}
       {schedule?.isActive && finishedSessionsToday.length > 0 && (
           <div className="bg-amber-50 border-2 border-amber-100 p-5 rounded-[2rem] shadow-sm animate-in zoom-in-95 duration-500">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -299,7 +305,7 @@ export default function AttendanceRecorder() {
                 <div className="p-3 bg-white/20 rounded-2xl">
                     <PartyPopper className="h-6 w-6" />
                 </div>
-                <div>
+                <div className="flex-grow">
                     <p className="text-[10px] font-bold uppercase opacity-80 tracking-widest">آخر تسجيل ناجح</p>
                     <h4 className="font-black text-xl">{lastAttended}</h4>
                 </div>
@@ -338,6 +344,7 @@ export default function AttendanceRecorder() {
                             <TableHead className="text-right font-black px-6">الاسم</TableHead>
                             <TableHead className="text-right font-black">الصف</TableHead>
                             <TableHead className="text-center font-black">الحالة</TableHead>
+                            <TableHead className="text-center font-black">تنبيه</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -352,6 +359,16 @@ export default function AttendanceRecorder() {
                                     ) : (
                                         <Badge className="bg-rose-500 hover:bg-rose-600 rounded-lg">غائب</Badge>
                                     )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="text-emerald-600 hover:bg-emerald-50 rounded-full"
+                                        onClick={() => sendAttendanceWhatsapp(student)}
+                                    >
+                                        <MessageCircle className="h-4 w-4" />
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                             ))}

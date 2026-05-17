@@ -20,7 +20,8 @@ import {
   Calendar,
   AlertCircle,
   Clock,
-  Sparkles
+  Sparkles,
+  Trophy
 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -30,6 +31,13 @@ import { useAppConfig } from '@/hooks/use-app-config';
 import { useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 
+const BADGE_MAP: Record<string, { label: string; color: string; icon: any }> = {
+    'متفوق': { label: 'طالب متفوق', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Trophy },
+    'منضبط': { label: 'طالب منضبط', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: CheckCircle2 },
+    'مشارك': { label: 'مشارك متميز', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Sparkles },
+    'مبادر': { label: 'طالب مبادر', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Award },
+};
+
 export default function ParentPortalPage() {
   const params = useParams();
   const teacherId = params.teacherId as string;
@@ -37,19 +45,16 @@ export default function ParentPortalPage() {
   const firestore = useFirestore();
   const { config } = useAppConfig();
 
-  // 1. جلب بيانات المدرس
   const teacherRef = useMemoFirebase(() => 
     firestore ? doc(firestore, 'users', teacherId) : null, 
   [firestore, teacherId]);
   const { data: teacher, isLoading: teacherLoading } = useDoc<any>(teacherRef);
 
-  // 2. جلب بيانات الطالب
   const studentRef = useMemoFirebase(() => 
     firestore ? doc(firestore, `users/${teacherId}/students`, studentId) : null, 
   [firestore, teacherId, studentId]);
   const { data: student, isLoading: studentLoading } = useDoc<any>(studentRef);
 
-  // 3. جلب سجل الحضور
   const attendanceQuery = useMemoFirebase(() => 
     firestore ? query(
       collection(firestore, `users/${teacherId}/attendance`), 
@@ -59,7 +64,6 @@ export default function ParentPortalPage() {
     ) : null, [firestore, teacherId, studentId]);
   const { data: attendance, isLoading: attendanceLoading } = useCollection<any>(attendanceQuery);
 
-  // 4. جلب سجل المدفوعات
   const paymentsQuery = useMemoFirebase(() => 
     firestore ? query(
       collection(firestore, `users/${teacherId}/payments`), 
@@ -69,7 +73,6 @@ export default function ParentPortalPage() {
     ) : null, [firestore, teacherId, studentId]);
   const { data: payments, isLoading: paymentsLoading } = useCollection<any>(paymentsQuery);
 
-  // حساب الإحصائيات الذكية
   const stats = useMemo(() => {
     if (!attendance || attendance.length === 0) return { rate: 0, present: 0, absent: 0, total: 0, status: 'لا توجد بيانات' };
     const presentCount = attendance.filter((a: any) => a.status === 'present').length;
@@ -124,7 +127,6 @@ export default function ParentPortalPage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 px-4 sm:px-6 font-body" dir="rtl">
       <div className="max-w-5xl mx-auto pt-8 space-y-8">
         
-        {/* الهيدر المطور */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
             <div className="flex items-center gap-4">
                 <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
@@ -141,9 +143,31 @@ export default function ParentPortalPage() {
             </div>
         </div>
 
-        {/* لوحة التحكم الذكية */}
+        {/* قسم الأوسمة والتميز */}
+        {student.badges && student.badges.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 animate-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center gap-2 px-4">
+                    <Trophy className="h-5 w-5 text-amber-500" />
+                    <h3 className="font-black text-lg text-slate-800">إنجازات الطالب المتميزة</h3>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                    {student.badges.map(badgeId => {
+                        const info = BADGE_MAP[badgeId];
+                        if (!info) return null;
+                        return (
+                            <div key={badgeId} className={`flex items-center gap-3 px-6 py-4 rounded-[2rem] border-2 shadow-sm ${info.color} border-current/10 hover-lift`}>
+                                <div className="p-2 bg-white/50 rounded-xl">
+                                    <info.icon className="h-6 w-6" />
+                                </div>
+                                <span className="font-black text-sm">{info.label}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* بطاقة الطالب */}
             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-primary text-primary-foreground overflow-hidden relative group">
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700" />
                 <CardContent className="p-8 flex flex-col items-center text-center justify-center h-full relative z-10">
@@ -158,7 +182,6 @@ export default function ParentPortalPage() {
                 </CardContent>
             </Card>
 
-            {/* إحصائيات الحضور */}
             <Card className="border-0 shadow-lg rounded-[2.5rem] bg-white overflow-hidden hover-lift">
                 <CardContent className="p-8 space-y-6">
                     <div className="flex items-center justify-between">
@@ -189,7 +212,6 @@ export default function ParentPortalPage() {
                 </CardContent>
             </Card>
 
-            {/* الوضع المالي */}
             <Card className="border-0 shadow-lg rounded-[2.5rem] bg-white overflow-hidden hover-lift">
                 <CardContent className="p-8 space-y-6">
                     <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl w-fit">
@@ -220,9 +242,7 @@ export default function ParentPortalPage() {
             </Card>
         </div>
 
-        {/* الجداول التفصيلية */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* سجل الحضور الأخير */}
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col">
                 <CardHeader className="p-8 border-b bg-slate-50/50">
                     <div className="flex items-center gap-3">
@@ -278,7 +298,6 @@ export default function ParentPortalPage() {
                 </CardContent>
             </Card>
 
-            {/* سجل المدفوعات */}
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col">
                 <CardHeader className="p-8 border-b bg-slate-50/50">
                     <div className="flex items-center gap-3">
@@ -326,7 +345,6 @@ export default function ParentPortalPage() {
             </Card>
         </div>
 
-        {/* الفوتر التقني */}
         <div className="text-center pt-16 pb-8 space-y-4">
             <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Powered by</span>

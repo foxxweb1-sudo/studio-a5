@@ -4,6 +4,7 @@
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { GlobalConfig } from "@/lib/definitions";
 import { doc, setDoc } from "firebase/firestore";
+import { useMemo } from 'react';
 
 export const DEFAULT_LOGO = "https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19";
 export const DEFAULT_NAME = "الحضور";
@@ -20,13 +21,15 @@ export function useAppConfig() {
     await setDoc(configRef, newConfig, { merge: true });
   };
 
+  const memoizedConfig = useMemo(() => ({
+    appName: config?.appName || DEFAULT_NAME,
+    appLogo: config?.appLogo || DEFAULT_LOGO,
+    loginBg: config?.loginBg || DEFAULT_LOGIN_BG,
+    signupBg: config?.signupBg || DEFAULT_SIGNUP_BG,
+  }), [config?.appName, config?.appLogo, config?.loginBg, config?.signupBg]);
+
   return {
-    config: {
-      appName: config?.appName || DEFAULT_NAME,
-      appLogo: config?.appLogo || DEFAULT_LOGO,
-      loginBg: config?.loginBg || DEFAULT_LOGIN_BG,
-      signupBg: config?.signupBg || DEFAULT_SIGNUP_BG,
-    },
+    config: memoizedConfig,
     isLoading,
     updateConfig
   };

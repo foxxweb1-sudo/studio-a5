@@ -40,11 +40,22 @@ export default function AdminAppSettingsPage() {
 
   useEffect(() => {
     if (config) {
-      setFormData({
-        appName: config.appName || '',
-        appLogo: config.appLogo || '',
-        loginBg: config.loginBg || '',
-        signupBg: config.signupBg || ''
+      setFormData(prev => {
+        // التحقق من القيم الحالية لتجنب التحديثات المتكررة التي تسبب Loop
+        if (
+          prev.appName === (config.appName || '') &&
+          prev.appLogo === (config.appLogo || '') &&
+          prev.loginBg === (config.loginBg || '') &&
+          prev.signupBg === (config.signupBg || '')
+        ) {
+          return prev;
+        }
+        return {
+          appName: config.appName || '',
+          appLogo: config.appLogo || '',
+          loginBg: config.loginBg || '',
+          signupBg: config.signupBg || ''
+        };
       });
     }
   }, [config]);
@@ -90,7 +101,6 @@ export default function AdminAppSettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* إعدادات الموقع الأساسية */}
         <Card className="border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden">
           <CardHeader className="bg-primary/5 border-b border-primary/10">
             <CardTitle className="text-xl flex items-center gap-2">
@@ -125,7 +135,6 @@ export default function AdminAppSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* إعدادات الخلفيات */}
         <Card className="border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden">
           <CardHeader className="bg-emerald-500/5 border-b border-emerald-500/10">
             <CardTitle className="text-xl flex items-center gap-2">

@@ -1,14 +1,15 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
 import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock } from 'lucide-react';
+import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 import { ADMIN_EMAIL } from '@/lib/constants';
 
 const stages = [
@@ -40,6 +41,14 @@ export default function Home() {
   const { students } = useStudents();
   const { attendance } = useAttendance();
   const { payments } = usePayments();
+
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -85,6 +94,35 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-10 py-4">
+      {/* قسم الوقت والترحيب */}
+      {now && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
+          <Card className="md:col-span-2 border-0 shadow-lg bg-gradient-to-r from-primary to-blue-600 text-white rounded-[2rem] overflow-hidden relative group">
+            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
+              <Calendar className="w-32 h-32" />
+            </div>
+            <CardContent className="p-8 flex flex-col justify-center h-full relative z-10">
+              <h2 className="text-2xl font-black mb-2">أهلاً بك، {user?.displayName || 'أستاذنا'} 👋</h2>
+              <p className="text-blue-100 font-bold text-sm">نتمنى لك يوماً دراسياً موفقاً ومليئاً بالإنجازات.</p>
+              <div className="mt-6 flex items-center gap-3 bg-white/10 w-fit px-5 py-2 rounded-2xl backdrop-blur-md border border-white/10">
+                 <Calendar className="h-4 w-4 text-blue-200" />
+                 <span className="text-sm font-black">{format(now, 'eeee، d MMMM yyyy', { locale: ar })}</span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden flex flex-col items-center justify-center p-6 text-center border-b-4 border-b-primary">
+            <div className="p-3 bg-primary/10 rounded-2xl mb-2">
+              <Clock className="h-6 w-6 text-primary" />
+            </div>
+            <div className="text-4xl font-black tracking-tighter text-slate-800 dark:text-white tabular-nums">
+              {format(now, 'HH:mm:ss')}
+            </div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">الوقت الآن بتوقيتك المحلي</p>
+          </Card>
+        </div>
+      )}
+
       <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 md:p-12 text-white shadow-2xl">
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
           <div className="space-y-6 text-center lg:text-right">

@@ -1,8 +1,9 @@
+
 'use client';
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Settings, Home } from 'lucide-react';
+import { ShieldCheck, Settings, Home, Clock } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import Link from 'next/link';
@@ -19,10 +20,19 @@ import {
 import Footer from './Footer';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import ReviewPopup from '../features/reviews/ReviewPopup';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const { config } = useAppConfig();
+  const [time, setTime] = React.useState<Date | null>(null);
+
+  React.useEffect(() => {
+    setTime(new Date());
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const isAdmin = React.useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
@@ -61,6 +71,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {config.appName}
               </h1>
             </Link>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 px-4 py-1.5 rounded-full border border-slate-100 dark:border-slate-800">
+             <Clock className="h-3.5 w-3.5 text-primary" />
+             <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 tabular-nums">
+                {time ? format(time, 'HH:mm:ss') : '--:--:--'}
+             </span>
+             <span className="text-[10px] font-bold text-slate-400 px-2 border-r border-slate-200 dark:border-slate-700">
+                {time ? format(time, 'eeee', { locale: ar }) : ''}
+             </span>
           </div>
 
           <div className="flex items-center gap-3">

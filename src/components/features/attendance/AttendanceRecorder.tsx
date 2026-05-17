@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, BadgeCheck, Clock, UserX, AlertCircle } from 'lucide-react';
+import { ar } from 'date-fns/locale';
+import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, BadgeCheck, Clock, UserX, AlertCircle, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import {
   Table,
@@ -47,6 +48,13 @@ export default function AttendanceRecorder() {
   const { toast } = useToast();
   const [lastAttended, setLastAttended] = useState<string | null>(null);
   const [isMarkingAbsence, setIsMarkingAbsence] = useState(false);
+  const [liveTime, setLiveTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setLiveTime(new Date());
+    const timer = setInterval(() => setLiveTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,7 +66,7 @@ export default function AttendanceRecorder() {
   const todayDate = new Date();
   const todayStr = format(todayDate, 'yyyy-MM-dd');
   const currentDayName = format(todayDate, 'EEEE');
-  const currentTimeStr = format(todayDate, 'HH:mm');
+  const currentTimeStr = liveTime ? format(liveTime, 'HH:mm') : format(todayDate, 'HH:mm');
 
   // الحصص النشطة الآن
   const activeSessionsNow = useMemo(() => {
@@ -156,74 +164,82 @@ export default function AttendanceRecorder() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* شريط المواعيد والحالة */}
-      {schedule?.isActive && (
-          <div className="flex flex-col gap-4">
-              <div className={`p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeSessionsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
-                <div className="flex items-center gap-4 w-full md:w-auto text-center md:text-right">
-                    {activeSessionsNow.length > 0 ? (
-                        <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
-                            <BadgeCheck className="h-6 w-6" />
-                        </div>
-                    ) : (
-                        <div className="p-3 bg-slate-400 rounded-2xl text-white">
-                            <Clock className="h-6 w-6" />
-                        </div>
-                    )}
-                    <div>
-                        <h5 className={`font-black text-lg ${activeSessionsNow.length > 0 ? 'text-emerald-700' : 'text-slate-600'}`}>
-                            {activeSessionsNow.length > 0 ? 'وقت الحصص الجارية الآن' : 'لا توجد حصص جارية حالياً'}
-                        </h5>
-                        <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
-                            {activeSessionsNow.length > 0 ? activeSessionsNow.map(s => (
-                                <Badge key={s.id} variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold">
-                                    {s.grade} ({s.startTime}-{s.endTime})
-                                </Badge>
-                            )) : (
-                                <span className="text-xs font-bold text-slate-400 italic">بإمكانك إضافة حصص من صفحة "مواعيد العمل"</span>
-                            )}
-                        </div>
+      {/* شريط المواعيد والحالة مع الساعة الحية */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className={`lg:col-span-3 p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeSessionsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
+            <div className="flex items-center gap-4 w-full md:w-auto text-center md:text-right">
+                {activeSessionsNow.length > 0 ? (
+                    <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
+                        <BadgeCheck className="h-6 w-6" />
+                    </div>
+                ) : (
+                    <div className="p-3 bg-slate-400 rounded-2xl text-white">
+                        <Clock className="h-6 w-6" />
+                    </div>
+                )}
+                <div>
+                    <h5 className={`font-black text-lg ${activeSessionsNow.length > 0 ? 'text-emerald-700' : 'text-slate-600'}`}>
+                        {activeSessionsNow.length > 0 ? 'وقت الحصص الجارية الآن' : 'لا توجد حصص جارية حالياً'}
+                    </h5>
+                    <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
+                        {activeSessionsNow.length > 0 ? activeSessionsNow.map(s => (
+                            <Badge key={s.id} variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold">
+                                {s.grade} ({s.startTime}-{s.endTime})
+                            </Badge>
+                        )) : (
+                            <span className="text-xs font-bold text-slate-400 italic">بإمكانك إضافة حصص من صفحة "مواعيد العمل"</span>
+                        )}
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{DAY_MAP[currentDayName]} | {currentTimeStr}</span>
-                    <Badge variant={activeSessionsNow.length > 0 ? "default" : "secondary"} className="rounded-xl px-4 py-1.5 font-black">
-                        {activeSessionsNow.length > 0 ? 'الاستقبال متاح' : 'الاستقبال مغلق'}
-                    </Badge>
+            </div>
+            <div className="flex items-center gap-4">
+                <div className="hidden md:flex flex-col items-end">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{DAY_MAP[currentDayName]}</span>
+                    <span className="text-xs font-bold text-slate-600">{liveTime ? format(liveTime, 'd MMMM', { locale: ar }) : ''}</span>
                 </div>
-              </div>
+                <Badge variant={activeSessionsNow.length > 0 ? "default" : "secondary"} className="rounded-xl px-4 py-1.5 font-black h-10">
+                    {activeSessionsNow.length > 0 ? 'الاستقبال متاح' : 'الاستقبال مغلق'}
+                </Badge>
+            </div>
+          </div>
 
-              {/* قسم الحصص المنتهية لتسجيل الغياب */}
-              {finishedSessionsToday.length > 0 && (
-                  <div className="bg-amber-50 border-2 border-amber-100 p-5 rounded-[2rem] shadow-sm animate-in zoom-in-95 duration-500">
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                              <div className="p-2 bg-amber-500 text-white rounded-xl">
-                                  <AlertCircle className="h-5 w-5" />
-                              </div>
-                              <div className="text-right">
-                                  <h4 className="font-black text-amber-900 text-sm">حصص انتهى وقتها</h4>
-                                  <p className="text-[10px] text-amber-700 font-bold">يمكنك الآن تسجيل "غائب" لمن لم يحضر.</p>
-                              </div>
-                          </div>
-                          <div className="flex flex-wrap gap-2 justify-center">
-                              {finishedSessionsToday.map(s => (
-                                  <Button 
-                                    key={s.id} 
-                                    size="sm" 
-                                    variant="outline" 
-                                    className="rounded-xl border-amber-200 bg-white text-amber-700 font-bold gap-2 hover:bg-amber-100"
-                                    onClick={() => handleMarkAbsentees(s.grade)}
-                                    disabled={isMarkingAbsence}
-                                  >
-                                      {isMarkingAbsence ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
-                                      غياب {s.grade}
-                                  </Button>
-                              ))}
-                          </div>
+          <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 rounded-[2rem] flex flex-col items-center justify-center p-4 text-center border-b-4 border-b-primary overflow-hidden">
+             <div className="text-2xl font-black tracking-tighter text-primary tabular-nums">
+                {liveTime ? format(liveTime, 'HH:mm:ss') : '--:--:--'}
+             </div>
+             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">توقيت التسجيل</p>
+          </Card>
+      </div>
+
+      {/* قسم الحصص المنتهية لتسجيل الغياب */}
+      {schedule?.isActive && finishedSessionsToday.length > 0 && (
+          <div className="bg-amber-50 border-2 border-amber-100 p-5 rounded-[2rem] shadow-sm animate-in zoom-in-95 duration-500">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-500 text-white rounded-xl">
+                          <AlertCircle className="h-5 w-5" />
+                      </div>
+                      <div className="text-right">
+                          <h4 className="font-black text-amber-900 text-sm">حصص انتهى وقتها</h4>
+                          <p className="text-[10px] text-amber-700 font-bold">يمكنك الآن تسجيل "غائب" لمن لم يحضر.</p>
                       </div>
                   </div>
-              )}
+                  <div className="flex flex-wrap gap-2 justify-center">
+                      {finishedSessionsToday.map(s => (
+                          <Button 
+                            key={s.id} 
+                            size="sm" 
+                            variant="outline" 
+                            className="rounded-xl border-amber-200 bg-white text-amber-700 font-bold gap-2 hover:bg-amber-100"
+                            onClick={() => handleMarkAbsentees(s.grade)}
+                            disabled={isMarkingAbsence}
+                          >
+                              {isMarkingAbsence ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
+                              غياب {s.grade}
+                          </Button>
+                      ))}
+                  </div>
+              </div>
           </div>
       )}
 

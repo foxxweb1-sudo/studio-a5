@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -31,9 +30,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const contactFormSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
-  email: z.string().email('البريد الإلكتروني غير صحيح.'),
+  email: z.string().email('البريد الإلكتروني غير صحيح.').optional().or(z.string().length(0)),
   countryCode: z.string().min(1, 'مطلوب'),
-  whatsapp: z.string().min(8, 'رقم الواتساب غير صحيح.'),
+  whatsapp: z.string().min(8, 'رقم الواتساب إلزامي وغير صحيح.'),
   message: z.string().min(10, 'الرسالة يجب أن تكون 10 أحرف على الأقل.'),
 });
 
@@ -62,16 +61,16 @@ export default function ContactPage() {
       
       await addDoc(collection(firestore, 'contactMessages'), {
         name: values.name,
-        email: values.email,
+        email: values.email || 'غير متوفر',
         whatsapp: fullWhatsapp,
         message: values.message,
-        status: 'pending', // الحالة الافتراضية
+        status: 'pending',
         createdAt: serverTimestamp(),
       });
       
       toast({
         title: 'تم إرسال رسالتك',
-        description: 'شكراً لتواصلك معنا، سنرد عليك في أقرب وقت.',
+        description: 'شكراً لتواصلك معنا، سنرد عليك في أقرب وقت عبر الواتساب.',
       });
       form.reset();
     } catch (error) {
@@ -164,34 +163,19 @@ export default function ContactPage() {
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-right block">الاسم</FormLabel>
-                          <FormControl>
-                            <Input placeholder="أدخل اسمك" className="rounded-xl h-12 text-right" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-right block">البريد الإلكتروني</FormLabel>
-                          <FormControl>
-                            <Input placeholder="name@example.com" className="rounded-xl h-12 text-right font-mono" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-right block">الاسم</FormLabel>
+                        <FormControl>
+                          <Input placeholder="أدخل اسمك" className="rounded-xl h-12 text-right" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <div className="grid grid-cols-3 gap-2">
                     <FormField
@@ -224,7 +208,7 @@ export default function ContactPage() {
                       name="whatsapp"
                       render={({ field }) => (
                         <FormItem className="col-span-2">
-                          <FormLabel className="text-right block">رقم الواتساب</FormLabel>
+                          <FormLabel className="text-right block font-bold text-emerald-600">رقم الواتساب (إلزامي)</FormLabel>
                           <FormControl>
                             <div className="relative">
                                <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
@@ -236,6 +220,20 @@ export default function ContactPage() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-right block">البريد الإلكتروني (اختياري)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="name@example.com" className="rounded-xl h-12 text-right font-mono" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}

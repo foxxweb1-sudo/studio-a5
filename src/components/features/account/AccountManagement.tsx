@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
@@ -186,6 +186,24 @@ export default function AccountManagement() {
         <div className="text-center space-y-1">
             <h2 className="text-2xl font-black tracking-tight">{user?.displayName || 'مستخدم جديد'}</h2>
             <p className="text-sm text-muted-foreground font-medium">{user?.email}</p>
+            
+            <div className="flex items-center justify-center gap-2 mt-4 group/uid">
+                <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                    <Fingerprint className="h-3 w-3 text-slate-400" />
+                    <code className="text-[10px] font-mono text-slate-500 tracking-tighter select-all">
+                        {user?.uid}
+                    </code>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 text-slate-400 hover:text-primary transition-colors"
+                      onClick={handleCopyUid}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                </div>
+            </div>
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">معرف المستخدم الفريد (UID)</p>
         </div>
       </div>
 
@@ -332,4 +350,3 @@ export default function AccountManagement() {
     </div>
   );
 }
-

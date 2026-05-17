@@ -13,6 +13,7 @@ import {
   BarChart3,
   CreditCard,
   CalendarCheck,
+  Clock,
 } from "lucide-react";
 
 const navItems = [
@@ -25,6 +26,11 @@ const navItems = [
     href: "/attendance",
     icon: CalendarCheck,
     label: "تسجيل الحضور",
+  },
+  {
+    href: "/schedule",
+    icon: Clock,
+    label: "مواعيد العمل",
   },
   {
     href: "/students",

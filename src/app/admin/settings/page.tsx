@@ -354,18 +354,19 @@ export default function AdminAppSettingsPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="fixed bottom-10 left-0 right-0 z-50 flex justify-center px-4">
+      {/* زر الحفظ الثابت في أسفل الشاشة */}
+      <div className="fixed bottom-10 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
         <Button 
           onClick={handleSave} 
           disabled={isSaving}
-          className="w-full max-w-md h-14 rounded-2xl font-black text-lg gap-3 shadow-xl hover-lift bg-primary text-white"
+          className="w-full max-w-md h-14 rounded-2xl font-black text-lg gap-3 shadow-2xl hover-lift bg-primary text-white pointer-events-auto"
         >
           {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
           حفظ كافة الإعدادات
         </Button>
       </div>
 
-      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4">
+      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4 mb-24">
         <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <h4 className="font-bold text-amber-900 text-sm">ملاحظة هامة</h4>

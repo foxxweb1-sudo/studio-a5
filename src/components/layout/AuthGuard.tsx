@@ -58,8 +58,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       const diffMs = now.getTime() - requestedAt.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
+      // إذا كان الطلب قد تم إنشاؤه للتو (أقل من دقيقة)، نتجاهل الإلغاء لنسمح للمستخدم بتسجيل الخروج
+      if (diffMs < 60000) {
+        return;
+      }
+
       if (diffDays < 7) {
-        // المستخدم دخل خلال فترة السماح (أقل من 7 أيام) -> نلغي الطلب ونستعيد الحساب
+        // المستخدم دخل بعد فترة (أكثر من دقيقة وأقل من 7 أيام) -> نعتبره عودة ونلغي الطلب
         const dRef = doc(firestore, 'deletionRequests', user.uid);
         hasCheckedDeletion.current = true; 
         
@@ -83,25 +88,24 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!user || !firestore) return;
     setIsFinalizingDeletion(true);
     try {
-      // محاولة مسح المستخدم من Firebase Auth (تحتاج دخول حديث)
+      // محاولة مسح المستخدم من Firebase Auth
       try {
         await deleteUser(user);
         
-        // إذا نجح حذف الـ Auth، نمسح بيانات Firestore
+        // مسح بيانات Firestore
         await deleteDoc(doc(firestore, 'deletionRequests', user.uid));
         await deleteDoc(doc(firestore, 'users', user.uid));
 
         toast({
           title: "تم مسح الحساب نهائياً",
-          description: "انتهت فترة السماح وتم مسح كافة بياناتك من النظام بنجاح.",
+          description: "انتهت فترة السماح وتم مسح كافة بياناتك من النظام.",
         });
       } catch (authError: any) {
-        // إذا فشل بسبب "دخول قديم"، لا نحذف البيانات من Firestore لكي يتمكن من المحاولة لاحقاً
         if (authError.code === 'auth/requires-recent-login') {
             toast({
                 variant: "destructive",
                 title: "تأكيد أمني مطلوب",
-                description: "انتهت مهلة الحذف (7 أيام)، ولكن جوجل تطلب إعادة تسجيل دخولك الآن لحذف البريد نهائياً.",
+                description: "انتهت المهلة، يرجى إعادة تسجيل الدخول لمرة أخيرة لحذف بريدك نهائياً.",
             });
             await signOut(auth);
         } else {
@@ -116,7 +120,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // مزامنة بيانات المستخدم الأساسية عند كل دخول
+  // مزامنة بيانات المستخدم الأساسية عند كل دخول (فقط إذا لم يكن هناك طلب حذف نشط)
   useEffect(() => {
     if (user && firestore && !deletionRequest) {
       const uRef = doc(firestore, 'users', user.uid);
@@ -155,7 +159,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         </div>
         <h1 className="text-4xl font-black mb-4">تم حظرك 🚫</h1>
         <p className="text-slate-400 max-w-md mb-8 leading-relaxed">
-          عذراً، لقد تم منع حسابك من الوصول إلى النظام من قبل الإدارة. يرجى التواصل مع الدعم الفني إذا كنت تعتقد أن هذا خطأ.
+          عذراً، لقد تم منع حسابك من الوصول إلى النظام.
         </p>
         <Button 
           variant="outline" 
@@ -181,3 +185,4 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   return null;
 }
+

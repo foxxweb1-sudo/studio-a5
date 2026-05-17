@@ -1,14 +1,13 @@
 
 'use client';
 
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -127,11 +126,10 @@ export default function AccountManagement() {
     if (!user || !firestore) return;
     setIsRequestingDeletion(true);
     try {
-      // جلب عدد الطلاب قبل الحذف للعرض لدى المشرف
+      // جلب عدد الطلاب قبل الحذف
       const studentsSnap = await getDocs(collection(firestore, `users/${user.uid}/students`));
       const studentCount = studentsSnap.size;
 
-      // إنشاء وثيقة في قاعدة طلبات الحذف المستقلة
       const dRef = doc(firestore, 'deletionRequests', user.uid);
       await setDoc(dRef, { 
         uid: user.uid,
@@ -145,17 +143,17 @@ export default function AccountManagement() {
 
       toast({
         title: 'تم جدولة الحذف',
-        description: 'سيتم حذف حسابك نهائياً بعد 7 أيام. يمكنك التراجع عن طريق تسجيل الدخول مجدداً.',
+        description: 'سيتم الحذف نهائياً بعد 7 أيام. جاري تسجيل خروجك الآن.',
       });
       
-      setTimeout(() => signOut(auth), 2000);
+      // ننتظر قليلاً ثم نسجل الخروج لإعطاء Firestore وقت للتحديث
+      setTimeout(() => signOut(auth), 1500);
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'خطأ',
         description: error.message || 'فشل طلب حذف الحساب.',
       });
-    } finally {
       setIsRequestingDeletion(false);
     }
   };
@@ -260,15 +258,6 @@ export default function AccountManagement() {
                 طلب رابط التغيير
               </Button>
             </div>
-            <div className="pt-4 border-t border-dashed">
-                 <h4 className="font-bold text-sm mb-2">معرف المستخدم (UID)</h4>
-                 <div className="flex items-center gap-2 p-3 bg-slate-900 text-slate-100 rounded-xl">
-                   <Input readOnly value={user?.uid ?? ''} className="flex-grow bg-transparent border-0 font-mono text-[10px] sm:text-xs text-emerald-400 focus-visible:ring-0 h-auto p-0"/>
-                   <Button variant="ghost" size="icon" onClick={handleCopyUid} className="h-8 w-8 hover:bg-white/10 text-slate-300">
-                    <Copy className="h-4 w-4"/>
-                   </Button>
-                 </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -297,47 +286,50 @@ export default function AccountManagement() {
               تسجيل الخروج
             </Button>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full h-12 rounded-xl font-bold" disabled={isRequestingDeletion || !!deletionRequest}>
-                  {isRequestingDeletion ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  {deletionRequest ? "جاري انتظار الحذف..." : "حذف الحساب نهائياً"}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-[2.5rem] max-w-md">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-right text-2xl font-black">لماذا تريد المغادرة؟</AlertDialogTitle>
-                  <AlertDialogDescription className="text-right font-medium">
-                    يؤسفنا رحيلك. يرجى اختيار سبب الحذف لمساعدتنا في تحسين خدماتنا:
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                
-                <div className="py-4">
-                  <RadioGroup defaultValue={DELETION_REASONS[0]} onValueChange={setSelectedReason} className="space-y-3">
-                    {DELETION_REASONS.map((reason, idx) => (
-                      <div key={idx} className="flex items-center justify-end gap-3 p-3 rounded-2xl border hover:bg-slate-50 cursor-pointer transition-colors">
-                        <Label htmlFor={`reason-${idx}`} className="flex-grow text-right font-bold cursor-pointer">{reason}</Label>
-                        <RadioGroupItem value={reason} id={`reason-${idx}`} />
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
+            {!deletionRequest && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full h-12 rounded-xl font-bold" disabled={isRequestingDeletion}>
+                    {isRequestingDeletion ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    حذف الحساب نهائياً
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-[2.5rem] max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-right text-2xl font-black">لماذا تريد المغادرة؟</AlertDialogTitle>
+                    <AlertDialogDescription className="text-right font-medium">
+                      يؤسفنا رحيلك. يرجى اختيار سبب الحذف لمساعدتنا في تحسين خدماتنا:
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  
+                  <div className="py-4">
+                    <RadioGroup defaultValue={DELETION_REASONS[0]} onValueChange={setSelectedReason} className="space-y-3">
+                      {DELETION_REASONS.map((reason, idx) => (
+                        <div key={idx} className="flex items-center justify-end gap-3 p-3 rounded-2xl border hover:bg-slate-50 cursor-pointer transition-colors">
+                          <Label htmlFor={`reason-${idx}`} className="flex-grow text-right font-bold cursor-pointer">{reason}</Label>
+                          <RadioGroupItem value={reason} id={`reason-${idx}`} />
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
 
-                <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 mb-4">
-                   <p className="text-[11px] text-rose-700 text-right leading-relaxed font-bold">
-                     * سيتم وضع حسابك في وضع "الانتظار" لمدة 7 أيام قبل الحذف النهائي.
-                   </p>
-                </div>
+                  <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 mb-4">
+                    <p className="text-[11px] text-rose-700 text-right leading-relaxed font-bold">
+                      * سيتم جدولة حذف حسابك لمدة 7 أيام. العودة للدخول تلغي هذا الإجراء.
+                    </p>
+                  </div>
 
-                <AlertDialogFooter className="flex-row-reverse gap-2">
-                  <AlertDialogAction onClick={handleRequestDeletion} className="bg-rose-600 hover:bg-rose-700 rounded-xl flex-grow h-12">تأكيد طلب الحذف</AlertDialogAction>
-                  <AlertDialogCancel className="rounded-xl flex-grow h-12">إلغاء</AlertDialogCancel>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  <AlertDialogFooter className="flex-row-reverse gap-2">
+                    <AlertDialogAction onClick={handleRequestDeletion} className="bg-rose-600 hover:bg-rose-700 rounded-xl flex-grow h-12">تأكيد طلب الحذف</AlertDialogAction>
+                    <AlertDialogCancel className="rounded-xl flex-grow h-12">إلغاء</AlertDialogCancel>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
   );
 }
+

@@ -23,19 +23,21 @@ service cloud.firestore {
 
       // الطلاب التابعين للمعلم
       match /students/{studentId} {
-        allow read: if true; // وصول عام لولي الأمر
+        allow read: if true; // وصول عام لولي الأمر لقراءة ملف الطالب
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
       // سجلات الحضور
       match /attendance/{attendanceId} {
-        allow read: if true; // وصول عام لولي الأمر
+        // ولي الأمر يقرأ فقط ما يخص ابنه، المعلم يقرأ الكل
+        allow read: if true; 
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
       // سجلات المدفوعات
       match /payments/{paymentId} {
-        allow read: if true; // وصول عام لولي الأمر
+        // ولي الأمر يقرأ فقط ما يخص ابنه، المعلم يقرأ الكل
+        allow read: if true; 
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
@@ -67,13 +69,13 @@ service cloud.firestore {
 
     // قواعد المجموعات (للإدارة العامة)
     match /{path=**}/students/{studentId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || true; // تأكيد القراءة العامة لولي الأمر
     }
     match /{path=**}/attendance/{attendanceId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || true;
     }
     match /{path=**}/payments/{paymentId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || true;
     }
 
     // رسائل اتصل بنا

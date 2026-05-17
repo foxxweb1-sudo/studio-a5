@@ -22,22 +22,16 @@ interface OutstandingPaymentsProps {
   gradeFilter?: string;
 }
 
-/**
- * دالة ذكية لجلب الشهور المطلوبة بناءً على نطاق (البداية والنهاية)
- * وتحسب الشهور التي مرت فعلياً حتى اللحظة فقط.
- */
 const getRequiredMonths = (startMonthStr: string | undefined, endMonthStr: string | undefined): string[] => {
+  if (!startMonthStr) return [];
+  
   const months: string[] = [];
   const today = new Date();
   const currentMonthStart = startOfMonth(today);
   
-  // تاريخ البدء الافتراضي: يناير من السنة الحالية
-  let startDate = startMonthStr 
-    ? parse(startMonthStr, 'yyyy-MM', new Date()) 
-    : startOfMonth(new Date(today.getFullYear(), 0, 1));
-
-  // تحديد الحد الأقصى للحساب: الأصغر بين (الشهر الحالي) و (تاريخ النهاية المحدد)
+  let startDate = parse(startMonthStr, 'yyyy-MM', new Date());
   let limitDate = currentMonthStart;
+  
   if (endMonthStr) {
     const definedEndDate = parse(endMonthStr, 'yyyy-MM', new Date());
     if (isBefore(definedEndDate, currentMonthStart)) {
@@ -46,8 +40,6 @@ const getRequiredMonths = (startMonthStr: string | undefined, endMonthStr: strin
   }
 
   let checkDate = startDate;
-  
-  // تجميع الشهور في النطاق المحدد
   while (isBefore(checkDate, limitDate) || isSameMonth(checkDate, limitDate)) {
     months.push(format(checkDate, 'yyyy-MM'));
     checkDate = addMonths(checkDate, 1);
@@ -59,16 +51,22 @@ const getRequiredMonths = (startMonthStr: string | undefined, endMonthStr: strin
 const getOutstandingStudents = (
   students: Student[],
   payments: PaymentRecord[],
-  months: string[]
+  gradeConfigs: Record<string, any> | undefined
 ): (Student & { outstandingMonths: string[] })[] => {
   if (!students || !payments) return [];
+
   return students
     .map((student) => {
+      // جلب إعدادات الفترة الخاصة بصف هذا الطالب تحديداً
+      const gradeConfig = gradeConfigs?.[student.grade];
+      if (!gradeConfig) return { ...student, outstandingMonths: [] };
+
+      const requiredMonths = getRequiredMonths(gradeConfig.startMonth, gradeConfig.endMonth);
       const paidMonths = payments
         .filter((p) => p.studentId === student.id)
         .map((p) => p.month);
 
-      const outstandingMonths = months.filter(
+      const outstandingMonths = requiredMonths.filter(
         (month) => !paidMonths.includes(month)
       );
 
@@ -87,11 +85,10 @@ export default function OutstandingPayments({ gradeFilter }: OutstandingPayments
     ? allStudents.filter(s => s.grade === gradeFilter)
     : allStudents;
 
-  const requiredMonths = getRequiredMonths(settings?.startMonth, settings?.endMonth);
   const outstandingStudents = getOutstandingStudents(
     students,
     payments,
-    requiredMonths
+    settings?.grades
   );
 
   const handleSendReminder = (student: Student & { outstandingMonths: string[] }) => {
@@ -129,26 +126,6 @@ export default function OutstandingPayments({ gradeFilter }: OutstandingPayments
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10 mb-4">
-          <div className="flex items-center gap-2">
-            <CalendarClock className="h-5 w-5 text-primary" />
-            <p className="text-[10px] font-bold text-slate-600">نطاق الحساب النشط:</p>
-          </div>
-          <div className="flex items-center gap-2">
-             <Badge variant="outline" className="bg-white text-primary border-primary/20 font-black">
-                {settings?.startMonth 
-                  ? format(parse(settings.startMonth, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })
-                  : 'يناير ' + new Date().getFullYear()}
-             </Badge>
-             <span className="text-[10px] font-black text-slate-400">إلى</span>
-             <Badge variant="outline" className="bg-white text-emerald-600 border-emerald-200 font-black">
-                {settings?.endMonth 
-                  ? format(parse(settings.endMonth, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })
-                  : 'ديسمبر ' + new Date().getFullYear()}
-             </Badge>
-          </div>
-      </div>
-
       {outstandingStudents.length > 0 ? (
         <div className="overflow-x-auto rounded-2xl border border-primary/10">
           <Table>
@@ -196,14 +173,14 @@ export default function OutstandingPayments({ gradeFilter }: OutstandingPayments
               <Loader2 className="h-8 w-8 text-emerald-500 animate-pulse" />
            </div>
           <p className="text-emerald-700 font-black">لا توجد أي متأخرات مالية حالياً.</p>
-          <p className="text-[10px] text-emerald-600/60 mt-1">كافة الطلاب المسجلين قاموا بسداد الرسوم في الفترة المحددة.</p>
+          <p className="text-[10px] text-emerald-600/60 mt-1">كافة الطلاب في هذا الصف قاموا بالسداد وفق الفترة المحددة لهم في الإعدادات.</p>
         </div>
       )}
 
       <div className="p-4 bg-slate-50 rounded-2xl flex items-start gap-3 border border-dashed">
           <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-[9px] text-slate-500 leading-relaxed font-bold">
-            ملاحظة: يتم حساب المتأخرات فقط للشهور التي مرت فعلياً داخل النطاق المحدد. الشهور المستقبلية لا تظهر كمتأخرات حتى يحين موعدها.
+            ملاحظة: يتم حساب المتأخرات بناءً على "الفترة المحاسبية" المحددة لكل صف في الصفحة الرئيسية. إذا لم يظهر طالب، تأكد من ضبط فترة صفه.
           </p>
       </div>
     </div>

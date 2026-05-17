@@ -2,7 +2,7 @@
 "use client";
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule, PaymentConfig } from "@/lib/definitions";
+import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule, PaymentConfig, GradePaymentConfig } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc } from "firebase/firestore";
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -76,21 +76,25 @@ export function usePaymentSettings() {
 
   const { data: settings, isLoading } = useDoc<PaymentConfig>(settingsRef);
 
-  const updateSettings = (data: Partial<PaymentConfig>) => {
+  const updateGradeSettings = (grade: string, data: GradePaymentConfig) => {
     if (!user || !firestore || !settingsRef) return;
+    
+    const newGrades = { ...(settings?.grades || {}) };
+    newGrades[grade] = data;
+
     setDoc(settingsRef, { 
-      ...data, 
+      grades: newGrades, 
       updatedAt: serverTimestamp() 
     }, { merge: true }).catch(error => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: settingsRef.path,
         operation: 'write',
-        requestResourceData: data
+        requestResourceData: { grades: newGrades }
       }));
     });
   };
 
-  return { settings, isLoading, updateSettings };
+  return { settings, isLoading, updateGradeSettings };
 }
 
 // --- Students Hook ---

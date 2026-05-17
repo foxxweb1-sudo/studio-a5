@@ -1,10 +1,10 @@
+
 'use client';
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, UserCircle2, ShieldCheck, Settings, Home } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
-import { useStudents } from '@/hooks/use-app-data';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -18,15 +18,14 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import Footer from './Footer';
-import { ADMIN_UID } from '@/lib/constants';
+import { ADMIN_EMAIL } from '@/lib/constants';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { user } = useUser();
-  const { students } = useStudents();
   const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
 
-  const isAdmin = React.useMemo(() => user?.uid === ADMIN_UID, [user]);
+  const isAdmin = React.useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
   React.useEffect(() => {
     setCurrentDateTime(new Date());
@@ -72,52 +71,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 الحضور
               </h1>
             </Link>
-            
-            <Button asChild variant="ghost" className="hidden md:flex gap-2 font-bold rounded-xl hover:bg-primary/5 transition-all text-muted-foreground hover:text-primary">
-              <Link href="/">
-                <Home className="h-4 w-4" />
-                الرئيسية
-              </Link>
-            </Button>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex flex-col items-end px-3 border-l ml-3">
-              {currentDateTime && (
-                <>
-                  <div className="text-xs font-bold text-primary">
-                    {new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(currentDateTime)}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">
-                    {new Intl.DateTimeFormat('ar-EG', { hour: 'numeric', minute: '2-digit', hour12: true }).format(currentDateTime)}
-                  </div>
-                </>
-              )}
-            </div>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl bg-muted p-0 border hover:bg-muted/80 overflow-hidden shadow-sm">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl bg-muted p-0 border overflow-hidden">
                   <Avatar className="h-full w-full rounded-none">
-                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} className="object-cover" />
+                    <AvatarImage src={user.photoURL || ''} className="object-cover" />
                     <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-bold">
                       {getInitials(user.displayName)}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 rounded-2xl p-2 shadow-2xl border-primary/10" align="start">
+              <DropdownMenuContent className="w-64 rounded-2xl p-2 shadow-2xl" align="start">
                 <DropdownMenuLabel className="p-4 text-right">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
-                    <p className="text-xs leading-none text-muted-foreground truncate">
-                      {user.email}
-                    </p>
+                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="p-1 space-y-1">
-                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10 md:hidden">
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
                     <Link href="/">
                       <span className="font-bold">الرئيسية</span>
                       <Home className="mr-2 h-4 w-4 text-primary" />
@@ -145,8 +122,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                 </div>
                 <DropdownMenuSeparator />
-                <div className="p-1 space-y-1">
-                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive focus:text-destructive focus:bg-destructive/10 justify-end">
+                <div className="p-1">
+                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive justify-end">
                     <span className="font-bold">تسجيل الخروج</span>
                     <LogOut className="mr-2 h-4 w-4" />
                   </DropdownMenuItem>

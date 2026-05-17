@@ -10,12 +10,11 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return request.auth != null && request.auth.uid == 'dr8wgLhCfRSGyjVR8Au5KxwUj0v1';
+      return request.auth != null && request.auth.token.email == 'tech.support.app@gmail.com';
     }
 
     // Rules for all users collection
     match /users/{userId} {
-      // الأدمن يقرأ الجميع ويعدل الحالة، والمستخدم يقرأ بياناته ويحدثها (إلا إذا كان محظوراً لكن نكتفي بالتحقق من الأدمن هنا)
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }

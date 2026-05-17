@@ -30,7 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ADMIN_UID } from '@/lib/constants';
+import { ADMIN_EMAIL } from '@/lib/constants';
 import Link from 'next/link';
 import { useAllUsers } from '@/hooks/use-app-data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -52,7 +52,7 @@ export default function AdminPage() {
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
-  const isAdmin = useMemo(() => user?.uid === ADMIN_UID, [user]);
+  const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -93,8 +93,6 @@ export default function AdminPage() {
     setIsProcessingManual(true);
     try {
       const userRef = doc(firestore, 'users', manualUid.trim());
-      const userSnap = await getDoc(userRef);
-      
       const status = action === 'block';
       
       await setDoc(userRef, { 
@@ -188,7 +186,6 @@ export default function AdminPage() {
             
             <TabsContent value="users">
                 <div className="space-y-8">
-                  {/* قسم الحظر اليدوي */}
                   <Card className="border-0 shadow-lg rounded-[2rem] bg-slate-900 text-white overflow-hidden">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-xl flex items-center gap-2">
@@ -226,18 +223,12 @@ export default function AdminPage() {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-slate-400 font-bold">
-                        * ملاحظة: يمكنك حظر أي UID حتى لو لم يكن مسجلاً في القائمة أدناه؛ سيتم منعه بمجرد محاولته دخول الموقع.
-                      </p>
                     </CardContent>
                   </Card>
 
                   <div className="space-y-6">
-                    <div className="text-right px-4 flex justify-between items-end">
-                      <div>
+                    <div className="text-right px-4">
                         <h3 className="text-xl font-black">إدارة مستخدمي الموقع ({users.length})</h3>
-                        <p className="text-sm text-muted-foreground">عرض كافة الحسابات المسجلة وإمكانية حظرها.</p>
-                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -249,53 +240,34 @@ export default function AdminPage() {
                       ) : users.length > 0 ? users.map((u) => (
                           <Card 
                             key={u.uid} 
-                            className={`group border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-xl ${u.isBlocked ? 'border-2 border-rose-500/50 grayscale opacity-75 shadow-rose-500/5' : ''}`}
+                            className={`group border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-xl ${u.isBlocked ? 'border-2 border-rose-500/50 grayscale opacity-75' : ''}`}
                           >
                             <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
-                              <div className="relative">
-                                <Avatar className="h-20 w-20 border-4 border-primary/10">
-                                  <AvatarImage src={u.photoURL} />
-                                  <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">
-                                    {u.displayName?.substring(0, 2).toUpperCase() || 'U'}
-                                  </AvatarFallback>
-                                </Avatar>
-                                {u.isBlocked && (
-                                  <div className="absolute -top-1 -right-1 bg-rose-500 text-white p-1 rounded-full border-2 border-white shadow-lg">
-                                    <Ban className="h-4 w-4" />
-                                  </div>
-                                )}
-                              </div>
+                              <Avatar className="h-20 w-20 border-4 border-primary/10">
+                                <AvatarImage src={u.photoURL} />
+                                <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">
+                                  {u.displayName?.substring(0, 2).toUpperCase() || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
 
                               <div className="space-y-1">
                                 <h4 className="font-black text-lg">{u.displayName || 'مستخدم جديد'}</h4>
                                 <p className="text-xs text-muted-foreground">{u.email}</p>
-                                <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70 cursor-pointer hover:bg-primary/5 transition-colors" onClick={() => {
+                                <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70 cursor-pointer" onClick={() => {
                                   setManualUid(u.uid);
-                                  toast({ title: "تم نسخ الـ UID", description: "يمكنك الآن تعديله في حقل الحظر اليدوي." });
+                                  toast({ title: "تم نسخ الـ UID" });
                                 }}>
                                   UID: {u.uid}
                                 </div>
                               </div>
 
-                              <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
-                                <Button 
-                                  variant={u.isBlocked ? "outline" : "destructive"} 
-                                  onClick={() => toggleUserBlock(u.id, !!u.isBlocked)}
-                                  className="w-full rounded-xl font-bold gap-2 h-11 transition-all"
-                                >
-                                  {u.isBlocked ? (
-                                    <>
-                                      <UserCheck className="h-4 w-4" />
-                                      إلغاء حظر المستخدم
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ShieldAlert className="h-4 w-4" />
-                                      حظر من الوصول
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
+                              <Button 
+                                variant={u.isBlocked ? "outline" : "destructive"} 
+                                onClick={() => toggleUserBlock(u.id, !!u.isBlocked)}
+                                className="w-full rounded-xl font-bold h-11"
+                              >
+                                {u.isBlocked ? "إلغاء الحظر" : "حظر الوصول"}
+                              </Button>
                             </CardContent>
                           </Card>
                       )) : (
@@ -309,88 +281,35 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="teacher-uids">
-                <div className="space-y-6">
-                  <div className="text-right px-4">
-                    <h3 className="text-xl font-black">معرفات المعلمين والطلاب ({uidsWithStudents.length})</h3>
-                    <p className="text-sm text-muted-foreground">عرض المعرفات التي قامت بتسجيل طلاب وإدارة بياناتهم.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {loading ? (
-                       <div className="col-span-full py-20 flex flex-col items-center gap-4">
-                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                         <span className="font-bold">جاري تحليل البيانات...</span>
-                       </div>
-                    ) : uidsWithStudents.length > 0 ? uidsWithStudents.map((teacher) => (
-                        <Card 
-                          key={teacher.uid} 
-                          className="group border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-xl"
-                        >
-                          <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
-                            <div className="p-4 bg-primary/5 rounded-3xl text-primary">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {uidsWithStudents.map((teacher) => (
+                        <Card key={teacher.uid} className="border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 p-8 text-center flex flex-col items-center gap-4">
+                             <div className="p-4 bg-primary/5 rounded-3xl text-primary">
                                 <Fingerprint className="h-10 w-10" />
                             </div>
-
-                            <div className="space-y-1">
-                              <h4 className="font-black text-lg">{teacher.displayName}</h4>
-                              <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70">
-                                {teacher.uid}
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap justify-center gap-2 mt-2">
-                                <Badge variant="secondary" className="rounded-full px-4 py-1.5 font-bold bg-primary/10 text-primary border-0">
-                                  <Users className="h-4 w-4 ms-2" />
-                                  {teacher.count} طالب مسجل
-                                </Badge>
-                            </div>
-
-                            <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
-                              <Button asChild variant="default" className="w-full rounded-xl h-12 font-bold bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+                            <h4 className="font-black text-lg">{teacher.displayName}</h4>
+                            <Badge className="rounded-full px-4 py-1.5 font-bold bg-primary/10 text-primary border-0">
+                                {teacher.count} طالب مسجل
+                            </Badge>
+                            <Button asChild variant="default" className="w-full rounded-xl h-12 font-bold">
                                 <Link href={`/admin/teacher/${teacher.uid}`}>
-                                  <Search className="h-4 w-4 ms-2" />
                                   إدارة طلاب هذا المعرف
                                 </Link>
-                              </Button>
-                            </div>
-                          </CardContent>
+                            </Button>
                         </Card>
-                    )) : (
-                      <div className="col-span-full py-20 text-center text-muted-foreground font-bold bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
-                        لا توجد معرفات مسجلة لطلاب حالياً.
-                      </div>
-                    )}
-                  </div>
+                    ))}
                 </div>
             </TabsContent>
 
             <TabsContent value="messages">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {messages.length > 0 ? messages.map(msg => (
-                        <Card key={msg.id} className="border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 p-8 border-r-4 border-emerald-500">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center">
-                                        <Mail className="h-5 w-5" />
-                                    </div>
-                                    <div className="text-right">
-                                        <h4 className="font-black text-lg">{msg.name}</h4>
-                                        <p className="text-xs text-muted-foreground">{msg.email}</p>
-                                    </div>
-                                </div>
-                                <span className="text-[10px] font-bold bg-muted px-3 py-1 rounded-full">
-                                    {msg.createdAt ? format(msg.createdAt.toDate(), 'd MMM yyyy', { locale: ar }) : 'تاريخ غير متوفر'}
-                                </span>
-                            </div>
-                            <div className="bg-muted/30 p-4 rounded-2xl text-right">
-                                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">"{msg.message}"</p>
-                            </div>
+                    {messages.map(msg => (
+                        <Card key={msg.id} className="border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 p-8">
+                            <h4 className="font-black text-lg">{msg.name}</h4>
+                            <p className="text-xs text-muted-foreground mb-4">{msg.email}</p>
+                            <div className="bg-muted/30 p-4 rounded-2xl italic">"{msg.message}"</div>
                         </Card>
-                    )) : (
-                        <div className="col-span-full py-20 text-center text-muted-foreground font-bold bg-muted/20 rounded-[3rem] border-2 border-dashed">
-                            لا توجد رسائل واردة حالياً.
-                        </div>
-                    )}
+                    ))}
                 </div>
             </TabsContent>
         </Tabs>

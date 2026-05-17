@@ -5,12 +5,13 @@ import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, Fi
 import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy } from "firebase/firestore";
 import { format } from 'date-fns';
+import { ADMIN_EMAIL } from "@/lib/constants";
 
 // --- Users Hook (For Admin) ---
 export function useAllUsers() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const isAdmin = user?.uid === 'dr8wgLhCfRSGyjVR8Au5KxwUj0v1';
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   const usersQuery = useMemoFirebase(() => 
     isAdmin ? query(collection(firestore, 'users'), orderBy("displayName", "asc")) : null,
@@ -161,7 +162,7 @@ export function usePayments() {
                 operation: 'create',
                 requestResourceData: newPayment,
                 })
-            )
+            );
         });
     };
 

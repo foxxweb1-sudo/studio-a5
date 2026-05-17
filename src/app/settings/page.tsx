@@ -18,7 +18,8 @@ import {
   ExternalLink,
   UserCircle,
   ChevronLeft,
-  Star
+  Star,
+  Tag
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';

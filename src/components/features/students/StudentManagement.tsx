@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter, MoreVertical } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -39,6 +39,12 @@ import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const GRADES = [
   'الصف الأول الابتدائي', 'الصف الثاني الابتدائي', 'الصف الثالث الابتدائي', 'الصف الرابع الابتدائي', 'الصف الخامس الابتدائي', 'الصف السادس الابتدائي',
@@ -166,42 +172,55 @@ export default function StudentManagement() {
                         <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500 h-8 w-8" onClick={() => setEditingStudent(student)}>
                             <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            title={student.isArchived ? "استعادة" : "أرشفة"} 
-                            className={`rounded-xl h-8 w-8 ${student.isArchived ? 'text-emerald-500' : 'text-amber-500'}`}
-                            onClick={() => handleArchive(student)}
-                        >
-                            {student.isArchived ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-                        </Button>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" title="حذف" className="rounded-xl text-destructive hover:bg-rose-50 h-8 w-8">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="rounded-[2rem]">
-                            <AlertDialogHeader>
-                                <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
-                                <AlertDialogDescription className="text-right">
-                                هذا الإجراء سيحذف الطالب ({student.name}) نهائياً بكافة سجلاته. لا يمكن التراجع.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="flex-row-reverse gap-2">
-                                <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
-                                حذف
-                                </AlertDialogAction>
-                                <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
-                            </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="rounded-xl p-1 w-40">
+                                <DropdownMenuItem 
+                                    className={`rounded-lg gap-2 font-bold focus:bg-primary/5 ${student.isArchived ? 'text-emerald-600' : 'text-amber-600'}`}
+                                    onClick={() => handleArchive(student)}
+                                >
+                                    {student.isArchived ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                                    {student.isArchived ? "استعادة الطالب" : "أرشفة الطالب"}
+                                </DropdownMenuItem>
+                                
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem 
+                                            onSelect={(e) => e.preventDefault()}
+                                            className="rounded-lg gap-2 font-bold text-destructive focus:bg-rose-50"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            حذف نهائي
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent className="rounded-[2rem]">
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
+                                            <AlertDialogDescription className="text-right">
+                                            هذا الإجراء سيحذف الطالب ({student.name}) نهائياً بكافة سجلاته. لا يمكن التراجع.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="flex-row-reverse gap-2">
+                                            <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
+                                            حذف
+                                            </AlertDialogAction>
+                                            <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         </TableCell>
                     </TableRow>
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={gradeFromUrl ? 3 : 3} className="h-24 text-center text-muted-foreground font-bold italic">
+                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground font-bold italic">
                         {list.length === 0 ? "لا يوجد طلاب هنا حالياً." : "لا توجد نتائج بحث مطابقة."}
                     </TableCell>
                     </TableRow>

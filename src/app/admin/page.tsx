@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -19,7 +18,6 @@ import {
   TrendingUp, 
   MessageSquare,
   ShieldCheck,
-  ExternalLink,
   ChevronRight,
   Clock
 } from 'lucide-react';
@@ -75,19 +73,26 @@ function AllStudentsList() {
       try {
         const usersSnapshot = await getDocs(collection(firestore, 'users'));
         let studentsList: any[] = [];
+        
         for (const userDoc of usersSnapshot.docs) {
-          const studentsQuery = query(
-            collection(firestore, `users/${userDoc.id}/students`),
-            orderBy('createdAt', 'asc')
-          );
-          const studentsSnapshot = await getDocs(studentsQuery);
+          const userData = userDoc.data();
+          const studentsSnapshot = await getDocs(collection(firestore, `users/${userDoc.id}/students`));
+          
           const studentsData = studentsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            owner: userDoc.data().email || userDoc.id,
+            owner: userData.displayName || userData.email || userDoc.id,
           }));
           studentsList = [...studentsList, ...studentsData];
         }
+        
+        // ترتيب حسب تاريخ الإضافة
+        studentsList.sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || new Date(0);
+          return dateB - dateA;
+        });
+
         setAllStudents(studentsList);
       } catch (error) {
         console.error('Error fetching all students:', error);
@@ -129,7 +134,7 @@ function AllStudentsList() {
               <TableRow>
                 <TableHead className="text-right">اسم الطالب</TableHead>
                 <TableHead className="text-right">الصف الدراسي</TableHead>
-                <TableHead className="text-right">حساب المعلم (المالك)</TableHead>
+                <TableHead className="text-right">المعلم</TableHead>
                 <TableHead className="text-center">إجراء</TableHead>
               </TableRow>
             </TableHeader>
@@ -267,7 +272,6 @@ export default function AdminPage() {
       const fetchTotals = async () => {
           if (!firestore || !isAdmin) return;
           try {
-              // Fetch total students (simplified check)
               const usersSnapshot = await getDocs(collection(firestore, 'users'));
               let sCount = 0;
               for (const uDoc of usersSnapshot.docs) {
@@ -276,7 +280,6 @@ export default function AdminPage() {
               }
               setTotalStudentsCount(sCount);
 
-              // Fetch messages count
               const mSnap = await getDocs(collection(firestore, 'contactMessages'));
               setTotalMessagesCount(mSnap.size);
           } catch (e) {
@@ -314,7 +317,7 @@ export default function AdminPage() {
         </PageHeader>
         <Button 
           variant="outline" 
-          onClick={() => router.back()}
+          onClick={() => router.push('/')}
           className="rounded-2xl border-primary/20 hover:bg-primary/5 transition-all px-6 h-12 font-bold"
         >
           <ArrowLeft className="ms-2 h-5 w-5" />
@@ -348,7 +351,6 @@ export default function AdminPage() {
             </TabsContent>
         </Tabs>
 
-        {/* معلومات النظام */}
         <Card className="border-0 bg-slate-900 text-white rounded-[2.5rem] p-8 mt-4 overflow-hidden relative">
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
             <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">

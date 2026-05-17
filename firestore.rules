@@ -8,30 +8,26 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // IMPORTANT: Replace this UID with your own UID to become the Admin.
-    // You can find your UID in the "Account Management" page.
     function isAdmin() {
       return request.auth != null && request.auth.uid == 'dr8wgLhCfRSGyjVR8Au5KxwUj0v1';
     }
 
     // Rules for all users collection
     match /users/{userId} {
-      allow read: if isAdmin();
-      allow write: if false; // No one can write directly to the user doc list
+      // الأدمن يقرأ الجميع، والمستخدم يقرأ ويحدث بياناته الخاصة فقط
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isSignedIn() && request.auth.uid == userId;
     }
     
-    // Rules for user-specific data
+    // Rules for user-specific data (students, attendance, payments)
     match /users/{userId}/{document=**} {
       allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
     // Rules for contact messages
     match /contactMessages/{messageId} {
-      // Only the admin can read messages.
       allow read: if isAdmin();
-      // Anyone can create a message (submit the contact form).
       allow create: if true; 
-      // No one can update or delete messages through the client SDK.
       allow update, delete: if false; 
     }
   }

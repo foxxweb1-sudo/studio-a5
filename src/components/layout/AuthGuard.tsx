@@ -1,21 +1,21 @@
-
 "use client";
 
-import { useUser } from "@/firebase";
+import { useUser, useFirestore } from "@/firebase";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import SplashScreen from "./SplashScreen";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const publicRoutes = ["/login", "/signup", "/forgot-password"];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    // Show splash for at least 2.5 seconds to ensure branding is seen
     const timer = setTimeout(() => {
       if (!isUserLoading) {
         setShowSplash(false);
@@ -24,6 +24,19 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     return () => clearTimeout(timer);
   }, [isUserLoading]);
+
+  // تسجيل بيانات المستخدم في الفايرستور ليظهر للأدمن
+  useEffect(() => {
+    if (user && firestore) {
+      const userDocRef = doc(firestore, "users", user.uid);
+      setDoc(userDocRef, {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || "مستخدم جديد",
+        lastLogin: serverTimestamp(),
+      }, { merge: true });
+    }
+  }, [user, firestore]);
 
   useEffect(() => {
     if (!isUserLoading && !showSplash) {
@@ -36,17 +49,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, showSplash, router, pathname]);
 
-  // Show Splash Screen during initial load
   if (isUserLoading || showSplash) {
     return <SplashScreen />;
   }
 
-  // If user is not logged in and on a public page, show the public page
   if (!user && publicRoutes.includes(pathname)) {
     return <>{children}</>;
   }
 
-  // If user is logged in, show the protected page
   if (user) {
     return <>{children}</>;
   }

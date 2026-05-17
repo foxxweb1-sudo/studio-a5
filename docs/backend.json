@@ -60,6 +60,18 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       }
     },
+    "PaymentConfig": {
+      "title": "PaymentConfig",
+      "type": "object",
+      "description": "User-specific settings for payment tracking.",
+      "properties": {
+        "startMonth": {
+          "type": "string",
+          "description": "The month (YYYY-MM) from which to start calculating arrears."
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "DeletionRequest": {
       "title": "DeletionRequest",
       "type": "object",
@@ -273,6 +285,16 @@
             "$ref": "#/backend/entities/WorkingSchedule"
           },
           "description": "Stores working sessions for the user."
+        }
+      },
+      {
+        "path": "/users/{userId}/config/payments",
+        "definition": {
+          "entityName": "PaymentConfig",
+          "schema": {
+            "$ref": "#/backend/entities/PaymentConfig"
+          },
+          "description": "Stores payment settings for the user."
         }
       },
       {

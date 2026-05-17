@@ -2,7 +2,7 @@
 "use client";
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule } from "@/lib/definitions";
+import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule, PaymentConfig } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc } from "firebase/firestore";
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -63,6 +63,34 @@ export function useSchedule() {
   };
 
   return { schedule, isLoading, updateSchedule };
+}
+
+// --- Payment Settings Hook ---
+export function usePaymentSettings() {
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  const settingsRef = useMemoFirebase(() => 
+    (firestore && user) ? doc(firestore, `users/${user.uid}/config`, 'payments') : null,
+  [user, firestore]);
+
+  const { data: settings, isLoading } = useDoc<PaymentConfig>(settingsRef);
+
+  const updateSettings = (data: Partial<PaymentConfig>) => {
+    if (!user || !firestore || !settingsRef) return;
+    setDoc(settingsRef, { 
+      ...data, 
+      updatedAt: serverTimestamp() 
+    }, { merge: true }).catch(error => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: settingsRef.path,
+        operation: 'write',
+        requestResourceData: data
+      }));
+    });
+  };
+
+  return { settings, isLoading, updateSettings };
 }
 
 // --- Students Hook ---

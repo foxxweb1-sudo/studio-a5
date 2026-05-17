@@ -25,6 +25,11 @@ export type WorkingSchedule = {
   updatedAt?: FieldValue;
 };
 
+export type PaymentConfig = {
+  startMonth: string; // YYYY-MM
+  updatedAt?: FieldValue;
+};
+
 export type DeletionRequest = {
   id: string;
   uid: string;

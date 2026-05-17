@@ -11,16 +11,16 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 export function useAllUsers() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const usersQuery = useMemoFirebase(() => 
-    isAdmin ? query(collection(firestore, 'users'), orderBy("displayName", "asc")) : null,
+    (firestore && isAdmin) ? collection(firestore, 'users') : null,
   [isAdmin, firestore]);
 
   const { data: users, isLoading } = useCollection<UserProfile>(usersQuery);
 
   const toggleUserBlock = (userId: string, currentStatus: boolean) => {
-    if (!isAdmin) return;
+    if (!isAdmin || !firestore) return;
     const userDoc = doc(firestore, 'users', userId);
     updateDoc(userDoc, { isBlocked: !currentStatus }).catch(error => {
        errorEmitter.emit(
@@ -43,13 +43,13 @@ export function useStudents() {
   const { user } = useUser();
 
   const studentsQuery = useMemoFirebase(() => 
-    user ? query(collection(firestore, `users/${user.uid}/students`), orderBy("createdAt", "asc")) : null,
+    (firestore && user) ? query(collection(firestore, `users/${user.uid}/students`), orderBy("createdAt", "asc")) : null,
   [user, firestore]);
 
   const { data: students, isLoading } = useCollection<Student>(studentsQuery);
 
   const addStudent = (studentData: NewStudent) => {
-    if (!user) return;
+    if (!user || !firestore) return;
     const studentCollection = collection(firestore, `users/${user.uid}/students`);
     const newStudent = {
       ...studentData,
@@ -68,7 +68,7 @@ export function useStudents() {
   };
 
   const updateStudent = (studentId: string, studentData: Partial<Student>) => {
-    if (!user) return;
+    if (!user || !firestore) return;
     const studentDoc = doc(firestore, `users/${user.uid}/students`, studentId);
     updateDoc(studentDoc, studentData).catch(error => {
        errorEmitter.emit(
@@ -83,7 +83,7 @@ export function useStudents() {
   };
   
   const deleteStudent = (studentId: string) => {
-    if (!user) return;
+    if (!user || !firestore) return;
     const studentDoc = doc(firestore, `users/${user.uid}/students`, studentId);
     deleteDoc(studentDoc).catch(error => {
        errorEmitter.emit(
@@ -105,13 +105,13 @@ export function useAttendance() {
   const { user } = useUser();
 
   const attendanceQuery = useMemoFirebase(() =>
-    user ? collection(firestore, `users/${user.uid}/attendance`) : null,
+    (firestore && user) ? collection(firestore, `users/${user.uid}/attendance`) : null,
   [user, firestore]);
   
   const { data: attendance, isLoading } = useCollection<AttendanceRecord>(attendanceQuery);
 
   const addAttendance = (studentId: string) => {
-    if (!user) return;
+    if (!user || !firestore) return;
     const attendanceCollection = collection(firestore, `users/${user.uid}/attendance`);
     const today = format(new Date(), 'yyyy-MM-dd');
     const newRecord = {
@@ -141,13 +141,13 @@ export function usePayments() {
     const { user } = useUser();
 
     const paymentsQuery = useMemoFirebase(() =>
-      user ? collection(firestore, `users/${user.uid}/payments`) : null,
+      (firestore && user) ? collection(firestore, `users/${user.uid}/payments`) : null,
     [user, firestore]);
 
     const { data: payments, isLoading } = useCollection<PaymentRecord>(paymentsQuery);
 
     const addPayment = (paymentData: NewPayment) => {
-        if (!user) return;
+        if (!user || !firestore) return;
         const paymentCollection = collection(firestore, `users/${user.uid}/payments`);
         const newPayment = {
             ...paymentData,

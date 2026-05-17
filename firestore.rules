@@ -10,7 +10,8 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'tech.support.app@gmail.com';
+      return request.auth != null && 
+             request.auth.token.email.lower() == 'tech.support.app@gmail.com';
     }
 
     // Rules for all users collection
@@ -37,9 +38,8 @@ service cloud.firestore {
 
     // Rules for contact messages
     match /contactMessages/{messageId} {
-      allow read, delete: if isAdmin();
+      allow read, write, delete: if isAdmin();
       allow create: if true; 
-      allow update: if isAdmin(); 
     }
 
     // Rules for global app configuration
@@ -47,7 +47,5 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
-
-    // Security Rules Sync: Last update triggered on 2024-05-20 12:10:00
   }
 }

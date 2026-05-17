@@ -55,13 +55,13 @@ export default function AdminPage() {
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const [manualUid, setManualUid] = useState('');
   const [isProcessingManual, setIsProcessingManual] = useState(false);
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
-  const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
+  const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -71,16 +71,18 @@ export default function AdminPage() {
     }
     if (!firestore) return;
 
-    setLoading(true);
-
     const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
       const list = snap.docs.map(doc => {
         const pathSegments = doc.ref.path.split('/');
+        // In doc.ref.path like 'users/UID/students/SID', UID is at index 1
         const teacherUid = pathSegments[1]; 
         return { id: doc.id, teacherUid, ...doc.data() };
       });
       setAllStudents(list);
-      setLoading(false);
+      setLoadingStudents(false);
+    }, (err) => {
+      console.error("CollectionGroup Students Error:", err);
+      setLoadingStudents(false);
     });
 
     const unsubMessages = onSnapshot(query(collection(firestore, 'contactMessages'), orderBy('createdAt', 'desc')), (snap) => {
@@ -122,14 +124,18 @@ export default function AdminPage() {
 
   const calculateRemainingTime = (requestedAt: any) => {
     if (!requestedAt) return "غير معروف";
-    const date = requestedAt.toDate ? requestedAt.toDate() : new Date(requestedAt);
-    const executionDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const now = new Date();
-    const diff = executionDate.getTime() - now.getTime();
-    if (diff <= 0) return "بانتظار التنفيذ";
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    return `${days} يوم و ${hours} ساعة`;
+    try {
+        const date = requestedAt.toDate ? requestedAt.toDate() : new Date(requestedAt);
+        const executionDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const now = new Date();
+        const diff = executionDate.getTime() - now.getTime();
+        if (diff <= 0) return "بانتظار التنفيذ";
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        return `${days} يوم و ${hours} ساعة`;
+    } catch (e) {
+        return "جاري المعالجة...";
+    }
   };
 
   const uidsWithStudents = useMemo(() => {
@@ -176,19 +182,19 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-            { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
-            { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
-            { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-            { label: 'طلبات الحذف', value: deletionRequests.length, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50' },
+            { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50', loading: loadingStudents },
+            { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50', loading: usersLoading },
+            { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50', loading: false },
+            { label: 'طلبات الحذف', value: deletionRequests.length, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: usersLoading },
         ].map((stat, i) => (
             <Card key={i} className={`border-0 shadow-sm hover-lift`}>
                 <CardContent className="p-6 flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
-                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
+                        {stat.loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
                     </div>
                     <div>
                       <div className="text-xs font-bold text-slate-400">{stat.label}</div>
-                      <div className="text-xl font-black">{loading ? '...' : stat.value}</div>
+                      <div className="text-xl font-black">{stat.loading ? '...' : stat.value}</div>
                     </div>
                 </CardContent>
             </Card>
@@ -314,8 +320,8 @@ export default function AdminPage() {
                     ))
                   ) : (
                     <div className="py-20 text-center space-y-4 bg-slate-50 rounded-[2rem] border border-dashed">
-                      <Trash2 className="h-16 w-16 mx-auto text-slate-200" />
-                      <p className="text-slate-400 font-black">لا توجد طلبات حذف حالياً</p>
+                      {usersLoading ? <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary/20" /> : <Trash2 className="h-16 w-16 mx-auto text-slate-200" />}
+                      <p className="text-slate-400 font-black">{usersLoading ? 'جاري جلب الطلبات...' : 'لا توجد طلبات حذف حالياً'}</p>
                     </div>
                   )}
                 </div>

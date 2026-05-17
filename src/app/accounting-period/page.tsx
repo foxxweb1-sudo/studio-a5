@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, Loader2, Calendar, Plus, Trash2, Info, ArrowRight, History } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Calendar, Plus, Trash2, Info, ArrowRight, History, GraduationCap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -39,27 +39,35 @@ export default function AccountingPeriodPage() {
   const [endMonth, setEndMonth] = useState('12');
   const [isAdding, setIsAdding] = useState(false);
 
-  // استخراج الفترات الحالية للصف المختار
-  const currentPeriods = useMemo(() => {
-    const gradeConfig = settings?.grades?.[selectedGrade];
-    if (!gradeConfig) return [];
-    // توافق مع البيانات القديمة أو الهيكل الجديد
-    return Array.isArray(gradeConfig.periods) ? gradeConfig.periods : [];
-  }, [selectedGrade, settings]);
+  // استخراج كافة الفترات لكافة الصفوف في قائمة واحدة
+  const allRegisteredPeriods = useMemo(() => {
+    if (!settings?.grades) return [];
+    const flatList: any[] = [];
+    Object.entries(settings.grades).forEach(([grade, config]: [string, any]) => {
+      if (Array.isArray(config.periods)) {
+        config.periods.forEach(p => {
+          flatList.push({ ...p, grade });
+        });
+      }
+    });
+    // ترتيب تنازلي حسب الأحدث (يمكن التعديل حسب الحاجة)
+    return flatList.sort((a, b) => b.startMonth.localeCompare(a.startMonth));
+  }, [settings]);
 
   const handleAddPeriod = async () => {
     setIsAdding(true);
     try {
+      const currentGradePeriods = settings?.grades?.[selectedGrade]?.periods || [];
       const newPeriod = {
         id: Math.random().toString(36).substring(2, 9),
         startMonth: `${startYear}-${startMonth}`,
         endMonth: `${endYear}-${endMonth}`
       };
 
-      const updatedPeriods = [...currentPeriods, newPeriod];
+      const updatedPeriods = [...currentGradePeriods, newPeriod];
       await updateGradeSettings(selectedGrade, { periods: updatedPeriods });
       
-      toast({ title: "تمت الإضافة", description: "تمت إضافة فترة محاسبية جديدة." });
+      toast({ title: "تمت الإضافة", description: `تمت إضافة فترة جديدة لـ ${selectedGrade}.` });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الحفظ" });
     } finally {
@@ -67,10 +75,13 @@ export default function AccountingPeriodPage() {
     }
   };
 
-  const handleDeletePeriod = async (id: string) => {
+  const handleDeletePeriod = async (grade: string, id: string) => {
     try {
-      const updatedPeriods = currentPeriods.filter(p => p.id !== id);
-      await updateGradeSettings(selectedGrade, { periods: updatedPeriods });
+      const gradeConfig = settings?.grades?.[grade];
+      if (!gradeConfig || !Array.isArray(gradeConfig.periods)) return;
+
+      const updatedPeriods = gradeConfig.periods.filter(p => p.id !== id);
+      await updateGradeSettings(grade, { periods: updatedPeriods });
       toast({ title: "تم الحذف", description: "تمت إزالة الفترة بنجاح." });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الحذف" });
@@ -88,17 +99,17 @@ export default function AccountingPeriodPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-20 px-4">
-      <div className="flex justify-between items-start">
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-20 px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <PageHeader className="border-0 pb-0">
           <div className="flex items-center gap-3 text-amber-600 mb-2">
             <div className="p-3 bg-amber-500/10 rounded-2xl">
                <History className="h-6 w-6" />
             </div>
-            <PageHeaderTitle className="text-3xl font-black">إدارة الفترات المحاسبية</PageHeaderTitle>
+            <PageHeaderTitle className="text-3xl font-black">سجل الفترات المحاسبية</PageHeaderTitle>
           </div>
           <PageHeaderDescription>
-            حدد فترات العمل لكل صف (مثلاً: الترم الأول، الكورس الصيفي).
+            إدارة كافة فترات العمل المسجلة للنظام بجميع الصفوف.
           </PageHeaderDescription>
         </PageHeader>
         <Button 
@@ -190,51 +201,58 @@ export default function AccountingPeriodPage() {
               <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-3">
                 <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-blue-700 leading-relaxed font-bold">
-                    يمكنك إضافة أكثر من فترة لنفس الصف، وسيقوم النظام بجمع كافة الشهور المستحقة من جميع الفترات تلقائياً.
+                    سيقوم النظام بجمع كافة الشهور المستحقة من جميع الفترات المسجلة لكل صف تلقائياً لحساب المتأخرات بدقة.
                 </p>
               </div>
           </div>
 
-          {/* الجانب الأيسر: عرض الفترات الحالية */}
+          {/* الجانب الأيسر: عرض كافة الفترات */}
           <div className="lg:col-span-7 space-y-4">
               <div className="flex items-center justify-between px-2">
                   <h3 className="font-black text-slate-500 flex items-center gap-2">
                       <History className="h-4 w-4" />
-                      الفترات المسجلة لـ ({selectedGrade})
+                      كافة الفترات المسجلة بالنظام
                   </h3>
-                  <Badge variant="secondary" className="rounded-full px-4 font-bold bg-slate-100">{currentPeriods.length} فترات</Badge>
+                  <Badge variant="secondary" className="rounded-full px-4 font-bold bg-slate-100">{allRegisteredPeriods.length} إجمالي الفترات</Badge>
               </div>
 
-              <div className="space-y-4 max-h-[600px] overflow-auto pr-1">
-                  {currentPeriods.length > 0 ? currentPeriods.map((period) => {
+              <div className="space-y-4 max-h-[700px] overflow-auto pr-1">
+                  {allRegisteredPeriods.length > 0 ? allRegisteredPeriods.map((period) => {
                       const names = formatPeriodName(period);
                       return (
                         <Card key={period.id} className="border-0 shadow-sm rounded-3xl bg-white dark:bg-slate-900 border-r-4 border-r-amber-500 group hover:shadow-md transition-all">
-                            <CardContent className="p-6 flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-4 flex-1">
+                            <CardContent className="p-6 flex flex-col gap-4">
+                                <div className="flex items-center justify-between border-b border-dashed pb-3">
+                                    <div className="flex items-center gap-2 text-primary">
+                                        <GraduationCap className="h-4 w-4" />
+                                        <span className="font-black text-sm">{period.grade}</span>
+                                    </div>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="text-rose-500 hover:bg-rose-50 rounded-full h-8 w-8"
+                                        onClick={() => handleDeletePeriod(period.grade, period.id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex items-center gap-4">
                                     <div className="p-3 bg-amber-50 rounded-2xl text-amber-600">
                                         <Calendar className="h-5 w-5" />
                                     </div>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
                                         <div className="space-y-0.5">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">من</span>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">بداية الفترة</span>
                                             <p className="text-sm font-black text-slate-700">{names.start}</p>
                                         </div>
                                         <ArrowRight className="h-4 w-4 text-slate-300 hidden sm:block rotate-180" />
                                         <div className="space-y-0.5">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">إلى</span>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">نهاية الفترة</span>
                                             <p className="text-sm font-black text-slate-700">{names.end}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="text-rose-500 hover:bg-rose-50 rounded-full"
-                                    onClick={() => handleDeletePeriod(period.id)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
                             </CardContent>
                         </Card>
                       );
@@ -243,7 +261,7 @@ export default function AccountingPeriodPage() {
                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
                             <History className="h-6 w-6 text-slate-300" />
                         </div>
-                        <p className="text-slate-400 font-bold">لا توجد فترات محاسبية مسجلة لهذا الصف حتى الآن.</p>
+                        <p className="text-slate-400 font-bold px-6">لا توجد فترات محاسبية مسجلة في النظام حتى الآن. ابدأ بإضافة أول فترة من النموذج الجانبي.</p>
                     </div>
                   )}
               </div>

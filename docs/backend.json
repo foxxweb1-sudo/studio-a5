@@ -226,6 +226,7 @@
       "properties": {
         "appName": { "type": "string" },
         "appLogo": { "type": "string" },
+        "appVersion": { "type": "string" },
         "loginBg": { "type": "string" },
         "signupBg": { "type": "string" },
         "contactPhone": { "type": "string" },

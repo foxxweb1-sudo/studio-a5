@@ -28,7 +28,8 @@ import {
   GraduationCap,
   MessageSquareQuote,
   Star,
-  Plus
+  Plus,
+  ShieldAlert
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,6 +111,14 @@ export default function AdminPage() {
 
   const handleManualBlock = async (action: 'block' | 'unblock') => {
     if (!manualUid.trim() || !firestore) return;
+    
+    // منع حظر حساب المسؤول يدوياً عبر الـ UID
+    const adminUser = users.find(u => u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    if (action === 'block' && adminUser && manualUid.trim() === adminUser.uid) {
+        toast({ variant: "destructive", title: "إجراء غير مسموح", description: "لا يمكن حظر حساب المسؤول الرئيسي للنظام." });
+        return;
+    }
+
     setIsProcessingManual(true);
     try {
       const userRef = doc(firestore, 'users', manualUid.trim());
@@ -275,24 +284,41 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {usersLoading ? (
                       <div className="col-span-full py-10 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : users.map((u) => (
-                        <Card key={u.uid} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'}`}>
-                          <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
-                            <Avatar className="h-16 w-16">
-                              <AvatarImage src={u.photoURL} />
-                              <AvatarFallback>{u.displayName?.substring(0, 2) || 'U'}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h4 className="font-bold text-sm">{u.displayName || 'مستخدم'}</h4>
-                              <p className="text-[10px] text-muted-foreground font-mono truncate w-[140px]">{u.email}</p>
-                              <code className="text-[8px] opacity-40 select-all">{u.uid}</code>
-                            </div>
-                            <Button variant={u.isBlocked ? "secondary" : "ghost"} onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} className={`w-full rounded-xl font-bold h-9 text-xs ${u.isBlocked ? 'text-emerald-600' : 'text-rose-600 hover:bg-rose-50'}`}>
-                              {u.isBlocked ? "إلغاء الحظر" : "حظر الحساب"}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                    ))}
+                    ) : users.map((u) => {
+                        const isAccountAdmin = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+                        return (
+                          <Card key={u.uid} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'} ${isAccountAdmin ? 'border-2 border-primary/20' : ''}`}>
+                            <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
+                              <div className="relative">
+                                <Avatar className="h-16 w-16">
+                                  <AvatarImage src={u.photoURL} />
+                                  <AvatarFallback>{u.displayName?.substring(0, 2) || 'U'}</AvatarFallback>
+                                </Avatar>
+                                {isAccountAdmin && (
+                                    <div className="absolute -top-1 -right-1 bg-primary text-white p-1 rounded-full shadow-lg border-2 border-white">
+                                        <ShieldAlert className="h-3 w-3" />
+                                    </div>
+                                )}
+                              </div>
+                              <div className="w-full overflow-hidden">
+                                <h4 className="font-bold text-sm truncate">{u.displayName || 'مستخدم'}</h4>
+                                <p className="text-[10px] text-muted-foreground font-mono truncate w-full">{u.email}</p>
+                                <code className="text-[8px] opacity-40 select-all block mt-1">{u.uid}</code>
+                              </div>
+                              
+                              {isAccountAdmin ? (
+                                  <Badge variant="outline" className="w-full rounded-xl py-2 border-primary/30 text-primary font-black bg-primary/5">
+                                      المسؤول الرئيسي
+                                  </Badge>
+                              ) : (
+                                  <Button variant={u.isBlocked ? "secondary" : "ghost"} onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} className={`w-full rounded-xl font-bold h-9 text-xs ${u.isBlocked ? 'text-emerald-600' : 'text-rose-600 hover:bg-rose-50'}`}>
+                                    {u.isBlocked ? "إلغاء الحظر" : "حظر الحساب"}
+                                  </Button>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )
+                    })}
                   </div>
                 </div>
             </TabsContent>

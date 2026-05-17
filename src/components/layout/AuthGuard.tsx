@@ -11,6 +11,7 @@ import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
 import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_EMAIL } from "@/lib/constants";
 
 const publicRoutes = ["/login", "/signup", "/forgot-password"];
 
@@ -151,7 +152,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return <SplashScreen />;
   }
 
-  if (user && userProfile?.isBlocked) {
+  // السماح للمسؤول بالدخول حتى لو كانت حالة isBlocked تساوى true كإجراء حماية قصوى
+  const isSuperAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  if (user && userProfile?.isBlocked && !isSuperAdmin) {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-950 text-white p-6 text-center">
         <div className="w-24 h-24 bg-rose-500/20 rounded-full flex items-center justify-center mb-6 animate-pulse">
@@ -185,4 +189,3 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   return null;
 }
-

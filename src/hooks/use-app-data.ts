@@ -21,6 +21,13 @@ export function useAllUsers() {
 
   const toggleUserBlock = (userId: string, currentStatus: boolean) => {
     if (!isAdmin || !firestore) return;
+    
+    // حماية برمجية إضافية: التحقق من أن المستخدم ليس هو المسؤول قبل تحديث الحالة
+    const targetUser = users?.find(u => u.uid === userId);
+    if (targetUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        return; // تجاهل العملية للمسؤول
+    }
+
     const userDoc = doc(firestore, 'users', userId);
     updateDoc(userDoc, { isBlocked: !currentStatus }).catch(error => {
        errorEmitter.emit(

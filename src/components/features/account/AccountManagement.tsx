@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck, ShieldCheck } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
@@ -40,6 +40,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'الاسم مطلوب.'),
@@ -63,6 +64,7 @@ export default function AccountManagement() {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>(DELETION_REASONS[0]);
+  const [copied, setCopied] = useState(false);
 
   // مراقبة وثيقة طلب الحذف
   const deletionRequestRef = useMemoFirebase(() => user ? doc(firestore, 'deletionRequests', user.uid) : null, [user, firestore]);
@@ -165,7 +167,9 @@ export default function AccountManagement() {
   const handleCopyUid = () => {
     if (!user?.uid) return;
     navigator.clipboard.writeText(user.uid);
-    toast({ title: 'تم النسخ' });
+    setCopied(true);
+    toast({ title: 'تم نسخ المعرف بنجاح' });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const isArabic = (text: string) => /[\u0600-\u06FF]/.test(text);
@@ -216,34 +220,57 @@ export default function AccountManagement() {
                 )}
             </div>
             
-            {/* واجهة الـ UID المطورة */}
-            <div className="mt-8 w-full max-w-[240px] animate-in slide-in-from-bottom-2 duration-700">
-                <div className="relative p-[1px] bg-gradient-to-br from-primary/30 via-slate-200 to-primary/10 rounded-[1.5rem] overflow-hidden group/card shadow-sm hover:shadow-md transition-all">
-                    <div className="bg-white dark:bg-slate-900 rounded-[1.45rem] p-4 flex flex-col items-center gap-3">
-                        <div className="flex items-center justify-between w-full">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <Fingerprint className="h-3 w-3 text-primary/60" />
-                                الهوية الرقمية
-                            </span>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 rounded-full bg-slate-50 hover:bg-primary/10 text-slate-400 hover:text-primary transition-all active:scale-90"
-                              onClick={handleCopyUid}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
+            {/* واجهة الـ UID المطورة كبطاقة هوية رقمية */}
+            <div className="mt-8 w-full max-w-[280px] animate-in slide-in-from-bottom-4 duration-700">
+                <div className="relative overflow-hidden rounded-[2rem] bg-slate-900 text-white shadow-2xl group/card transition-all hover:scale-[1.02]">
+                    {/* تأثيرات خلفية */}
+                    <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover/card:bg-primary/30 transition-colors" />
+                    <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl" />
+                    
+                    <div className="relative p-6 space-y-5">
+                        <div className="flex items-center justify-between">
+                            <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-md border border-white/5">
+                                <Fingerprint className="h-5 w-5 text-primary" />
+                            </div>
+                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Digital Pass</span>
                         </div>
                         
-                        <div className="w-full bg-slate-50 dark:bg-slate-800/50 py-3 px-4 rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-                            <code className="text-[11px] font-mono text-primary font-bold tracking-tight select-all block truncate text-center">
-                                {user?.uid}
-                            </code>
+                        <div className="space-y-1.5 text-right">
+                            <label className="text-[9px] font-bold text-white/50 uppercase tracking-widest block">User Identity Code</label>
+                            <div className="relative group/copy">
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm transition-all group-hover/card:bg-white/10">
+                                    <code className="text-xs font-mono font-bold tracking-tighter select-all block truncate text-primary/90">
+                                        {user?.uid}
+                                    </code>
+                                </div>
+                                <Button 
+                                    size="icon"
+                                    variant="ghost"
+                                    className={cn(
+                                        "absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg transition-all",
+                                        copied ? "bg-emerald-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                                    )}
+                                    onClick={handleCopyUid}
+                                >
+                                    {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-3.5 w-3.5" />}
+                                </Button>
+                            </div>
                         </div>
                         
-                        <p className="text-[8px] text-slate-400 font-bold italic">هذا المعرف خاص بك فقط، لا تشاركه مع الغرباء.</p>
+                        <div className="pt-2 flex items-center justify-between border-t border-white/5">
+                            <div className="flex items-center gap-1.5 text-[8px] font-black text-white/30 uppercase italic">
+                                <ShieldCheck className="h-3 w-3" />
+                                Secured by TECH
+                            </div>
+                            <div className="flex gap-1">
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-pulse" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary/30" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary/10" />
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <p className="mt-3 text-[9px] text-slate-400 font-bold text-center italic opacity-60">هذا المعرف مخصص للعمليات الإدارية فقط</p>
             </div>
         </div>
       </div>

@@ -70,8 +70,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="container flex h-16 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           
           <div className="flex items-center gap-4 md:gap-6">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white shrink-0">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3">
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white shrink-0">
                 <Image 
                   src={config.appLogo}
                   alt="Logo"
@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="object-contain"
                 />
               </div>
-              <h1 className="font-bold text-lg sm:text-xl tracking-tight">
+              <h1 className="font-black text-base sm:text-xl tracking-tight text-slate-800 dark:text-white">
                 {config.appName}
               </h1>
             </Link>

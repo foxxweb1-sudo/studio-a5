@@ -14,25 +14,37 @@ service cloud.firestore {
              request.auth.token.email.lower() == 'tech.support.app@gmail.com';
     }
 
-    // السماح للمشرف بقراءة كافة الطلاب والمدفوعات والحضور عبر Collection Groups
+    // قواعد الوصول للطلاب (يسمح لولي الأمر بالقراءة عبر الرابط)
+    match /users/{userId}/students/{studentId} {
+      allow read: if true; 
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // قواعد الحضور والمدفوعات (يسمح لولي الأمر بالقراءة عبر الرابط)
+    match /users/{userId}/attendance/{id} {
+      allow read: if true; 
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    match /users/{userId}/payments/{id} {
+      allow read: if true; 
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // السماح للمشرف بقراءة المجموعات عبر Collection Groups
     match /{path=**}/students/{id} {
       allow read: if true; 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == path.split('/')[1]);
     }
-
     match /{path=**}/attendance/{id} {
       allow read: if true; 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == path.split('/')[1]);
     }
-
     match /{path=**}/payments/{id} {
       allow read: if true; 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == path.split('/')[1]);
     }
 
     // قواعد المستخدمين (المعلمين)
     match /users/{userId} {
-      allow get: if true; 
+      allow get: if true; // للسماح لولي الأمر برؤية اسم المدرس
       allow list: if isAdmin(); 
       allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
 

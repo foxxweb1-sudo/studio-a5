@@ -60,7 +60,6 @@ const formSchema = z.object({
 export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
-  const initialTab = searchParams.get('tab') || 'active';
   
   const { user } = useUser();
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
@@ -69,13 +68,7 @@ export default function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentForQR, setSelectedStudentForQR] = useState<Student | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [activeTab, setActiveTab] = useState(initialTab);
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab]);
+  const [activeTab, setActiveTab] = useState('active');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -331,7 +324,7 @@ export default function StudentManagement() {
                     <CardDescription>
                         {gradeFromUrl 
                           ? `عرض ${activeTab === 'archived' ? 'أرشيف' : 'طلاب'} صف: ${gradeFromUrl}` 
-                          : `إدارة ${activeTab === 'archived' ? 'أرشيف' : 'الطلاب'} بكافة الصفوف.`
+                          : `إدارة كافة الطلاب النشطين حالياً.`
                         }
                     </CardDescription>
                 </div>
@@ -346,36 +339,39 @@ export default function StudentManagement() {
                 </div>
              </div>
 
-             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="bg-slate-100/50 p-1 rounded-t-xl rounded-b-none border-b-0 w-full flex justify-start">
-                    <TabsTrigger value="active" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-primary border-transparent">
-                        الطلاب النشطين
-                        <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{activeStudents.length}</Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="archived" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-amber-500 border-transparent">
-                        الأرشيف العام
-                        <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{archivedStudents.length}</Badge>
-                    </TabsTrigger>
-                </TabsList>
-                
-                <CardContent className="pt-6 p-0">
-                    <TabsContent value="active" className="m-0">
-                        {isLoading ? (
-                            <div className="flex justify-center items-center h-48">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : renderStudentTable(activeStudents)}
-                    </TabsContent>
+             {/* التبويبات تظهر فقط إذا كان هناك فلتر لصف دراسي معين لضمان تجربة مستخدم منظمة */}
+             {gradeFromUrl ? (
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="bg-slate-100/50 p-1 rounded-t-xl rounded-b-none border-b-0 w-full flex justify-start">
+                        <TabsTrigger value="active" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-primary border-transparent">
+                            الطلاب النشطين
+                            <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{activeStudents.filter(s => s.grade === gradeFromUrl).length}</Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="archived" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-amber-500 border-transparent">
+                            أرشيف الصف
+                            <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{archivedStudents.filter(s => s.grade === gradeFromUrl).length}</Badge>
+                        </TabsTrigger>
+                    </TabsList>
                     
-                    <TabsContent value="archived" className="m-0">
-                        {isLoading ? (
-                            <div className="flex justify-center items-center h-48">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : renderStudentTable(archivedStudents)}
-                    </TabsContent>
-                </CardContent>
-             </Tabs>
+                    <CardContent className="pt-6 p-0">
+                        <TabsContent value="active" className="m-0">
+                            {isLoading ? <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-primary" /></div> : renderStudentTable(activeStudents)}
+                        </TabsContent>
+                        
+                        <TabsContent value="archived" className="m-0">
+                            {isLoading ? <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-primary" /></div> : renderStudentTable(archivedStudents)}
+                        </TabsContent>
+                    </CardContent>
+                </Tabs>
+             ) : (
+                <div className="pt-6 pb-6">
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : renderStudentTable(activeStudents)}
+                </div>
+             )}
           </CardHeader>
         </Card>
       </div>

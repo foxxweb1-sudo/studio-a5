@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-amber-50">
-                    <Link href="/students?tab=archived">
+                    <Link href="/archive">
                       <span className="font-bold text-amber-700">أرشيف الطلاب العام</span>
                       <Archive className="mr-2 h-4 w-4 text-amber-600" />
                     </Link>

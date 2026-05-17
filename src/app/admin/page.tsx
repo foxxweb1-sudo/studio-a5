@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -19,7 +19,9 @@ import {
   UserCircle,
   Ban,
   Fingerprint,
-  Layout
+  Settings,
+  RefreshCw,
+  Database
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,11 +33,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useAppConfig } from '@/hooks/use-app-config';
 
 export default function AdminPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { updateConfig } = useAppConfig();
   const { toast } = useToast();
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
@@ -43,6 +47,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [manualUid, setManualUid] = useState('');
   const [isProcessingManual, setIsProcessingManual] = useState(false);
+  const [isUpdatingRules, setIsUpdatingRules] = useState(false);
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
@@ -110,6 +115,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateRules = async () => {
+    setIsUpdatingRules(true);
+    try {
+      await updateConfig({
+        lastRulesUpdate: serverTimestamp()
+      });
+      toast({
+        title: "جاري المزامنة",
+        description: "تم إرسال طلب تحديث قواعد البيانات بنجاح.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "فشلت عملية المزامنة."
+      });
+    } finally {
+      setTimeout(() => setIsUpdatingRules(false), 2000);
+    }
+  };
+
   const uidsWithStudents = useMemo(() => {
     const uids = Array.from(new Set(allStudents.map(s => s.teacherUid)));
     return uids.map(uid => {
@@ -149,8 +175,8 @@ export default function AdminPage() {
         </PageHeader>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl h-12 font-bold px-6 border-emerald-500/20 hover:bg-emerald-500/5 transition-all text-emerald-600">
-              <Layout className="ms-2 h-5 w-5" />
-              إعدادات الهوية
+              <Settings className="ms-2 h-5 w-5" />
+              إعدادات النظام
           </Button>
           <Button variant="outline" onClick={() => router.push('/')} className="rounded-xl h-12 font-bold px-6 border-primary/20 hover:bg-primary/5 transition-all">
               <ArrowLeft className="ms-2 h-5 w-5" />
@@ -159,19 +185,32 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
             { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-500/10' },
             { label: 'إجمالي المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-500/10' },
             { label: 'الرسائل الواردة', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            { 
+              label: 'تحديث القواعد', 
+              value: 'تحديث الآن', 
+              icon: RefreshCw, 
+              color: 'text-amber-500', 
+              bg: 'bg-amber-100 dark:bg-amber-500/10',
+              onClick: handleUpdateRules,
+              loading: isUpdatingRules
+            },
         ].map((stat, i) => (
-            <Card key={i} className="border-0 shadow-sm bg-white dark:bg-slate-900 rounded-[2rem]">
+            <Card 
+              key={i} 
+              className={`border-0 shadow-sm bg-white dark:bg-slate-900 rounded-[2rem] ${stat.onClick ? 'cursor-pointer hover:bg-amber-50 transition-colors' : ''}`}
+              onClick={stat.onClick}
+            >
                 <CardContent className="p-6 flex flex-col items-center gap-2">
                     <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
-                        <stat.icon className="w-6 h-6" />
+                        {stat.loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
                     </div>
-                    <div className="text-2xl font-black">{loading ? '...' : stat.value}</div>
-                    <div className="text-xs text-muted-foreground font-bold">{stat.label}</div>
+                    <div className="text-xl font-black">{loading ? '...' : stat.value}</div>
+                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{stat.label}</div>
                 </CardContent>
             </Card>
         ))}
@@ -263,7 +302,7 @@ export default function AdminPage() {
 
                               <Button 
                                 variant={u.isBlocked ? "outline" : "destructive"} 
-                                onClick={() => toggleUserBlock(u.id, !!u.isBlocked)}
+                                onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)}
                                 className="w-full rounded-xl font-bold h-11"
                               >
                                 {u.isBlocked ? "إلغاء الحظر" : "حظر الوصول"}

@@ -28,7 +28,8 @@ import {
   Facebook,
   Twitter,
   Send,
-  LifeBuoy
+  LifeBuoy,
+  Tag
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -44,6 +45,7 @@ export default function AdminAppSettingsPage() {
   const [formData, setFormData] = useState({
     appName: '',
     appLogo: '',
+    appVersion: '',
     loginBg: '',
     signupBg: '',
     contactPhone: '',
@@ -73,6 +75,7 @@ export default function AdminAppSettingsPage() {
       setFormData({
         appName: config.appName || '',
         appLogo: config.appLogo || '',
+        appVersion: config.appVersion || '',
         loginBg: config.loginBg || '',
         signupBg: config.signupBg || '',
         contactPhone: config.contactPhone || '',
@@ -182,6 +185,17 @@ export default function AdminAppSettingsPage() {
                     onChange={(e) => setFormData({...formData, appName: e.target.value})}
                     placeholder="اسم الموقع..."
                     className="rounded-xl h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold flex items-center gap-2">
+                    <Tag className="h-4 w-4" /> إصدار التطبيق
+                  </Label>
+                  <Input 
+                    value={formData.appVersion}
+                    onChange={(e) => setFormData({...formData, appVersion: e.target.value})}
+                    placeholder="v3.77.0"
+                    className="rounded-xl h-11 font-mono"
                   />
                 </div>
                 <div className="space-y-2">

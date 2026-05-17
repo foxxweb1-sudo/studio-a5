@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -166,10 +167,10 @@ export default function SettingsPage() {
             </div>
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
               <div className="flex items-center gap-2">
-                <Github className="h-4 w-4 text-muted-foreground" />
+                <Tag className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium text-sm">الإصدار</span>
               </div>
-              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold">v3.77.0</span>
+              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold">{config.appVersion}</span>
             </div>
             
             <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-primary/5 to-emerald-500/5 rounded-2xl border border-primary/10">

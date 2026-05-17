@@ -80,6 +80,7 @@ export type GlobalConfig = {
   id: string;
   appName?: string;
   appLogo?: string;
+  appVersion?: string;
   loginBg?: string;
   signupBg?: string;
   contactPhone?: string;

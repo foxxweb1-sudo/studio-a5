@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // قواعد المستخدمين (المعلمين)
     match /users/{userId} {
-      // السماح بالقراءة العامة لبيانات المدرس (الاسم والصورة) ليراها ولي الأمر
+      // السماح للقراءة العامة لبيانات المدرس (الاسم والصورة) ليراها ولي الأمر
       allow read: if true; 
       allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
 
@@ -26,15 +26,15 @@ service cloud.firestore {
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
-      // سجلات الحضور - السماح لولي الأمر بالقراءة (سيتم الفلترة برمجياً داخل الكود)
+      // سجلات الحضور - السماح لولي الأمر بالقراءة والقوائم المفلترة
       match /attendance/{attendanceId} {
-        allow read: if true;
+        allow read, list: if true;
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
-      // سجلات المدفوعات - السماح لولي الأمر بالقراءة
+      // سجلات المدفوعات - السماح لولي الأمر بالقراءة والقوائم المفلترة
       match /payments/{paymentId} {
-        allow read: if true;
+        allow read, list: if true;
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 

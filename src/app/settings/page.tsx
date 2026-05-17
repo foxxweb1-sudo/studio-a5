@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -76,36 +75,42 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* قسم الحساب - نمط فيسبوك المطور */}
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border-r-4 border-primary">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                <UserCircle className="h-5 w-5" />
+        {/* قسم الحساب - نمط فيسبوك المطور مع تأثير النور الدوار */}
+        <div className="relative p-[2px] overflow-hidden rounded-[2.5rem] group">
+          {/* طبقة النور الدوار الخلفية */}
+          <div className="absolute inset-[-1000%] animate-spin-border bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,hsl(var(--primary))_50%,transparent_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <Card className="relative border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.4rem] overflow-hidden">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                  <UserCircle className="h-5 w-5" />
+                </div>
+                <CardTitle className="text-xl">الحساب</CardTitle>
               </div>
-              <CardTitle className="text-xl">الحساب</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-             <Button asChild variant="ghost" className="w-full justify-between h-auto py-5 px-4 rounded-2xl hover:bg-primary/5 font-bold group transition-all duration-300">
-              <Link href="/account" className="flex items-center w-full justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
-                        <UserCircle className="h-6 w-6" />
-                    </div>
-                    <div className="flex flex-col items-start text-right">
-                        <span className="text-base font-black text-slate-800 dark:text-white">إدارة الحساب</span>
-                        <span className="text-xs text-muted-foreground font-medium opacity-80">تحديث الاسم، الصورة، وكلمة المرور</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">تعديل</span>
-                  <ChevronLeft className="h-5 w-5 text-primary/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
-                </div>
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+               <Button asChild variant="ghost" className="w-full justify-between h-auto py-5 px-4 rounded-2xl hover:bg-primary/5 font-bold group transition-all duration-300">
+                <Link href="/account" className="flex items-center w-full justify-between">
+                  <div className="flex items-center gap-4">
+                      <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300 relative">
+                          <UserCircle className="h-6 w-6 relative z-10" />
+                          <div className="absolute inset-0 bg-white/20 rounded-2xl animate-ping group-hover:block hidden" />
+                      </div>
+                      <div className="flex flex-col items-start text-right">
+                          <span className="text-base font-black text-slate-800 dark:text-white">إدارة الحساب</span>
+                          <span className="text-xs text-muted-foreground font-medium opacity-80">تحديث الاسم، الصورة، وكلمة المرور</span>
+                      </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">تعديل</span>
+                    <ChevronLeft className="h-5 w-5 text-primary/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
+                  </div>
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* المظهر */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
@@ -194,44 +199,6 @@ export default function SettingsPage() {
                     </Button>
                 </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* قانوني ومعلومات */}
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-500/10 text-slate-500 rounded-xl">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-xl">قانوني ومعلومات</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-2">
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold group">
-              <Link href="/privacy" className="flex items-center w-full">
-                <ShieldCheck className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                <span>الخصوصية</span>
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold group">
-              <Link href="/terms" className="flex items-center w-full">
-                <FileText className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                <span>اتفاقية الاستخدام</span>
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold group">
-              <Link href="/about" className="flex items-center w-full">
-                <Users className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                <span>من نحن</span>
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold text-emerald-600 group">
-              <Link href="/contact" className="flex items-center w-full">
-                <MessageCircle className="h-5 w-5 text-emerald-500 group-hover:scale-110 transition-transform" />
-                <span>تواصل معنا</span>
-              </Link>
-            </Button>
           </CardContent>
         </Card>
 

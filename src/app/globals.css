@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -84,4 +83,13 @@
 
 ::-webkit-scrollbar-thumb {
   @apply bg-muted-foreground/10 rounded-full hover:bg-muted-foreground/20 transition-colors;
+}
+
+@keyframes spin-border {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-border {
+  animation: spin-border 4s linear infinite;
 }

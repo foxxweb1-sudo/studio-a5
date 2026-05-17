@@ -16,7 +16,9 @@ import {
   MessageSquare,
   ShieldCheck,
   Trash2,
-  Mail
+  Mail,
+  UserCircle,
+  ChevronDown
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -44,6 +46,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export default function AdminPage() {
   const router = useRouter();
@@ -53,9 +61,22 @@ export default function AdminPage() {
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [usersProfiles, setUsersProfiles] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
 
   const isAdmin = useMemo(() => user?.uid === ADMIN_UID, [user]);
+
+  // تجميع الطلاب حسب المعلم
+  const groupedStudents = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    allStudents.forEach(student => {
+      if (!groups[student.teacherUid]) {
+        groups[student.teacherUid] = [];
+      }
+      groups[student.teacherUid].push(student);
+    });
+    return groups;
+  }, [allStudents]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -69,7 +90,7 @@ export default function AdminPage() {
 
     setLoading(true);
 
-    // مراقبة كافة الطلاب عبر كافة حسابات المعلمين
+    // مراقبة كافة الطلاب
     const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
       const list = snap.docs.map(doc => {
         const pathSegments = doc.ref.path.split('/');
@@ -86,9 +107,19 @@ export default function AdminPage() {
       setMessages(list);
     });
 
+    // مراقبة بروفايلات المستخدمين لجلب الأسماء والايميلات
+    const unsubUsers = onSnapshot(collection(firestore, 'users'), (snap) => {
+      const profiles: Record<string, any> = {};
+      snap.docs.forEach(doc => {
+        profiles[doc.id] = doc.data();
+      });
+      setUsersProfiles(profiles);
+    });
+
     return () => {
       unsubStudents();
       unsubMessages();
+      unsubUsers();
     };
   }, [firestore, isAdmin, isUserLoading, router]);
 
@@ -121,7 +152,7 @@ export default function AdminPage() {
              </div>
              <div>
                 <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
-                <PageHeaderDescription>أنت تطلع الآن على كافة البيانات المسجلة.</PageHeaderDescription>
+                <PageHeaderDescription>إدارة الطلاب مجمعة حسب حساب المعلم.</PageHeaderDescription>
              </div>
           </div>
         </PageHeader>
@@ -134,8 +165,8 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
             { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-500/10' },
+            { label: 'إجمالي الحسابات', value: Object.keys(groupedStudents).length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-500/10' },
             { label: 'الرسائل الواردة', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-            { label: 'حالة النظام', value: 'نشط', icon: ShieldCheck, color: 'text-amber-500', bg: 'bg-amber-500/10' },
         ].map((stat, i) => (
             <Card key={i} className="border-0 shadow-sm bg-white dark:bg-slate-900 rounded-[2rem]">
                 <CardContent className="p-6 flex flex-col items-center gap-2">
@@ -151,71 +182,94 @@ export default function AdminPage() {
 
        <Tabs defaultValue="students" className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto h-14 bg-muted/50 p-1 rounded-2xl">
-                <TabsTrigger value="students" className="rounded-xl font-bold">قائمة الطلاب الشاملة</TabsTrigger>
+                <TabsTrigger value="students" className="rounded-xl font-bold">قاعدة بيانات الطلاب</TabsTrigger>
                 <TabsTrigger value="messages" className="rounded-xl font-bold">رسائل التواصل</TabsTrigger>
             </TabsList>
             
             <TabsContent value="students">
-                <Card className="border-0 shadow-lg rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
-                    <CardHeader className="bg-primary/5">
-                        <CardTitle>سجل الطلاب ({allStudents.length})</CardTitle>
-                        <CardDescription>قائمة بجميع الطلاب المسجلين عبر كافة الحسابات.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-muted/30">
-                                    <TableHead className="text-right font-bold">اسم الطالب</TableHead>
-                                    <TableHead className="text-right font-bold">المرحلة / الصف</TableHead>
-                                    <TableHead className="text-right font-bold">معرف المعلم (UID)</TableHead>
-                                    <TableHead className="text-center font-bold">إجراءات</TableHead>
+                <div className="space-y-6">
+                  <div className="text-right px-4">
+                    <h3 className="text-xl font-black">الحسابات المسجلة ({Object.keys(groupedStudents).length})</h3>
+                    <p className="text-sm text-muted-foreground">اضغط على المعرف (UID) لعرض الطلاب التابعين له.</p>
+                  </div>
+
+                  <Accordion type="single" collapsible className="w-full space-y-4">
+                    {Object.keys(groupedStudents).length > 0 ? Object.entries(groupedStudents).map(([teacherUid, students]) => {
+                      const profile = usersProfiles[teacherUid];
+                      return (
+                        <AccordionItem key={teacherUid} value={teacherUid} className="border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden">
+                          <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-all group">
+                            <div className="flex items-center gap-4 w-full text-right">
+                              <div className="p-3 bg-primary/10 text-primary rounded-2xl group-data-[state=open]:bg-primary group-data-[state=open]:text-white transition-colors">
+                                <UserCircle className="h-6 w-6" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-black text-lg">
+                                  {profile?.displayName || 'معلم غير مسمى'}
+                                </h4>
+                                <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-2">
+                                  <span className="bg-muted px-2 py-0.5 rounded">UID: {teacherUid}</span>
+                                  {profile?.email && <span>• {profile.email}</span>}
+                                </p>
+                              </div>
+                              <div className="bg-primary/5 text-primary text-xs font-bold px-4 py-1.5 rounded-full border border-primary/20 me-4">
+                                {students.length} طالب
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="p-0 border-t">
+                            <Table>
+                              <TableHeader className="bg-muted/30">
+                                <TableRow>
+                                  <TableHead className="text-right font-bold px-6">اسم الطالب</TableHead>
+                                  <TableHead className="text-right font-bold">المرحلة / الصف</TableHead>
+                                  <TableHead className="text-center font-bold px-6">إجراءات</TableHead>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {allStudents.length > 0 ? allStudents.map(student => (
-                                    <TableRow key={student.id} className="hover:bg-muted/10 transition-colors">
-                                        <TableCell className="font-bold">{student.name}</TableCell>
-                                        <TableCell>
-                                            <span className="inline-block bg-primary/10 text-primary text-[10px] font-bold px-3 py-1 rounded-full border border-primary/20">
-                                                {student.grade}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-[10px] font-mono text-muted-foreground">
-                                            {student.teacherUid}
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="text-rose-500 hover:bg-rose-50 rounded-xl">
-                                                        <Trash2 className="h-5 w-5" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent className="rounded-[2.5rem] border-0 shadow-2xl">
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle className="text-2xl font-black">حذف الطالب نهائياً؟</AlertDialogTitle>
-                                                        <AlertDialogDescription className="text-base">
-                                                            أنت على وشك حذف الطالب <span className="font-bold text-rose-600">({student.name})</span> من قاعدة البيانات. لا يمكن التراجع عن هذا الإجراء.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter className="gap-3">
-                                                        <AlertDialogCancel className="rounded-2xl h-12 font-bold">إلغاء</AlertDialogCancel>
-                                                        <AlertDialogAction className="rounded-2xl h-12 font-bold bg-rose-600 hover:bg-rose-700" onClick={() => handleDeleteStudent(student.id, student.teacherUid)}>تأكيد الحذف</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-32 text-center text-muted-foreground font-bold">
-                                            لا يوجد طلاب مسجلين في النظام حالياً.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                              </TableHeader>
+                              <TableBody>
+                                {students.map(student => (
+                                  <TableRow key={student.id} className="hover:bg-muted/10 transition-colors">
+                                    <TableCell className="font-bold px-6">{student.name}</TableCell>
+                                    <TableCell>
+                                      <span className="inline-block bg-primary/10 text-primary text-[10px] font-bold px-3 py-1 rounded-full border border-primary/20">
+                                        {student.grade}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="text-center px-6">
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="text-rose-500 hover:bg-rose-50 rounded-xl">
+                                            <Trash2 className="h-5 w-5" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent className="rounded-[2.5rem] border-0 shadow-2xl">
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle className="text-2xl font-black text-right">حذف الطالب نهائياً؟</AlertDialogTitle>
+                                            <AlertDialogDescription className="text-base text-right">
+                                              أنت على وشك حذف الطالب <span className="font-bold text-rose-600">({student.name})</span> من حساب المعلم <span className="font-bold">({profile?.displayName || teacherUid})</span>. لا يمكن التراجع عن هذا الإجراء.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter className="gap-3 flex-row-reverse">
+                                            <AlertDialogAction className="rounded-2xl h-12 font-bold bg-rose-600 hover:bg-rose-700 flex-1" onClick={() => handleDeleteStudent(student.id, teacherUid)}>تأكيد الحذف</AlertDialogAction>
+                                            <AlertDialogCancel className="rounded-2xl h-12 font-bold flex-1">إلغاء</AlertDialogCancel>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </AccordionContent>
+                        </AccordionItem>
+                      )
+                    }) : (
+                      <div className="py-20 text-center text-muted-foreground font-bold bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
+                        لا يوجد طلاب مسجلين في أي حساب حالياً.
+                      </div>
+                    )}
+                  </Accordion>
+                </div>
             </TabsContent>
 
             <TabsContent value="messages">
@@ -227,7 +281,7 @@ export default function AdminPage() {
                                     <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center">
                                         <Mail className="h-5 w-5" />
                                     </div>
-                                    <div>
+                                    <div className="text-right">
                                         <h4 className="font-black text-lg">{msg.name}</h4>
                                         <p className="text-xs text-muted-foreground">{msg.email}</p>
                                     </div>
@@ -236,7 +290,7 @@ export default function AdminPage() {
                                     {msg.createdAt ? format(msg.createdAt.toDate(), 'd MMM yyyy', { locale: ar }) : 'تاريخ غير متوفر'}
                                 </span>
                             </div>
-                            <div className="bg-muted/30 p-4 rounded-2xl">
+                            <div className="bg-muted/30 p-4 rounded-2xl text-right">
                                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">"{msg.message}"</p>
                             </div>
                         </Card>

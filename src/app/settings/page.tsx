@@ -77,7 +77,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* قسم الحساب */}
+        {/* قسم الحساب (ثابت في الأعلى للضرورة التقنية) */}
         <div className="relative p-[2px] overflow-hidden rounded-[2.5rem] group">
           <div className="absolute inset-[-1000%] animate-spin-border bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,hsl(var(--primary))_50%,transparent_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
           
@@ -110,7 +110,60 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* المظهر */}
+        {/* 1. معلومات التطبيق */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                <Info className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-xl font-black">عن التطبيق</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <AppWindow className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">اسم التطبيق</span>
+              </div>
+              <span className="font-bold text-primary">{config.appName}</span>
+            </div>
+            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">الإصدار الحالي</span>
+              </div>
+              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold">{config.appVersion}</span>
+            </div>
+            
+            <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-primary/5 to-emerald-500/5 rounded-2xl border border-primary/10">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-800">
+                            <Image 
+                                src={techStoreLogo}
+                                alt="TECH STORE"
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">المصدر الرسمي</span>
+                            <span className="font-bold text-sm">TECH STORE</span>
+                        </div>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="rounded-xl border-primary/20 hover:bg-primary hover:text-white transition-all">
+                        <a href={config.techStoreUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                            <ExternalLink className="h-3 w-3" />
+                            زيارة
+                        </a>
+                    </Button>
+                </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 2. المظهر */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -147,7 +200,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* مركز المعلومات والدعم - الصفحات التي كانت مفقودة */}
+        {/* 3. المعلومات والدعم */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -202,60 +255,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* معلومات التطبيق */}
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                <Info className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-xl font-black">عن التطبيق</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <AppWindow className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">اسم التطبيق</span>
-              </div>
-              <span className="font-bold text-primary">{config.appName}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">الإصدار الحالي</span>
-              </div>
-              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold">{config.appVersion}</span>
-            </div>
-            
-            <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-primary/5 to-emerald-500/5 rounded-2xl border border-primary/10">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-800">
-                            <Image 
-                                src={techStoreLogo}
-                                alt="TECH STORE"
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">المصدر الرسمي</span>
-                            <span className="font-bold text-sm">TECH STORE</span>
-                        </div>
-                    </div>
-                    <Button asChild variant="outline" size="sm" className="rounded-xl border-primary/20 hover:bg-primary hover:text-white transition-all">
-                        <a href={config.techStoreUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                            <ExternalLink className="h-3 w-3" />
-                            زيارة
-                        </a>
-                    </Button>
-                </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* تابعونا */}
+        {/* 4. تابعونا */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -295,7 +295,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* الروابط والمشاركة */}
+        {/* 5. مشاركة وتواصل */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">

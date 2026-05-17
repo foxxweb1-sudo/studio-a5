@@ -2,7 +2,8 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import { useStudents, useAttendance, usePayments, useUser } from '@/hooks/use-app-data';
+import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
+import { useUser } from '@/firebase';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

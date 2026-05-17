@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter, MoreVertical } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter, MoreVertical, FolderArchive } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -36,7 +37,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -68,7 +68,6 @@ export default function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentForQR, setSelectedStudentForQR] = useState<Student | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [activeTab, setActiveTab] = useState('active');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -120,7 +119,7 @@ export default function StudentManagement() {
     deleteStudent(studentId);
     toast({
         variant: "destructive",
-        title: "تم الحذف",
+        title: "تم الحظر",
         description: "تم حذف الطالب بنجاح."
     });
   }
@@ -136,7 +135,7 @@ export default function StudentManagement() {
   const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
   const archivedStudents = useMemo(() => students.filter(s => s.isArchived), [students]);
 
-  const renderStudentTable = (list: Student[]) => {
+  const renderStudentTable = (list: Student[], emptyMessage: string = "لا يوجد طلاب هنا حالياً.") => {
     const filtered = list.filter(student => 
         (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -222,7 +221,7 @@ export default function StudentManagement() {
                 ) : (
                     <TableRow>
                     <TableCell colSpan={3} className="h-24 text-center text-muted-foreground font-bold italic">
-                        {list.length === 0 ? "لا يوجد طلاب هنا حالياً." : "لا توجد نتائج بحث مطابقة."}
+                        {list.length === 0 ? emptyMessage : "لا توجد نتائج بحث مطابقة."}
                     </TableCell>
                     </TableRow>
                 )}
@@ -315,65 +314,70 @@ export default function StudentManagement() {
         </Card>
       </div>
 
-      <div className="lg:col-span-2">
-        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
-          <CardHeader className="bg-slate-50 border-b pb-0">
-             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 px-1">
+      <div className="lg:col-span-2 space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                    <Filter className="h-5 w-5 text-primary" />
+                </div>
                 <div>
-                    <CardTitle>{activeTab === 'archived' ? 'سجل الأرشيف' : 'كشف الطلاب'}</CardTitle>
-                    <CardDescription>
-                        {gradeFromUrl 
-                          ? `عرض ${activeTab === 'archived' ? 'أرشيف' : 'طلاب'} صف: ${gradeFromUrl}` 
-                          : `إدارة كافة الطلاب النشطين حالياً.`
-                        }
-                    </CardDescription>
+                    <h3 className="font-black text-lg">فرز وتصفية</h3>
+                    <p className="text-[10px] text-muted-foreground font-bold">ابحث في قائمة طلابك</p>
                 </div>
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="ابحث بالاسم..."
-                        className="pr-10 h-10 rounded-xl bg-white border-slate-200"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-             </div>
+            </div>
+            <div className="relative w-full sm:w-80">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="ابحث بالاسم هنا..."
+                    className="pr-10 h-11 rounded-xl bg-slate-50 border-slate-200"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+        </div>
 
-             {/* التبويبات تظهر فقط إذا كان هناك فلتر لصف دراسي معين لضمان تجربة مستخدم منظمة */}
-             {gradeFromUrl ? (
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="bg-slate-100/50 p-1 rounded-t-xl rounded-b-none border-b-0 w-full flex justify-start">
-                        <TabsTrigger value="active" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-primary border-transparent">
-                            الطلاب النشطين
-                            <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{activeStudents.filter(s => s.grade === gradeFromUrl).length}</Badge>
-                        </TabsTrigger>
-                        <TabsTrigger value="archived" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-amber-500 border-transparent">
-                            أرشيف الصف
-                            <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{archivedStudents.filter(s => s.grade === gradeFromUrl).length}</Badge>
-                        </TabsTrigger>
-                    </TabsList>
-                    
-                    <CardContent className="pt-6 p-0">
-                        <TabsContent value="active" className="m-0">
-                            {isLoading ? <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-primary" /></div> : renderStudentTable(activeStudents)}
-                        </TabsContent>
-                        
-                        <TabsContent value="archived" className="m-0">
-                            {isLoading ? <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-primary" /></div> : renderStudentTable(archivedStudents)}
-                        </TabsContent>
-                    </CardContent>
-                </Tabs>
-             ) : (
-                <div className="pt-6 pb-6">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-48">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : renderStudentTable(activeStudents)}
+        {/* حقل الطلاب النشطين */}
+        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden border-t-4 border-t-primary">
+            <CardHeader className="bg-slate-50/50 border-b flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="text-xl">الطلاب النشطين</CardTitle>
+                    <CardDescription>هؤلاء هم الطلاب الذين يتم تسجيل حضورهم ومدفوعاتهم حالياً.</CardDescription>
                 </div>
-             )}
-          </CardHeader>
+                <Badge className="bg-primary hover:bg-primary rounded-xl h-10 px-4 font-black">
+                    {activeStudents.filter(s => !gradeFromUrl || s.grade === gradeFromUrl).length} طالب
+                </Badge>
+            </CardHeader>
+            <CardContent className="p-0">
+                {isLoading ? (
+                    <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-primary/20" /></div>
+                ) : renderStudentTable(activeStudents, "لا يوجد طلاب نشطون حالياً.")}
+            </CardContent>
         </Card>
+
+        {/* حقل الأرشيف الخاص بالصف (يظهر فقط عند الفلترة بصف معين) */}
+        {gradeFromUrl && (
+            <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden border-t-4 border-t-amber-500 bg-amber-50/10">
+                <CardHeader className="bg-amber-50/30 border-b flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-500/10 rounded-xl text-amber-600">
+                            <FolderArchive className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-xl text-amber-700">أرشيف {gradeFromUrl}</CardTitle>
+                            <CardDescription>الطلاب غير النشطين التابعين لهذا الصف تحديداً.</CardDescription>
+                        </div>
+                    </div>
+                    <Badge variant="outline" className="border-amber-200 text-amber-700 bg-white rounded-xl h-10 px-4 font-black">
+                        {archivedStudents.filter(s => s.grade === gradeFromUrl).length} مؤرشف
+                    </Badge>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {isLoading ? (
+                        <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-amber-200" /></div>
+                    ) : renderStudentTable(archivedStudents, "لا يوجد طلاب في أرشيف هذا الصف.")}
+                </CardContent>
+            </Card>
+        )}
       </div>
       
       {selectedStudentForQR && (

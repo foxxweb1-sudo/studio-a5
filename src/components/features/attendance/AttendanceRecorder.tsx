@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, ShieldAlert, BadgeCheck, Clock } from 'lucide-react';
+import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, BadgeCheck, Clock, UserX, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import {
   Table,
@@ -25,8 +25,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from './QRCodeScanner';
 import { Badge } from '@/components/ui/badge';
-import { Student } from '@/lib/definitions';
-
 
 const formSchema = z.object({
   studentCode: z.string().min(1, 'الرجاء إدخل كود الطالب.'),
@@ -44,10 +42,11 @@ const DAY_MAP: Record<string, string> = {
 
 export default function AttendanceRecorder() {
   const { students, isLoading: studentsLoading } = useStudents();
-  const { attendance, addAttendance, isLoading: attendanceLoading } = useAttendance();
+  const { attendance, addAttendance, markAbsentees, isLoading: attendanceLoading } = useAttendance();
   const { schedule, isLoading: scheduleLoading } = useSchedule();
   const { toast } = useToast();
   const [lastAttended, setLastAttended] = useState<string | null>(null);
+  const [isMarkingAbsence, setIsMarkingAbsence] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,7 +60,7 @@ export default function AttendanceRecorder() {
   const currentDayName = format(todayDate, 'EEEE');
   const currentTimeStr = format(todayDate, 'HH:mm');
 
-  // التحقق من الحصص النشطة حالياً لعرضها في الواجهة
+  // الحصص النشطة الآن
   const activeSessionsNow = useMemo(() => {
     if (!schedule?.isActive || !schedule.sessions) return [];
     return schedule.sessions.filter(s => 
@@ -71,10 +70,18 @@ export default function AttendanceRecorder() {
     );
   }, [schedule, currentDayName, currentTimeStr]);
 
+  // الحصص التي انتهت اليوم (لتسجيل الغياب)
+  const finishedSessionsToday = useMemo(() => {
+    if (!schedule?.isActive || !schedule.sessions) return [];
+    return schedule.sessions.filter(s => 
+      s.days.includes(currentDayName) && 
+      currentTimeStr > s.endTime
+    );
+  }, [schedule, currentDayName, currentTimeStr]);
+
   const recordAttendance = (studentCode: string) => {
     let student = students.find(s => s.id === studentCode);
 
-    // دعم البحث بالرقم التسلسلي (ID)
     if (!student) {
       const sequentialId = parseInt(studentCode, 10);
       if (!isNaN(sequentialId) && sequentialId > 0 && sequentialId <= students.length) {
@@ -83,15 +90,10 @@ export default function AttendanceRecorder() {
     }
     
     if (!student) {
-      toast({
-        variant: 'destructive',
-        title: 'خطأ',
-        description: 'الطالب غير موجود.',
-      });
+      toast({ variant: 'destructive', title: 'خطأ', description: 'الطالب غير موجود.' });
       return;
     }
 
-    // التحقق من الجدول الزمني إذا كان مفعلاً
     if (schedule?.isActive && schedule.sessions) {
         const hasSessionNow = schedule.sessions.some(s => 
             s.grade === student!.grade && 
@@ -110,129 +112,170 @@ export default function AttendanceRecorder() {
         }
     }
 
-    const alreadyAttended = attendance.some(
+    const alreadyRecorded = attendance.some(
       (a) => a.studentId === student!.id && a.date === todayStr
     );
 
-    if (alreadyAttended) {
-      toast({
-        title: 'تم التسجيل مسبقاً',
-        description: `تم تسجيل حضور الطالب ${student!.name} اليوم بالفعل.`,
-      });
+    if (alreadyRecorded) {
+      toast({ title: 'مسجل مسبقاً', description: `تم تسجيل الطالب ${student!.name} اليوم بالفعل.` });
       return;
     }
 
     addAttendance(student!.id);
     setLastAttended(student!.name);
-    toast({
-      title: 'تم تسجيل الحضور',
-      description: `تم تسجيل حضور الطالب ${student!.name} بنجاح.`,
-    });
+    toast({ title: 'تم التسجيل', description: `تم تسجيل حضور الطالب ${student!.name} بنجاح.` });
     form.reset();
   }
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    recordAttendance(values.studentCode);
+  const handleMarkAbsentees = async (grade: string) => {
+    setIsMarkingAbsence(true);
+    try {
+        await markAbsentees(grade, students);
+        toast({ title: "تم تسجيل الغياب", description: `تم رصد الغائبين لصف (${grade}) بنجاح.` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "فشل رصد الغياب" });
+    } finally {
+        setIsMarkingAbsence(false);
+    }
   };
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => recordAttendance(values.studentCode);
   
-  const attendedToday = attendance
-    .filter((a) => a.date === todayStr)
-    .map((a) => {
-        const student = students.find((s) => s.id === a.studentId);
-        return student || null;
-    })
+  const recordsToday = attendance.filter((a) => a.date === todayStr);
+  const attendedToday = recordsToday
+    .filter(a => a.status === 'present')
+    .map((a) => students.find((s) => s.id === a.studentId))
+    .filter(Boolean);
+
+  const absentToday = recordsToday
+    .filter(a => a.status === 'absent')
+    .map((a) => students.find((s) => s.id === a.studentId))
     .filter(Boolean);
 
   const isLoading = studentsLoading || attendanceLoading || scheduleLoading;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* عرض شريط حالة العمل الذكي */}
+      {/* شريط المواعيد والحالة */}
       {schedule?.isActive && (
-          <div className={`p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeSessionsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
-             <div className="flex items-center gap-4 w-full md:w-auto text-center md:text-right">
-                {activeSessionsNow.length > 0 ? (
-                    <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
-                        <BadgeCheck className="h-6 w-6" />
-                    </div>
-                ) : (
-                    <div className="p-3 bg-slate-400 rounded-2xl text-white">
-                        <Clock className="h-6 w-6" />
-                    </div>
-                )}
-                <div>
-                    <h5 className={`font-black text-lg ${activeSessionsNow.length > 0 ? 'text-emerald-700' : 'text-slate-600'}`}>
-                        {activeSessionsNow.length > 0 ? 'وقت الحصص الجارية الآن' : 'لا توجد حصص جارية حالياً'}
-                    </h5>
-                    <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
-                        {activeSessionsNow.length > 0 ? activeSessionsNow.map(s => (
-                            <Badge key={s.id} variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold">
-                                {s.grade} ({s.startTime}-{s.endTime})
-                            </Badge>
-                        )) : (
-                            <span className="text-xs font-bold text-slate-400 italic">بإمكانك إضافة حصص من صفحة "مواعيد العمل"</span>
-                        )}
+          <div className="flex flex-col gap-4">
+              <div className={`p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeSessionsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
+                <div className="flex items-center gap-4 w-full md:w-auto text-center md:text-right">
+                    {activeSessionsNow.length > 0 ? (
+                        <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
+                            <BadgeCheck className="h-6 w-6" />
+                        </div>
+                    ) : (
+                        <div className="p-3 bg-slate-400 rounded-2xl text-white">
+                            <Clock className="h-6 w-6" />
+                        </div>
+                    )}
+                    <div>
+                        <h5 className={`font-black text-lg ${activeSessionsNow.length > 0 ? 'text-emerald-700' : 'text-slate-600'}`}>
+                            {activeSessionsNow.length > 0 ? 'وقت الحصص الجارية الآن' : 'لا توجد حصص جارية حالياً'}
+                        </h5>
+                        <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
+                            {activeSessionsNow.length > 0 ? activeSessionsNow.map(s => (
+                                <Badge key={s.id} variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold">
+                                    {s.grade} ({s.startTime}-{s.endTime})
+                                </Badge>
+                            )) : (
+                                <span className="text-xs font-bold text-slate-400 italic">بإمكانك إضافة حصص من صفحة "مواعيد العمل"</span>
+                            )}
+                        </div>
                     </div>
                 </div>
-             </div>
-             <div className="flex items-center gap-2">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{DAY_MAP[currentDayName]} | {currentTimeStr}</span>
-                <Badge variant={activeSessionsNow.length > 0 ? "default" : "secondary"} className="rounded-xl px-4 py-1.5 font-black">
-                    {activeSessionsNow.length > 0 ? 'الاستقبال متاح' : 'الاستقبال مغلق'}
-                </Badge>
-             </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{DAY_MAP[currentDayName]} | {currentTimeStr}</span>
+                    <Badge variant={activeSessionsNow.length > 0 ? "default" : "secondary"} className="rounded-xl px-4 py-1.5 font-black">
+                        {activeSessionsNow.length > 0 ? 'الاستقبال متاح' : 'الاستقبال مغلق'}
+                    </Badge>
+                </div>
+              </div>
+
+              {/* قسم الحصص المنتهية لتسجيل الغياب */}
+              {finishedSessionsToday.length > 0 && (
+                  <div className="bg-amber-50 border-2 border-amber-100 p-5 rounded-[2rem] shadow-sm animate-in zoom-in-95 duration-500">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                              <div className="p-2 bg-amber-500 text-white rounded-xl">
+                                  <AlertCircle className="h-5 w-5" />
+                              </div>
+                              <div className="text-right">
+                                  <h4 className="font-black text-amber-900 text-sm">حصص انتهى وقتها</h4>
+                                  <p className="text-[10px] text-amber-700 font-bold">يمكنك الآن تسجيل "غائب" لمن لم يحضر.</p>
+                              </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2 justify-center">
+                              {finishedSessionsToday.map(s => (
+                                  <Button 
+                                    key={s.id} 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="rounded-xl border-amber-200 bg-white text-amber-700 font-bold gap-2 hover:bg-amber-100"
+                                    onClick={() => handleMarkAbsentees(s.grade)}
+                                    disabled={isMarkingAbsence}
+                                  >
+                                      {isMarkingAbsence ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
+                                      غياب {s.grade}
+                                  </Button>
+                              ))}
+                          </div>
+                      </div>
+                  </div>
+              )}
           </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
             <Tabs defaultValue="scanner" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-muted/50 rounded-xl p-1">
-                <TabsTrigger value="scanner" className="rounded-lg font-bold">مسح الكود</TabsTrigger>
-                <TabsTrigger value="manual" className="rounded-lg font-bold">إدخال يدوي</TabsTrigger>
-            </TabsList>
-            <TabsContent value="scanner">
-                <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
+                <TabsList className="grid w-full grid-cols-2 bg-muted/50 rounded-xl p-1">
+                    <TabsTrigger value="scanner" className="rounded-lg font-bold">مسح الكود</TabsTrigger>
+                    <TabsTrigger value="manual" className="rounded-lg font-bold">إدخال يدوي</TabsTrigger>
+                </TabsList>
+                <TabsContent value="scanner">
+                    <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
+                        <CardHeader>
+                            <CardTitle className="text-lg">تسجيل بالـ QR</CardTitle>
+                            <CardDescription>وجه الكاميرا نحو كود الطالب.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <QRCodeScanner onScan={recordAttendance} />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="manual">
+                    <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
                     <CardHeader>
-                        <CardTitle className="text-lg">تسجيل بالـ QR</CardTitle>
-                        <CardDescription>وجه الكاميرا نحو كود الطالب.</CardDescription>
+                        <CardTitle className="text-lg">إدخال يدوي</CardTitle>
+                        <CardDescription>أدخل الكود أو الرقم التسلسلي.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <QRCodeScanner onScan={recordAttendance} />
+                        <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                            control={form.control}
+                            name="studentCode"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel className="font-bold">كود الطالب</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="000" {...field} autoFocus className="text-center text-3xl font-black h-20 rounded-2xl bg-slate-50"/>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <Button type="submit" className="w-full h-14 rounded-2xl text-lg font-black gap-2" disabled={isLoading}>
+                            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <CheckCircle className="h-6 w-6" />}
+                            تسجيل الحضور
+                            </Button>
+                        </form>
+                        </Form>
                     </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="manual">
-                <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
-                <CardHeader>
-                    <CardTitle className="text-lg">إدخال يدوي</CardTitle>
-                    <CardDescription>أدخل الكود أو الرقم التسلسلي.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                        control={form.control}
-                        name="studentCode"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel className="font-bold">كود الطالب</FormLabel>
-                            <FormControl>
-                                <Input placeholder="000" {...field} autoFocus className="text-center text-3xl font-black h-20 rounded-2xl bg-slate-50"/>
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <Button type="submit" className="w-full h-14 rounded-2xl text-lg font-black gap-2" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <CheckCircle className="h-6 w-6" />}
-                        تسجيل الحضور
-                        </Button>
-                    </form>
-                    </Form>
-                </CardContent>
-                </Card>
-            </TabsContent>
+                    </Card>
+                </TabsContent>
             </Tabs>
             {lastAttended && (
             <div className="p-5 bg-emerald-500 text-white rounded-[2rem] shadow-xl shadow-emerald-500/20 flex items-center gap-4 animate-bounce">
@@ -246,68 +289,68 @@ export default function AttendanceRecorder() {
             </div>
             )}
         </div>
+
         <div className="lg:col-span-2">
             <Card className="border-0 shadow-xl rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900">
-            <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <CardTitle className="text-xl">الحاضرون اليوم</CardTitle>
-                        <CardDescription>قائمة الطلاب المسجلين بتاريخ {todayStr}</CardDescription>
+                <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle className="text-xl">سجل اليوم</CardTitle>
+                            <CardDescription>قائمة الطلاب المسجلين بتاريخ {todayStr}</CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                            <Badge variant="default" className="bg-emerald-500 h-10 px-4 rounded-xl font-black text-xs sm:text-sm">
+                                {attendedToday.length} حضور
+                            </Badge>
+                            <Badge variant="destructive" className="bg-rose-500 h-10 px-4 rounded-xl font-black text-xs sm:text-sm">
+                                {absentToday.length} غياب
+                            </Badge>
+                        </div>
                     </div>
-                    <Badge variant="secondary" className="h-10 px-4 rounded-xl font-black text-lg">
-                        {attendedToday.length} طالب
-                    </Badge>
-                </div>
-            </CardHeader>
-            <CardContent className="p-0">
-                {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary/20" />
-                </div>
-                ) : attendedToday.length > 0 ? (
-                <div className="max-h-[500px] overflow-auto">
-                    <Table>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-right font-black px-6">كود</TableHead>
-                        <TableHead className="text-right font-black">الاسم</TableHead>
-                        <TableHead className="text-right font-black">الصف</TableHead>
-                        <TableHead className="text-center font-black">الحالة</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {attendedToday.map((student, idx) => (
-                        student &&
-                        <TableRow key={student.id} className="group transition-colors">
-                            <TableCell className="font-mono font-bold text-slate-400 px-6">{(students.findIndex(s => s.id === student.id) + 1)}</TableCell>
-                            <TableCell className="font-black text-slate-700 dark:text-slate-200">{student.name}</TableCell>
-                            <TableCell className="text-slate-500 font-medium text-xs">{student.grade}</TableCell>
-                            <TableCell className="text-center">
-                                <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-lg">حاضر</Badge>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                    </Table>
-                </div>
-                ) : (
-                <div className="text-center py-24 px-6">
-                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-slate-200">
-                         <QrCode className="h-8 w-8 text-slate-300" />
+                </CardHeader>
+                <CardContent className="p-0">
+                    {isLoading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader2 className="h-10 w-10 animate-spin text-primary/20" />
                     </div>
-                    <h3 className="font-bold text-slate-400 mb-2">لا توجد سجلات بعد</h3>
-                    <p className="text-xs text-slate-400 mb-6">ابدأ بمسح كود الطالب لتسجيل الحضور</p>
-                    {students.length === 0 && !isLoading && (
-                    <Button asChild variant="outline" className="rounded-xl border-dashed">
-                        <Link href="/students">
-                        <UserPlus className="ms-2 h-4 w-4" />
-                        إضافة الطلاب أولاً
-                        </Link>
-                    </Button>
+                    ) : (attendedToday.length > 0 || absentToday.length > 0) ? (
+                    <div className="max-h-[500px] overflow-auto">
+                        <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                            <TableHead className="text-right font-black px-6">الاسم</TableHead>
+                            <TableHead className="text-right font-black">الصف</TableHead>
+                            <TableHead className="text-center font-black">الحالة</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {[...attendedToday, ...absentToday].map((student, idx) => (
+                            student &&
+                            <TableRow key={student.id} className="group transition-colors">
+                                <TableCell className="font-black text-slate-700 dark:text-slate-200 px-6">{student.name}</TableCell>
+                                <TableCell className="text-slate-500 font-medium text-xs">{student.grade}</TableCell>
+                                <TableCell className="text-center">
+                                    {attendance.find(a => a.studentId === student.id && a.date === todayStr)?.status === 'present' ? (
+                                        <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-lg">حاضر</Badge>
+                                    ) : (
+                                        <Badge className="bg-rose-500 hover:bg-rose-600 rounded-lg">غائب</Badge>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                        </Table>
+                    </div>
+                    ) : (
+                    <div className="text-center py-24 px-6">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-slate-200">
+                            <QrCode className="h-8 w-8 text-slate-300" />
+                        </div>
+                        <h3 className="font-bold text-slate-400 mb-2">لا توجد سجلات بعد</h3>
+                        <p className="text-xs text-slate-400 mb-6">ابدأ بمسح كود الطالب لتسجيل الحضور</p>
+                    </div>
                     )}
-                </div>
-                )}
-            </CardContent>
+                </CardContent>
             </Card>
         </div>
       </div>

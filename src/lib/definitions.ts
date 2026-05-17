@@ -61,7 +61,7 @@ export type AttendanceRecord = {
   id: string;
   studentId: string;
   date: string; // YYYY-MM-DD
-  status: 'present';
+  status: 'present' | 'absent';
   createdAt: FieldValue;
 };
 

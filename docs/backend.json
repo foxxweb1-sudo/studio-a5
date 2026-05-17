@@ -120,7 +120,7 @@
         },
         "status": {
           "type": "string",
-          "enum": ["present"],
+          "enum": ["present", "absent"],
           "description": "The attendance status."
         },
         "createdAt": {

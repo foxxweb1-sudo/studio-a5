@@ -138,14 +138,15 @@ export function useAttendance() {
   
   const { data: attendance, isLoading } = useCollection<AttendanceRecord>(attendanceQuery);
 
-  const addAttendance = (studentId: string) => {
+  const addAttendance = (studentId: string, status: 'present' | 'absent' = 'present') => {
     if (!user || !firestore) return;
     const attendanceCollection = collection(firestore, `users/${user.uid}/attendance`);
     const today = format(new Date(), 'yyyy-MM-dd');
+    
     const newRecord = {
       studentId,
       date: today,
-      status: "present",
+      status,
       createdAt: serverTimestamp(),
     };
     addDoc(attendanceCollection, newRecord).catch(error => {
@@ -159,8 +160,25 @@ export function useAttendance() {
       )
     });
   };
+
+  const markAbsentees = async (grade: string, studentsList: Student[]) => {
+    if (!user || !firestore || !attendance) return;
+    
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const studentsInGrade = studentsList.filter(s => s.grade === grade);
+    
+    // الطلاب الذين لديهم سجل حضور (سواء حاضر أو غائب) اليوم
+    const recordsToday = attendance.filter(a => a.date === today);
+    const studentsWithRecordsIds = new Set(recordsToday.map(r => r.studentId));
+    
+    const absentees = studentsInGrade.filter(s => !studentsWithRecordsIds.has(s.id));
+    
+    for (const student of absentees) {
+      addAttendance(student.id, 'absent');
+    }
+  };
   
-  return { attendance: attendance || [], isLoading, addAttendance };
+  return { attendance: attendance || [], isLoading, addAttendance, markAbsentees };
 }
 
 // --- Payments Hook ---

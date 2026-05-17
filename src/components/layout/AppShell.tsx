@@ -1,9 +1,8 @@
-
 'use client';
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Settings, Home, Clock } from 'lucide-react';
+import { ShieldCheck, Settings, Home, Clock, Archive } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import Link from 'next/link';
@@ -110,6 +109,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <Home className="mr-2 h-4 w-4 text-primary" />
                     </Link>
                   </DropdownMenuItem>
+                  
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-amber-50">
+                    <Link href="/students?tab=archived">
+                      <span className="font-bold text-amber-700">أرشيف الطلاب العام</span>
+                      <Archive className="mr-2 h-4 w-4 text-amber-600" />
+                    </Link>
+                  </DropdownMenuItem>
+
                   {isAdmin && (
                     <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
                       <Link href="/admin">

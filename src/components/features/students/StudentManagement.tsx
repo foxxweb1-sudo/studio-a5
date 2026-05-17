@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -61,13 +60,22 @@ const formSchema = z.object({
 export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
-  const { user } = useUser();
+  const initialTab = searchParams.get('tab') || 'active';
   
+  const { user } = useUser();
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
   const { toast } = useToast();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentForQR, setSelectedStudentForQR] = useState<Student | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -319,8 +327,13 @@ export default function StudentManagement() {
           <CardHeader className="bg-slate-50 border-b pb-0">
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 px-1">
                 <div>
-                    <CardTitle>كشف الطلاب</CardTitle>
-                    <CardDescription>{gradeFromUrl ? `عرض طلاب صف: ${gradeFromUrl}` : 'إدارة الطلاب بكافة الصفوف.'}</CardDescription>
+                    <CardTitle>{activeTab === 'archived' ? 'سجل الأرشيف' : 'كشف الطلاب'}</CardTitle>
+                    <CardDescription>
+                        {gradeFromUrl 
+                          ? `عرض ${activeTab === 'archived' ? 'أرشيف' : 'طلاب'} صف: ${gradeFromUrl}` 
+                          : `إدارة ${activeTab === 'archived' ? 'أرشيف' : 'الطلاب'} بكافة الصفوف.`
+                        }
+                    </CardDescription>
                 </div>
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -333,14 +346,14 @@ export default function StudentManagement() {
                 </div>
              </div>
 
-             <Tabs defaultValue="active" className="w-full">
+             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="bg-slate-100/50 p-1 rounded-t-xl rounded-b-none border-b-0 w-full flex justify-start">
                     <TabsTrigger value="active" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-primary border-transparent">
                         الطلاب النشطين
                         <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{activeStudents.length}</Badge>
                     </TabsTrigger>
                     <TabsTrigger value="archived" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-amber-500 border-transparent">
-                        الأرشيف
+                        الأرشيف العام
                         <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{archivedStudents.length}</Badge>
                     </TabsTrigger>
                 </TabsList>

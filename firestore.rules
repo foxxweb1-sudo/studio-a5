@@ -24,6 +24,11 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
+    // Collection Group Rule for Students (Allows Admin to query across all users)
+    match /{path=**}/students/{studentId} {
+      allow read: if isAdmin();
+    }
+
     // Rules for contact messages
     match /contactMessages/{messageId} {
       allow read: if isAdmin();

@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, collectionGroup, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -71,29 +71,25 @@ function AllStudentsList() {
     const fetchAllStudents = async () => {
       setLoading(true);
       try {
-        const usersSnapshot = await getDocs(collection(firestore, 'users'));
-        let studentsList: any[] = [];
+        // استخدام collectionGroup لجلب كافة الطلاب من جميع الحسابات مرة واحدة
+        const studentsQuery = query(collectionGroup(firestore, 'students'), orderBy('createdAt', 'desc'));
+        const studentsSnapshot = await getDocs(studentsQuery);
         
-        for (const userDoc of usersSnapshot.docs) {
-          const userData = userDoc.data();
-          const studentsSnapshot = await getDocs(collection(firestore, `users/${userDoc.id}/students`));
+        const studentsData = studentsSnapshot.docs.map(studentDoc => {
+          // محاولة استنتاج اسم المعلم من المسار (users/UID/students/ID)
+          const pathSegments = studentDoc.ref.path.split('/');
+          const teacherUid = pathSegments[1];
           
-          const studentsData = studentsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            owner: userData.displayName || userData.email || userDoc.id,
-          }));
-          studentsList = [...studentsList, ...studentsData];
-        }
-        
-        // ترتيب حسب تاريخ الإضافة
-        studentsList.sort((a, b) => {
-          const dateA = a.createdAt?.toDate?.() || new Date(0);
-          const dateB = b.createdAt?.toDate?.() || new Date(0);
-          return dateB - dateA;
+          return {
+            id: studentDoc.id,
+            ...studentDoc.data(),
+            teacherUid,
+            // سيتم تحديث اسم المعلم لاحقاً أو استخدامه كـ UID
+            owner: teacherUid === ADMIN_UID ? 'المشرف' : `معلم (${teacherUid.substring(0,5)})`,
+          };
         });
 
-        setAllStudents(studentsList);
+        setAllStudents(studentsData);
       } catch (error) {
         console.error('Error fetching all students:', error);
       } finally {
@@ -134,7 +130,7 @@ function AllStudentsList() {
               <TableRow>
                 <TableHead className="text-right">اسم الطالب</TableHead>
                 <TableHead className="text-right">الصف الدراسي</TableHead>
-                <TableHead className="text-right">المعلم</TableHead>
+                <TableHead className="text-right">هوية المعلم</TableHead>
                 <TableHead className="text-center">إجراء</TableHead>
               </TableRow>
             </TableHeader>
@@ -146,7 +142,7 @@ function AllStudentsList() {
                     <TableCell>
                         <span className="bg-muted px-3 py-1 rounded-lg text-xs font-medium">{student.grade}</span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{student.owner}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs font-mono">{student.owner}</TableCell>
                     <TableCell className="text-center">
                       <Button asChild variant="ghost" size="sm" className="rounded-xl hover:bg-primary/10 hover:text-primary gap-1">
                         <Link href={`/students/${student.id}`}>
@@ -162,7 +158,7 @@ function AllStudentsList() {
                   <TableCell colSpan={4} className="h-48 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                         <Users className="h-8 w-8 opacity-20" />
-                        لم يتم العثور على طلاب مسجلين.
+                        لم يتم العثور على طلاب مسجلين في أي حساب.
                     </div>
                   </TableCell>
                 </TableRow>
@@ -272,13 +268,9 @@ export default function AdminPage() {
       const fetchTotals = async () => {
           if (!firestore || !isAdmin) return;
           try {
-              const usersSnapshot = await getDocs(collection(firestore, 'users'));
-              let sCount = 0;
-              for (const uDoc of usersSnapshot.docs) {
-                  const sSnap = await getDocs(collection(firestore, `users/${uDoc.id}/students`));
-                  sCount += sSnap.size;
-              }
-              setTotalStudentsCount(sCount);
+              // جلب إجمالي الطلاب باستخدام collectionGroup لسرعة الإحصائيات
+              const studentsSnapshot = await getDocs(collectionGroup(firestore, 'students'));
+              setTotalStudentsCount(studentsSnapshot.size);
 
               const mSnap = await getDocs(collection(firestore, 'contactMessages'));
               setTotalMessagesCount(mSnap.size);

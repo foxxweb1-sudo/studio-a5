@@ -21,7 +21,8 @@ import {
   Mail,
   Ban,
   ShieldAlert,
-  UserX
+  UserX,
+  Fingerprint
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -81,6 +82,21 @@ export default function AdminPage() {
     };
   }, [firestore, isAdmin, isUserLoading, router]);
 
+  // استخراج المعرفات التي لديها طلاب فقط
+  const uidsWithStudents = useMemo(() => {
+    const uids = Array.from(new Set(allStudents.map(s => s.teacherUid)));
+    return uids.map(uid => {
+      const teacherInfo = users.find(u => u.uid === uid);
+      return {
+        uid,
+        displayName: teacherInfo?.displayName || 'معلم غير مسمى',
+        email: teacherInfo?.email || 'لا يوجد بريد',
+        photoURL: teacherInfo?.photoURL,
+        count: allStudents.filter(s => s.teacherUid === uid).length
+      };
+    });
+  }, [allStudents, users]);
+
   if (isUserLoading || !isAdmin) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-900 text-white gap-6">
@@ -129,29 +145,26 @@ export default function AdminPage() {
       </div>
 
        <Tabs defaultValue="users" className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto h-14 bg-muted/50 p-1 rounded-2xl">
-                <TabsTrigger value="users" className="rounded-xl font-bold text-base">المستخدمين والمعرفات</TabsTrigger>
-                <TabsTrigger value="messages" className="rounded-xl font-bold text-base">رسائل التواصل</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto h-14 bg-muted/50 p-1 rounded-2xl">
+                <TabsTrigger value="users" className="rounded-xl font-bold text-sm sm:text-base">المستخدمين والحظر</TabsTrigger>
+                <TabsTrigger value="teacher-uids" className="rounded-xl font-bold text-sm sm:text-base">معرفات الطلاب</TabsTrigger>
+                <TabsTrigger value="messages" className="rounded-xl font-bold text-sm sm:text-base">الرسائل</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users">
                 <div className="space-y-6">
                   <div className="text-right px-4">
-                    <h3 className="text-xl font-black">المستخدمين والمعرفات المسجلة ({users.length})</h3>
-                    <p className="text-sm text-muted-foreground">عرض كافة الحسابات والـ UID وإمكانية حظرها أو إدارة طلابها.</p>
+                    <h3 className="text-xl font-black">إدارة مستخدمي الموقع ({users.length})</h3>
+                    <p className="text-sm text-muted-foreground">عرض كافة الحسابات المسجلة وإمكانية حظرها من الوصول.</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {usersLoading ? (
                        <div className="col-span-full py-20 flex flex-col items-center gap-4">
                          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                         <span className="font-bold">جاري جلب البيانات...</span>
+                         <span className="font-bold">جاري جلب المستخدمين...</span>
                        </div>
-                    ) : users.length > 0 ? users.map((u) => {
-                      // حساب عدد الطلاب لهذا المعرف تحديداً
-                      const studentCount = allStudents.filter(s => s.teacherUid === u.uid).length;
-
-                      return (
+                    ) : users.length > 0 ? users.map((u) => (
                         <Card 
                           key={u.uid} 
                           className={`group border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-xl ${u.isBlocked ? 'border-2 border-rose-500/50 grayscale opacity-75' : ''}`}
@@ -172,56 +185,93 @@ export default function AdminPage() {
                             </div>
 
                             <div className="space-y-1">
-                              <h4 className="font-black text-lg">{u.displayName || 'معلم غير مسمى'}</h4>
+                              <h4 className="font-black text-lg">{u.displayName || 'مستخدم جديد'}</h4>
                               <p className="text-xs text-muted-foreground">{u.email}</p>
                               <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70">
                                 UID: {u.uid}
                               </div>
                             </div>
 
-                            <div className="flex flex-wrap justify-center gap-2 mt-2">
-                                <Badge variant="secondary" className="rounded-full px-3 py-1 font-bold">
-                                  <Users className="h-3 w-3 ms-1" />
-                                  {studentCount} طالب
-                                </Badge>
-                                {u.isBlocked && (
-                                  <Badge variant="destructive" className="rounded-full px-3 py-1 font-bold">
-                                    محظور
-                                  </Badge>
-                                )}
-                            </div>
-
                             <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
-                              <Button asChild variant="default" className="w-full rounded-xl h-11 font-bold bg-primary shadow-lg shadow-primary/20">
-                                <Link href={`/admin/teacher/${u.uid}`}>
-                                  <ExternalLink className="h-4 w-4 ms-2" />
-                                  عرض وإدارة الطلاب
-                                </Link>
-                              </Button>
                               <Button 
                                 variant={u.isBlocked ? "outline" : "destructive"} 
                                 onClick={() => toggleUserBlock(u.id, !!u.isBlocked)}
-                                className="w-full rounded-xl font-bold gap-2 h-11"
+                                className="w-full rounded-xl font-bold gap-2 h-11 transition-all"
                               >
                                 {u.isBlocked ? (
                                   <>
                                     <ShieldAlert className="h-4 w-4" />
-                                    إلغاء الحظر
+                                    إلغاء حظر المستخدم
                                   </>
                                 ) : (
                                   <>
                                     <UserX className="h-4 w-4" />
-                                    حظر هذا المعرف
+                                    حظر من الوصول
                                   </>
                                 )}
                               </Button>
                             </div>
                           </CardContent>
                         </Card>
-                      )
-                    }) : (
+                    )) : (
                       <div className="col-span-full py-20 text-center text-muted-foreground font-bold bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
-                        لا يوجد مستخدمون أو معرفات مسجلة حالياً.
+                        لا يوجد مستخدمون مسجلون حالياً.
+                      </div>
+                    )}
+                  </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="teacher-uids">
+                <div className="space-y-6">
+                  <div className="text-right px-4">
+                    <h3 className="text-xl font-black">معرفات المعلمين والطلاب ({uidsWithStudents.length})</h3>
+                    <p className="text-sm text-muted-foreground">عرض المعرفات التي قامت بتسجيل طلاب وإدارة بياناتهم.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {loading ? (
+                       <div className="col-span-full py-20 flex flex-col items-center gap-4">
+                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                         <span className="font-bold">جاري تحليل البيانات...</span>
+                       </div>
+                    ) : uidsWithStudents.length > 0 ? uidsWithStudents.map((teacher) => (
+                        <Card 
+                          key={teacher.uid} 
+                          className="group border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-xl"
+                        >
+                          <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
+                            <div className="p-4 bg-primary/5 rounded-3xl text-primary">
+                                <Fingerprint className="h-10 w-10" />
+                            </div>
+
+                            <div className="space-y-1">
+                              <h4 className="font-black text-lg">{teacher.displayName}</h4>
+                              <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70">
+                                {teacher.uid}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap justify-center gap-2 mt-2">
+                                <Badge variant="secondary" className="rounded-full px-4 py-1.5 font-bold bg-primary/10 text-primary border-0">
+                                  <Users className="h-4 w-4 ms-2" />
+                                  {teacher.count} طالب مسجل
+                                </Badge>
+                            </div>
+
+                            <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
+                              <Button asChild variant="default" className="w-full rounded-xl h-12 font-bold bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+                                <Link href={`/admin/teacher/${teacher.uid}`}>
+                                  <ExternalLink className="h-4 w-4 ms-2" />
+                                  إدارة طلاب هذا المعرف
+                                </Link>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                    )) : (
+                      <div className="col-span-full py-20 text-center text-muted-foreground font-bold bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
+                        لا توجد معرفات مسجلة لطلاب حالياً.
                       </div>
                     )}
                   </div>

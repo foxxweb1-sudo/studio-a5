@@ -36,10 +36,11 @@ export function getSdks(firebaseApp: FirebaseApp) {
   let firestore: Firestore;
   
   try {
-    // We use initializeFirestore to force long-polling. 
-    // This is a robust way to handle connectivity issues in restricted network environments (like some Cloud IDEs).
+    // We use initializeFirestore to force long-polling and disable fetch streams. 
+    // This is the most robust way to handle connectivity issues in restricted network environments (like Cloud IDEs).
     firestore = initializeFirestore(firebaseApp, {
       experimentalForceLongPolling: true,
+      useFetchStreams: false,
     });
   } catch (e) {
     // If already initialized, fallback to getFirestore

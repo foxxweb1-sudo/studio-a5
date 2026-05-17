@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
@@ -27,7 +26,9 @@ import {
   XCircle,
   Info,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  CalendarClock,
+  GraduationCap
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -128,44 +129,14 @@ export default function AdminPage() {
     }
   };
 
-  const handleUpdateRules = async () => {
-    setIsUpdatingRules(true);
-    try {
-      await updateConfig({
-        lastRulesUpdate: serverTimestamp()
-      });
-      toast({
-        title: "جاري المزامنة",
-        description: "تم إرسال طلب تحديث القواعد.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: "فشلت عملية المزامنة."
-      });
-    } finally {
-      setTimeout(() => setIsUpdatingRules(false), 2000);
-    }
-  };
-
-  const uidsWithStudents = useMemo(() => {
-    const uids = Array.from(new Set(allStudents.map(s => s.teacherUid)));
-    return uids.map(uid => {
-      const teacherInfo = users.find(u => u.uid === uid);
-      return {
-        uid,
-        displayName: teacherInfo?.displayName || 'معلم غير مسمى',
-        email: teacherInfo?.email || 'لا يوجد بريد',
-        photoURL: teacherInfo?.photoURL,
-        count: allStudents.filter(s => s.teacherUid === uid).length
-      };
-    });
-  }, [allStudents, users]);
-
   const deletionRequests = useMemo(() => {
-    return users.filter(u => !!u.deletionRequestedAt);
-  }, [users]);
+    return users
+      .filter(u => !!u.deletionRequestedAt)
+      .map(u => {
+        const studentCount = allStudents.filter(s => s.teacherUid === u.uid).length;
+        return { ...u, studentCount };
+      });
+  }, [users, allStudents]);
 
   const calculateRemainingTime = (requestedAt: any) => {
     if (!requestedAt) return "غير معروف";
@@ -181,6 +152,20 @@ export default function AdminPage() {
     
     return `${days} يوم و ${hours} ساعة`;
   };
+
+  const uidsWithStudents = useMemo(() => {
+    const uids = Array.from(new Set(allStudents.map(s => s.teacherUid)));
+    return uids.map(uid => {
+      const teacherInfo = users.find(u => u.uid === uid);
+      return {
+        uid,
+        displayName: teacherInfo?.displayName || 'معلم غير مسمى',
+        email: teacherInfo?.email || 'لا يوجد بريد',
+        photoURL: teacherInfo?.photoURL,
+        count: allStudents.filter(s => s.teacherUid === uid).length
+      };
+    });
+  }, [allStudents, users]);
 
   if (isUserLoading || !isAdmin) {
     return (
@@ -223,10 +208,10 @@ export default function AdminPage() {
               bg: 'bg-rose-50'
             },
         ].map((stat, i) => (
-            <Card key={i} className={`border-0 shadow-sm hover-lift ${stat.onClick ? 'cursor-pointer' : ''}`} onClick={stat.onClick}>
+            <Card key={i} className={`border-0 shadow-sm hover-lift`}>
                 <CardContent className="p-6 flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
-                        {stat.loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
+                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
                     </div>
                     <div>
                       <div className="text-xs font-bold text-slate-400">{stat.label}</div>
@@ -329,51 +314,70 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="deletions">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
                   {deletionRequests.map((req) => (
-                    <Card key={req.uid} className="border-0 shadow-lg rounded-3xl overflow-hidden bg-white border-t-4 border-rose-500">
-                      <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 border-2 border-rose-100">
-                            <AvatarImage src={req.photoURL} />
-                            <AvatarFallback>{req.displayName?.substring(0, 2)}</AvatarFallback>
-                          </Avatar>
-                          <div className="overflow-hidden">
-                            <h4 className="font-black text-sm truncate">{req.displayName}</h4>
-                            <p className="text-[10px] text-muted-foreground truncate">{req.email}</p>
+                    <div 
+                      key={req.uid} 
+                      className="flex flex-col lg:flex-row items-center gap-4 bg-white p-4 rounded-[1.5rem] shadow-sm border border-rose-100 hover:shadow-md transition-all group border-r-4 border-r-rose-500"
+                    >
+                      {/* بيانات المستخدم الأساسية */}
+                      <div className="flex items-center gap-4 flex-1 w-full">
+                        <Avatar className="h-12 w-12 border-2 border-rose-50 group-hover:border-rose-200 transition-colors">
+                          <AvatarImage src={req.photoURL} />
+                          <AvatarFallback className="bg-rose-50 text-rose-500 font-bold">{req.displayName?.substring(0, 1)}</AvatarFallback>
+                        </Avatar>
+                        <div className="overflow-hidden">
+                          <h4 className="font-black text-sm text-slate-800 truncate">{req.displayName}</h4>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Fingerprint className="h-3 w-3 text-slate-400" />
+                            <code className="text-[10px] font-mono text-slate-500 tracking-tighter truncate max-w-[150px]">{req.uid}</code>
                           </div>
                         </div>
+                      </div>
 
-                        <div className="bg-rose-50 p-4 rounded-2xl space-y-3">
-                          <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span className="text-rose-600 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              الوقت المتبقي:
-                            </span>
-                            <span className="text-rose-700">{calculateRemainingTime(req.deletionRequestedAt)}</span>
+                      {/* الوقت المتبقي - كشريط ملون */}
+                      <div className="flex-1 w-full">
+                        <div className="bg-rose-50/80 px-4 py-2 rounded-xl flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-rose-600 font-bold text-xs shrink-0">
+                            <CalendarClock className="h-4 w-4" />
+                            <span>المتبقي:</span>
                           </div>
-                          
-                          <div className="space-y-1">
-                            <span className="text-[9px] text-rose-400 font-bold block uppercase">معرف المستخدم (UID)</span>
-                            <code className="text-[9px] block bg-white/50 p-2 rounded-lg font-mono break-all text-rose-900/70 border border-rose-100">
-                              {req.uid}
-                            </code>
-                          </div>
+                          <span className="font-black text-rose-700 text-xs">{calculateRemainingTime(req.deletionRequestedAt)}</span>
                         </div>
+                      </div>
 
-                        <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                          <p className="text-[10px] text-amber-700 leading-relaxed">
-                            سيتم حذف كافة بيانات الطلاب والمدفوعات الخاصة بهذا المعرف تلقائياً عند انتهاء المدة.
-                          </p>
+                      {/* عدد الطلاب */}
+                      <div className="flex-none w-full lg:w-32">
+                        <div className="bg-blue-50 px-4 py-2 rounded-xl flex items-center justify-between lg:justify-center gap-3">
+                           <GraduationCap className="h-4 w-4 text-blue-500 shrink-0" />
+                           <div className="text-center lg:text-right">
+                              <span className="font-black text-blue-700 text-sm">{req.studentCount}</span>
+                              <span className="text-[10px] text-blue-400 font-bold mr-1">طلاب</span>
+                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+
+                      {/* إجراء سريع */}
+                      <div className="flex-none shrink-0">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50"
+                          onClick={() => {
+                            setManualUid(req.uid);
+                            toast({ title: "تم نسخ UID" });
+                          }}
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </div>
                   ))}
+                  
                   {deletionRequests.length === 0 && (
-                    <div className="col-span-full py-20 text-center space-y-4 opacity-40">
-                      <Trash2 className="h-20 w-20 mx-auto text-slate-300" />
-                      <p className="text-xl font-black">لا توجد طلبات حذف معلقة</p>
+                    <div className="py-20 text-center space-y-4 bg-slate-50 rounded-[2rem] border border-dashed">
+                      <Trash2 className="h-16 w-16 mx-auto text-slate-200" />
+                      <p className="text-slate-400 font-black">لا توجد طلبات حذف نشطة حالياً</p>
                     </div>
                   )}
                 </div>

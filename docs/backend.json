@@ -237,6 +237,7 @@
         "twitter": { "type": "string" },
         "telegram": { "type": "string" },
         "techStoreUrl": { "type": "string" },
+        "cookiePolicyUrl": { "type": "string" },
         "lastRulesUpdate": { "type": "string", "format": "date-time" }
       }
     }

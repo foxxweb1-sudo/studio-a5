@@ -91,5 +91,6 @@ export type GlobalConfig = {
   twitter?: string;
   telegram?: string;
   techStoreUrl?: string;
+  cookiePolicyUrl?: string;
   lastRulesUpdate?: FieldValue;
 };

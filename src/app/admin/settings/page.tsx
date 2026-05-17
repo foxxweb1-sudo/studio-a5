@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser } from '@/firebase';
@@ -28,7 +29,8 @@ import {
   Twitter,
   Send,
   LifeBuoy,
-  Tag
+  Tag,
+  ShieldCheck
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -54,7 +56,8 @@ export default function AdminAppSettingsPage() {
     facebook: '',
     twitter: '',
     telegram: '',
-    techStoreUrl: ''
+    techStoreUrl: '',
+    cookiePolicyUrl: ''
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -84,7 +87,8 @@ export default function AdminAppSettingsPage() {
         facebook: config.facebook || '',
         twitter: config.twitter || '',
         telegram: config.telegram || '',
-        techStoreUrl: config.techStoreUrl || ''
+        techStoreUrl: config.techStoreUrl || '',
+        cookiePolicyUrl: config.cookiePolicyUrl || ''
       });
     }
   }, [config]);
@@ -116,7 +120,7 @@ export default function AdminAppSettingsPage() {
       });
       toast({
         title: "تزامن القواعد",
-        description: "جاري نشر قواعد الأمان الجديدة."
+        description: "جاري نشر قواعد الأمان الجديدة إلى خوادم TECH."
       });
     } catch (error) {
       toast({
@@ -293,7 +297,7 @@ export default function AdminAppSettingsPage() {
               <CardHeader className="bg-slate-50 p-6 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <LinkIcon className="h-5 w-5 text-emerald-500" />
-                  روابط منصاتنا
+                  روابط منصاتنا والسياسات
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
@@ -307,6 +311,17 @@ export default function AdminAppSettingsPage() {
                       onChange={(e) => setFormData({...formData, whatsappChannel: e.target.value})}
                       placeholder="رابط القناة..."
                       className="rounded-xl h-11 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-primary" /> رابط "لمعرفة المزيد"
+                    </Label>
+                    <Input 
+                      value={formData.cookiePolicyUrl}
+                      onChange={(e) => setFormData({...formData, cookiePolicyUrl: e.target.value})}
+                      placeholder="/privacy"
+                      className="rounded-xl h-11 text-xs font-mono"
                     />
                   </div>
                   <div className="space-y-2">
@@ -328,17 +343,6 @@ export default function AdminAppSettingsPage() {
                       value={formData.twitter}
                       onChange={(e) => setFormData({...formData, twitter: e.target.value})}
                       placeholder="رابط الحساب..."
-                      className="rounded-xl h-11 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-bold flex items-center gap-2">
-                      <Send className="h-4 w-4 text-sky-500" /> تلجرام
-                    </Label>
-                    <Input 
-                      value={formData.telegram}
-                      onChange={(e) => setFormData({...formData, telegram: e.target.value})}
-                      placeholder="رابط القناة..."
                       className="rounded-xl h-11 text-xs"
                     />
                   </div>

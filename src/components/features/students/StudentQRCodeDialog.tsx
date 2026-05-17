@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useRef } from "react";
 import { Student } from "@/lib/definitions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,7 @@ interface StudentQRCodeDialogProps {
 
 export default function StudentQRCodeDialog({ student, open, onOpenChange }: StudentQRCodeDialogProps) {
   const { toast } = useToast();
+  const qrContainerRef = useRef<HTMLDivElement>(null);
 
   if (!student) return null;
 
@@ -27,27 +30,30 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
   };
 
   const handlePrint = () => {
+    // الحصول على الـ SVG الفعلي من داخل الحاوية
+    const svgElement = qrContainerRef.current?.querySelector('svg');
+    if (!svgElement) {
+      toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على الكود للطباعة." });
+      return;
+    }
+
+    const qrSvg = svgElement.outerHTML;
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-
-    // الحصول على محتوى الـ SVG الخاص بالـ QR
-    const qrElement = document.getElementById('student-qr-code-svg');
-    const qrSvg = qrElement ? qrElement.outerHTML : '';
 
     printWindow.document.write(`
       <html dir="rtl">
         <head>
-          <title>طباعة كود الطالب - ${student.name}</title>
+          <title>كود الطالب - ${student.name}</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap');
             body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              font-family: system-ui, -apple-system, sans-serif; 
               display: flex; 
               flex-direction: column; 
               align-items: center; 
               justify-content: center; 
-              min-height: 100vh; 
               margin: 0;
+              padding: 20px;
               background-color: white;
             }
             .ticket {
@@ -58,31 +64,31 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
               width: 350px;
               background: white;
             }
-            .header { color: #0A4A8C; margin-bottom: 20px; }
-            h1 { font-size: 28px; margin: 0; font-weight: 900; }
-            .grade { font-size: 18px; color: #666; margin: 10px 0 25px 0; font-weight: bold; }
+            .header h1 { font-size: 24px; margin: 0; color: #0A4A8C; }
+            .header .grade { font-size: 16px; color: #666; margin-top: 10px; font-weight: bold; }
             .qr-wrapper { 
-              margin: 20px auto;
+              margin: 30px auto;
               padding: 15px;
               border: 1px solid #eee;
               display: inline-block;
-              border-radius: 15px;
+              border-radius: 20px;
             }
+            .qr-wrapper svg { width: 200px; height: 200px; display: block; }
             .code-text { 
               font-family: monospace; 
-              font-size: 24px; 
+              font-size: 22px; 
               font-weight: bold; 
-              letter-spacing: 4px; 
+              letter-spacing: 5px; 
               color: #0A4A8C;
-              margin-top: 20px;
               background: #f0f7ff;
-              padding: 10px;
-              border-radius: 10px;
+              padding: 15px;
+              border-radius: 12px;
+              margin-top: 10px;
             }
-            .footer { margin-top: 30px; font-size: 12px; color: #aaa; }
+            .footer { margin-top: 40px; font-size: 11px; color: #999; }
             @media print {
-              .no-print { display: none; }
-              body { background: white; }
+              body { padding: 0; }
+              .ticket { border-color: #000; }
             }
           </style>
         </head>
@@ -95,7 +101,10 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
             <div class="qr-wrapper">
               ${qrSvg}
             </div>
-            <div class="code-text">${student.id}</div>
+            <div>
+              <div style="font-size: 10px; color: #999; margin-bottom: 5px;">كود الطالب الرقمي</div>
+              <div class="code-text">${student.id}</div>
+            </div>
             <div class="footer">تطبيق الحضور الذكي - TECH TEAM</div>
           </div>
           <script>
@@ -122,9 +131,8 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
           </DialogDescription>
         </DialogHeader>
         <div className="py-6 flex flex-col items-center gap-6">
-          <div className="p-6 bg-white rounded-[2rem] shadow-inner border-2 border-slate-50 flex items-center justify-center">
+          <div ref={qrContainerRef} className="p-6 bg-white rounded-[2rem] shadow-inner border-2 border-slate-50 flex items-center justify-center">
              <QRCode 
-               id="student-qr-code-svg"
                value={student.id} 
                size={200} 
                bgColor={"#ffffff"} 

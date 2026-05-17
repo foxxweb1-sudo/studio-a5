@@ -134,15 +134,26 @@ export default function AdminAppSettingsPage() {
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-40 px-4 relative">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* هيدر ثابت يحتوي على أزرار الحفظ والرجوع */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">إعدادات النظام</PageHeaderTitle>
           <PageHeaderDescription>التحكم في الهوية، الصور، والروابط</PageHeaderDescription>
         </PageHeader>
-        <Button variant="outline" onClick={() => router.back()} className="rounded-xl font-bold gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          رجوع
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="rounded-xl font-bold gap-2 shadow-lg bg-primary text-white flex-grow sm:flex-initial h-11 px-6"
+          >
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            حفظ الإعدادات
+          </Button>
+          <Button variant="outline" onClick={() => router.back()} className="rounded-xl font-bold gap-2 flex-grow sm:flex-initial h-11 px-6">
+            <ArrowLeft className="h-4 w-4" />
+            رجوع
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="identity" className="w-full">
@@ -364,18 +375,10 @@ export default function AdminAppSettingsPage() {
         </div>
       </div>
 
-      {/* شريط الحفظ الثابت في أسفل الصفحة */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-6 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none">
-        <div className="max-w-6xl mx-auto flex justify-center pointer-events-auto">
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="w-full max-w-md h-14 rounded-2xl font-black text-lg gap-3 shadow-2xl hover-lift bg-primary text-white border-t-4 border-white/10"
-          >
-            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-            حفظ كافة الإعدادات
-          </Button>
-        </div>
+      <div className="text-center pt-8">
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+              Made with ❤️ by TECH TEAM
+          </p>
       </div>
     </div>
   );

@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useStudents } from '@/hooks/use-app-data';
+import { useStudents, useUser } from '@/hooks/use-app-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, Share2, MessageCircle } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -44,6 +44,7 @@ const formSchema = z.object({
 export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
+  const { user } = useUser();
   
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
   const { toast } = useToast();
@@ -117,6 +118,26 @@ export default function StudentManagement() {
     });
   }
 
+  const handleShareParentLink = (student: Student) => {
+    if (!user) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = `${origin}/p/${user.uid}/${student.id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `متابعة الطالب: ${student.name}`,
+        text: `ولي أمر الطالب/ة: ${student.name}\nيمكنكم متابعة الحضور والمدفوعات عبر الرابط التالي:`,
+        url: shareUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "تم نسخ الرابط",
+        description: "يمكنك الآن إرساله لولي الأمر عبر واتساب.",
+      });
+    }
+  };
+
   const filteredStudents = students.filter(student => 
     (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -126,13 +147,13 @@ export default function StudentManagement() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1">
-        <Card>
-          <CardHeader>
+        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
+          <CardHeader className="bg-primary/5 border-b">
             <CardTitle>{editingStudent ? 'تعديل بيانات الطالب' : 'تسجيل طالب جديد'}</CardTitle>
              {gradeFromUrl && !editingStudent && <CardDescription>الصف: {gradeFromUrl}</CardDescription>}
              {editingStudent && <CardDescription>تعديل بيانات: {editingStudent.name}</CardDescription>}
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -140,9 +161,9 @@ export default function StudentManagement() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>اسم الطالب</FormLabel>
+                      <FormLabel className="font-bold">اسم الطالب</FormLabel>
                       <FormControl>
-                        <Input placeholder="الاسم الكامل" {...field} />
+                        <Input placeholder="الاسم الكامل" className="rounded-xl h-12" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -154,36 +175,36 @@ export default function StudentManagement() {
                   name="parentPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>هاتف ولي الأمر (اختياري)</FormLabel>
+                      <FormLabel className="font-bold">هاتف ولي الأمر (اختياري)</FormLabel>
                       <FormControl>
-                        <Input placeholder="رقم هاتف ولي الأمر" {...field} />
+                        <Input placeholder="رقم هاتف ولي الأمر" className="rounded-xl h-12" {...field} />
                       </FormControl>
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={(!gradeFromUrl && !editingStudent) || isLoading}>
+                <Button type="submit" className="w-full h-12 rounded-xl font-bold" disabled={(!gradeFromUrl && !editingStudent) || isLoading}>
                   {isLoading ? <Loader2 className="animate-spin" /> : <UserPlus className="ms-2 h-4 w-4" />}
                   {editingStudent ? 'حفظ التعديلات' : 'إضافة طالب'}
                 </Button>
-                 {editingStudent && <Button variant="ghost" className="w-full" onClick={() => setEditingStudent(null)}>إلغاء التعديل</Button>}
-                 {!gradeFromUrl && !editingStudent && <p className="text-xs text-destructive text-center">الرجاء اختيار صف دراسي أولاً.</p>}
+                 {editingStudent && <Button variant="ghost" className="w-full rounded-xl" onClick={() => setEditingStudent(null)}>إلغاء التعديل</Button>}
+                 {!gradeFromUrl && !editingStudent && <p className="text-xs text-destructive text-center font-bold">الرجاء اختيار صف دراسي أولاً.</p>}
               </form>
             </Form>
           </CardContent>
         </Card>
       </div>
       <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
+        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
+          <CardHeader className="bg-slate-50 border-b">
             <CardTitle>قائمة الطلاب {gradeFromUrl ? `(${filteredStudents.length})` : `(${students.length})`}</CardTitle>
             <CardDescription>{gradeFromUrl ? `عرض طلاب صف: ${gradeFromUrl}` : 'عرض وبحث الطلاب المسجلين.'}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <CardContent className="pt-6">
+            <div className="relative mb-6">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="ابحث بالاسم..."
-                className="pr-10"
+                className="pr-10 h-12 rounded-xl"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -191,57 +212,56 @@ export default function StudentManagement() {
             <div className="max-h-[30rem] overflow-auto">
                {isLoading ? (
                   <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>الكود</TableHead>
-                      <TableHead>الاسم</TableHead>
-                      {!gradeFromUrl && <TableHead>الفصل</TableHead>}
-                      <TableHead>رقم ولي الامر</TableHead>
-                      <TableHead>الإجراءات</TableHead>
+                      <TableHead className="text-right">الاسم</TableHead>
+                      {!gradeFromUrl && <TableHead className="text-right">الفصل</TableHead>}
+                      <TableHead className="text-center">إجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredStudents.length > 0 ? (
                       filteredStudents.map((student) => {
                         return (
-                        <TableRow key={student.id}>
-                          <TableCell className="font-mono text-sm">{(students.findIndex(s => s.id === student.id) + 1)}</TableCell>
-                          <TableCell className="font-medium">
+                        <TableRow key={student.id} className="group">
+                          <TableCell className="font-bold py-4">
                              <Link href={`/students/${student.id}`} className="hover:underline text-primary">
                               {student.name}
                             </Link>
                           </TableCell>
-                           {!gradeFromUrl && <TableCell>{student.grade}</TableCell>}
-                          <TableCell>{student.parentPhone || 'لا يوجد'}</TableCell>
-                          <TableCell className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedStudentForQR(student)}>
+                           {!gradeFromUrl && <TableCell className="text-xs">{student.grade}</TableCell>}
+                          <TableCell className="flex justify-center gap-1">
+                            <Button variant="ghost" size="icon" className="rounded-xl text-emerald-600 hover:bg-emerald-50" onClick={() => handleShareParentLink(student)}>
+                                <Share2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => setSelectedStudentForQR(student)}>
                               <QrCode className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setEditingStudent(student)}>
-                              <Edit className="h-4 w-4 text-blue-500" />
+                            <Button variant="ghost" size="icon" className="rounded-xl text-blue-500" onClick={() => setEditingStudent(student)}>
+                              <Edit className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:bg-rose-50">
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                               </AlertDialogTrigger>
-                              <AlertDialogContent>
+                              <AlertDialogContent className="rounded-[2rem]">
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    هذا الإجراء سيحذف الطالب ({student.name}) نهائياً. لا يمكن التراجع عن هذا الإجراء.
+                                  <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-right">
+                                    هذا الإجراء سيحذف الطالب ({student.name}) نهائياً بكافة سجلاته.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90">
+                                <AlertDialogFooter className="flex-row-reverse gap-2">
+                                  <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
                                     حذف
                                   </AlertDialogAction>
+                                  <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
@@ -250,8 +270,8 @@ export default function StudentManagement() {
                       )})
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={gradeFromUrl ? 5 : 5} className="h-24 text-center">
-                          {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على طلاب."}
+                        <TableCell colSpan={gradeFromUrl ? 3 : 3} className="h-24 text-center text-muted-foreground font-bold italic">
+                          {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على نتائج."}
                         </TableCell>
                       </TableRow>
                     )}

@@ -2,20 +2,23 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
+import { useStudents, useAttendance, usePayments, useUser } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, User, GraduationCap, Phone, BadgeDollarSign, ArrowLeft } from 'lucide-react';
+import { Loader2, User, GraduationCap, Phone, BadgeDollarSign, ArrowLeft, Share2 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StudentProfilePage() {
   const params = useParams();
   const router = useRouter();
   const studentId = params.studentId as string;
+  const { user } = useUser();
+  const { toast } = useToast();
 
   const { students, isLoading: studentsLoading } = useStudents();
   const { attendance, isLoading: attendanceLoading } = useAttendance();
@@ -26,6 +29,26 @@ export default function StudentProfilePage() {
   const studentPayments = payments.filter((p) => p.studentId === studentId);
 
   const isLoading = studentsLoading || attendanceLoading || paymentsLoading;
+
+  const handleShareParentLink = () => {
+    if (!user || !student) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = `${origin}/p/${user.uid}/${student.id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `متابعة الطالب: ${student.name}`,
+        text: `ولي أمر الطالب/ة: ${student.name}\nيمكنكم متابعة الحضور والمدفوعات عبر الرابط التالي:`,
+        url: shareUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "تم نسخ الرابط",
+        description: "الرابط جاهز للإرسال لولي الأمر.",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -52,36 +75,42 @@ export default function StudentProfilePage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-       <div className="flex justify-between items-start mb-8">
-         <PageHeader>
+       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+         <PageHeader className="border-0 pb-0">
             <PageHeaderTitle>ملف الطالب: {student.name}</PageHeaderTitle>
             <PageHeaderDescription>عرض جميع تفاصيل وسجلات الطالب.</PageHeaderDescription>
          </PageHeader>
-         <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-primary/20 hover:bg-primary/5">
-            <ArrowLeft className="ms-2 h-4 w-4" />
-            العودة
-        </Button>
+         <div className="flex gap-2 w-full md:w-auto">
+            <Button onClick={handleShareParentLink} className="rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold gap-2 flex-1 md:flex-none">
+                <Share2 className="h-4 w-4" />
+                رابط ولي الأمر
+            </Button>
+            <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-primary/20 hover:bg-primary/5 flex-1 md:flex-none">
+                <ArrowLeft className="ms-2 h-4 w-4" />
+                العودة
+            </Button>
+         </div>
        </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <Card>
+          <Card className="rounded-[2rem] border-0 shadow-lg">
             <CardHeader>
-              <CardTitle>معلومات الطالب</CardTitle>
+              <CardTitle className="text-lg">معلومات الطالب</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-xl">
+              <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl">
                 <User className="h-5 w-5 text-primary" />
-                <span className="font-bold">{student.name}</span>
+                <span className="font-bold text-slate-800">{student.name}</span>
               </div>
-              <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-xl">
+              <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl">
                 <GraduationCap className="h-5 w-5 text-primary" />
-                <span>{student.grade}</span>
+                <span className="font-bold text-slate-600">{student.grade}</span>
               </div>
               {student.parentPhone && (
-                <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-xl">
-                  <Phone className="h-5 w-5 text-primary" />
-                  <span>{student.parentPhone}</span>
+                <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <Phone className="h-5 w-5 text-emerald-600" />
+                  <span className="font-mono font-bold text-emerald-700">{student.parentPhone}</span>
                 </div>
               )}
             </CardContent>
@@ -89,26 +118,30 @@ export default function StudentProfilePage() {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>سجل الحضور ({studentAttendance.length})</CardTitle>
+          <Card className="rounded-[2rem] border-0 shadow-lg overflow-hidden">
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-lg">سجل الحضور ({studentAttendance.length})</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {studentAttendance.length > 0 ? (
-                 <div className="max-h-60 overflow-auto rounded-xl border">
+                 <div className="max-h-80 overflow-auto">
                     <Table>
-                        <TableHeader className="bg-muted">
+                        <TableHeader>
                         <TableRow>
-                            <TableHead className="text-right">التاريخ</TableHead>
-                            <TableHead className="text-right">الحالة</TableHead>
+                            <TableHead className="text-right px-6">التاريخ</TableHead>
+                            <TableHead className="text-center px-6">الحالة</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
                         {studentAttendance.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => (
                             <TableRow key={record.id}>
-                            <TableCell className="text-right">{format(new Date(record.date), 'eeee, d MMMM yyyy', { locale: ar })}</TableCell>
-                            <TableCell className="text-right">
-                                <Badge variant="default" className="bg-emerald-500">حاضر</Badge>
+                            <TableCell className="text-right px-6 font-medium text-xs">
+                                {format(new Date(record.date), 'eeee, d MMMM yyyy', { locale: ar })}
+                            </TableCell>
+                            <TableCell className="text-center px-6">
+                                <Badge className={`rounded-lg ${record.status === 'present' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                                    {record.status === 'present' ? 'حاضر' : 'غائب'}
+                                </Badge>
                             </TableCell>
                             </TableRow>
                         ))}
@@ -116,39 +149,45 @@ export default function StudentProfilePage() {
                     </Table>
                  </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">لا يوجد سجل حضور لهذا الطالب.</p>
+                <p className="text-muted-foreground text-center py-12 font-bold italic">لا يوجد سجل حضور لهذا الطالب.</p>
               )}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>سجل المدفوعات ({studentPayments.length})</CardTitle>
+          <Card className="rounded-[2rem] border-0 shadow-lg overflow-hidden">
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-lg">سجل المدفوعات ({studentPayments.length})</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {studentPayments.length > 0 ? (
-                <div className="max-h-60 overflow-auto rounded-xl border">
+                <div className="max-h-80 overflow-auto">
                     <Table>
-                        <TableHeader className="bg-muted">
+                        <TableHeader>
                         <TableRow>
-                            <TableHead className="text-right">الشهر المدفوع</TableHead>
-                            <TableHead className="text-right">المبلغ</TableHead>
-                            <TableHead className="text-right">تاريخ الدفع</TableHead>
+                            <TableHead className="text-right px-6">الشهر المدفوع</TableHead>
+                            <TableHead className="text-center px-6">المبلغ</TableHead>
+                            <TableHead className="text-right px-6">تاريخ الدفع</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
                         {studentPayments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((payment) => (
                             <TableRow key={payment.id}>
-                            <TableCell className="text-right font-bold">{format(parse(payment.month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}</TableCell>
-                            <TableCell className="text-right font-bold text-emerald-600">{payment.amount} جنيه</TableCell>
-                            <TableCell className="text-right text-muted-foreground">{format(new Date(payment.date), 'd MMMM yyyy', { locale: ar })}</TableCell>
+                            <TableCell className="text-right px-6 font-black text-slate-700">
+                                {format(parse(payment.month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}
+                            </TableCell>
+                            <TableCell className="text-center px-6">
+                                <span className="font-black text-emerald-600">{payment.amount} ج.م</span>
+                            </TableCell>
+                            <TableCell className="text-right px-6 text-[10px] text-muted-foreground font-bold">
+                                {format(new Date(payment.date), 'd MMMM yyyy', { locale: ar })}
+                            </TableCell>
                             </TableRow>
                         ))}
                         </TableBody>
                     </Table>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">لا يوجد سجل مدفوعات لهذا الطالب.</p>
+                <p className="text-muted-foreground text-center py-12 font-bold italic">لا يوجد سجل مدفوعات لهذا الطالب.</p>
               )}
             </CardContent>
           </Card>

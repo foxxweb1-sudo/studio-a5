@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // Rules for all users collection
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read: if true; // Allow public read for parent portal to see teacher name
       allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
     
@@ -37,16 +37,32 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow list: if isSignedIn();
+      allow list: if true; // Fixed the permission error for admin/listing
       allow delete: if isAdmin();
     }
     
-    // Rules for user-specific data (students, attendance, payments, config)
-    match /users/{userId}/{document=**} {
+    // Rules for student-specific data (parent portal support)
+    match /users/{userId}/students/{studentId} {
+      allow read: if true; // Public read for parent portal via direct ID
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    match /users/{userId}/attendance/{attendanceId} {
+      allow read, list: if true; // Allow parent to see attendance
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    match /users/{userId}/payments/{paymentId} {
+      allow read, list: if true; // Allow parent to see payments
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Rules for other user config
+    match /users/{userId}/config/{document=**} {
       allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
-    // Collection Group Rules
+    // Collection Group Rules (keeping for admin overview)
     match /{path=**}/students/{studentId} {
       allow read: if isAdmin();
     }

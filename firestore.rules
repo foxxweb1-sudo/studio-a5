@@ -14,68 +14,50 @@ service cloud.firestore {
              request.auth.token.email.lower() == 'tech.support.app@gmail.com';
     }
 
-    // قواعد مجموعة المستخدمين والبيانات التابعة لهم
+    // قواعد المستخدمين (المعلمين)
     match /users/{userId} {
-      // السماح بالقراءة العامة لدعم بوابة ولي الأمر ورؤية اسم المدرس
+      // السماح بالقراءة العامة لبيانات المدرس (الاسم والصورة) ليراها ولي الأمر
       allow read: if true; 
-      // المدرس أو المسؤول فقط يمكنهم التعديل
       allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
 
-      // الطلاب التابعين للمعلم
+      // الطلاب - السماح بقراءة ملف الطالب لولي الأمر
       match /students/{studentId} {
-        allow read: if true; // وصول عام لولي الأمر لقراءة ملف الطالب
+        allow read: if true; 
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
-      // سجلات الحضور
+      // سجلات الحضور - السماح لولي الأمر بالقراءة (سيتم الفلترة برمجياً داخل الكود)
       match /attendance/{attendanceId} {
-        // ولي الأمر يقرأ فقط ما يخص ابنه، المعلم يقرأ الكل
-        allow read: if true; 
+        allow read: if true;
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
-      // سجلات المدفوعات
+      // سجلات المدفوعات - السماح لولي الأمر بالقراءة
       match /payments/{paymentId} {
-        // ولي الأمر يقرأ فقط ما يخص ابنه، المعلم يقرأ الكل
-        allow read: if true; 
+        allow read: if true;
         allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
 
-      // الإعدادات الخاصة (مثل جدول المواعيد)
+      // الإعدادات
       match /config/{document=**} {
         allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       }
     }
     
-    // طلبات حذف الحساب
+    // طلبات الحذف والتقييمات
     match /deletionRequests/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow create, update, delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
-    // أذونات التقييم
     match /reviewPermissions/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow create, update: if isAdmin();
-      allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isSignedIn() || isAdmin();
     }
 
-    // التقييمات العامة
     match /reviews/{reviewId} {
-      allow read, list: if true;
+      allow read: if true;
       allow create: if isSignedIn();
       allow delete: if isAdmin();
-    }
-
-    // قواعد المجموعات (للإدارة العامة)
-    match /{path=**}/students/{studentId} {
-      allow read: if isAdmin() || true; // تأكيد القراءة العامة لولي الأمر
-    }
-    match /{path=**}/attendance/{attendanceId} {
-      allow read: if isAdmin() || true;
-    }
-    match /{path=**}/payments/{paymentId} {
-      allow read: if isAdmin() || true;
     }
 
     // رسائل اتصل بنا

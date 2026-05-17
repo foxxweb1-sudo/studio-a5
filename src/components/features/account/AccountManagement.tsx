@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck, ShieldCheck } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
@@ -179,7 +179,7 @@ export default function AccountManagement() {
   }
 
   const nameText = user?.displayName || 'مستخدم جديد';
-  const showBadgeBefore = isArabic(nameText); // Reversed logic: Arabic -> Before (Right)
+  const showBadgeBefore = isArabic(nameText); // Logic: Arabic -> Before (Right)
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto pb-20">
@@ -216,23 +216,35 @@ export default function AccountManagement() {
                 )}
             </div>
             
-            <div className="flex items-center justify-center gap-2 mt-4 group/uid">
-                <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
-                    <Fingerprint className="h-3 w-3 text-slate-400" />
-                    <code className="text-[10px] font-mono text-slate-500 tracking-tighter select-all">
-                        {user?.uid}
-                    </code>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 text-slate-400 hover:text-primary transition-colors"
-                      onClick={handleCopyUid}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
+            {/* واجهة الـ UID المطورة */}
+            <div className="mt-8 w-full max-w-[240px] animate-in slide-in-from-bottom-2 duration-700">
+                <div className="relative p-[1px] bg-gradient-to-br from-primary/30 via-slate-200 to-primary/10 rounded-[1.5rem] overflow-hidden group/card shadow-sm hover:shadow-md transition-all">
+                    <div className="bg-white dark:bg-slate-900 rounded-[1.45rem] p-4 flex flex-col items-center gap-3">
+                        <div className="flex items-center justify-between w-full">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                <Fingerprint className="h-3 w-3 text-primary/60" />
+                                الهوية الرقمية
+                            </span>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full bg-slate-50 hover:bg-primary/10 text-slate-400 hover:text-primary transition-all active:scale-90"
+                              onClick={handleCopyUid}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
+                        
+                        <div className="w-full bg-slate-50 dark:bg-slate-800/50 py-3 px-4 rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+                            <code className="text-[11px] font-mono text-primary font-bold tracking-tight select-all block truncate text-center">
+                                {user?.uid}
+                            </code>
+                        </div>
+                        
+                        <p className="text-[8px] text-slate-400 font-bold italic">هذا المعرف خاص بك فقط، لا تشاركه مع الغرباء.</p>
+                    </div>
                 </div>
             </div>
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">معرف المستخدم الفريد (UID)</p>
         </div>
       </div>
 

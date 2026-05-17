@@ -59,7 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const displayName = user.displayName || 'مستخدم';
-  const showBadgeBefore = isArabic(displayName); // Reversed: Arabic -> Before (Right)
+  const showBadgeBefore = isArabic(displayName); // Logic: Arabic -> Before (Right)
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background text-right" dir="rtl">
@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           
           <div className="flex items-center gap-4 md:gap-6">
             <Link href="/" className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white shrink-0">
                 <Image 
                   src={config.appLogo}
                   alt="Logo"
@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="object-contain"
                 />
               </div>
-              <h1 className="font-bold text-xl tracking-tight hidden sm:block">
+              <h1 className="font-bold text-lg sm:text-xl tracking-tight">
                 {config.appName}
               </h1>
             </Link>

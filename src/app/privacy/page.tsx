@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -38,7 +37,7 @@ export default function PrivacyPage() {
           </p>
           <h3 className="font-bold text-lg">1. البيانات التي نجمعها</h3>
           <p>
-            نقوم بجمع البيانات الضرورية فقط لعمل التطبيق، مثل أسماء الطلاب، الصفوف الدراسية، أرقام الهواتف المسجلة، وسجلات الحضور والمدفوعات. هذه البيانات مخزنة بشكل آمن عبر خدمات Firebase المشفرة.
+            نقوم بجمع البيانات الضرورية فقط لعمل التطبيق، مثل أسماء الطلاب، الصفوف الدراسية، أرقام الهواتف المسجلة، وسجلات الحضور والمدفوعات. هذه البيانات مخزنة بشكل آمن عبر خدمات TECH.
           </p>
           <h3 className="font-bold text-lg">2. كيف نستخدم بياناتك</h3>
           <p>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser } from '@/firebase';
@@ -373,7 +372,7 @@ export default function AdminAppSettingsPage() {
                   <Badge variant="outline" className="text-[10px] rounded-lg">مستحسن</Badge>
                 </h4>
                 <p className="text-xs text-slate-500 max-w-xl">
-                  استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم Firebase لضمان حماية بيانات الطلاب وخصوصية المعلمين.
+                  استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم TECH لضمان حماية بيانات الطلاب وخصوصية المعلمين.
                 </p>
               </div>
               <Button 

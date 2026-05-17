@@ -44,7 +44,7 @@ import { Label } from "@/components/ui/label";
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'الاسم مطلوب.'),
-  photoURL: z.string().url('الرجاء إدخال رابط صالح (يبدأ بـ http).').optional().or(z.string().length(0)),
+  photoURL: z.string().url('الرجاء إدخل رابط صالح (يبدأ بـ http).').optional().or(z.string().length(0)),
 });
 
 const DELETION_REASONS = [

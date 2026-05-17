@@ -18,7 +18,8 @@ import {
   ExternalLink,
   ShieldCheck,
   FileText,
-  Users
+  Users,
+  UserCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -57,11 +58,11 @@ export default function SettingsPage() {
   const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
 
   return (
-    <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-12">
+    <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-12 px-4">
       <div className="flex justify-between items-start">
-        <PageHeader>
-          <PageHeaderTitle>الإعدادات</PageHeaderTitle>
-          <PageHeaderDescription>إعدادات التطبيق ومعلومات الإصدار.</PageHeaderDescription>
+        <PageHeader className="border-0 pb-0">
+          <PageHeaderTitle className="text-3xl font-black">الإعدادات</PageHeaderTitle>
+          <PageHeaderDescription>تخصيص التطبيق وإدارة حسابك.</PageHeaderDescription>
         </PageHeader>
         <Button 
           variant="outline" 
@@ -74,6 +75,71 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
+        {/* قسم الحساب - نمط فيسبوك */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                <UserCircle className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-xl">الحساب</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+             <Button asChild variant="ghost" className="w-full justify-between h-16 rounded-2xl px-4 hover:bg-muted font-bold group">
+              <Link href="/account" className="flex items-center w-full">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
+                        <UserCircle className="h-5 w-5" />
+                    </div>
+                    <div className="flex flex-col items-start">
+                        <span className="text-sm font-black">إدارة الحساب</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">الاسم، الصورة، الأمان، والخصوصية</span>
+                    </div>
+                </div>
+                <ArrowLeft className="h-4 w-4 opacity-20 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* المظهر */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
+                <Palette className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-xl">المظهر</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-2xl">
+              <Button 
+                variant={theme === 'light' ? 'default' : 'ghost'} 
+                onClick={() => setTheme('light')}
+                className="rounded-xl font-bold"
+              >
+                فاتح
+              </Button>
+              <Button 
+                variant={theme === 'dark' ? 'default' : 'ghost'} 
+                onClick={() => setTheme('dark')}
+                className="rounded-xl font-bold"
+              >
+                داكن
+              </Button>
+              <Button 
+                variant={theme === 'system' ? 'default' : 'ghost'} 
+                onClick={() => setTheme('system')}
+                className="rounded-xl font-bold"
+              >
+                النظام
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* معلومات التطبيق */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
@@ -119,47 +185,10 @@ export default function SettingsPage() {
                     <Button asChild variant="outline" size="sm" className="rounded-xl border-primary/20 hover:bg-primary hover:text-white transition-all">
                         <a href={config.techStoreUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
                             <ExternalLink className="h-3 w-3" />
-                            زيارة المتجر
+                            زيارة
                         </a>
                     </Button>
                 </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* المظهر */}
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
-                <Palette className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-xl">المظهر</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-2xl">
-              <Button 
-                variant={theme === 'light' ? 'default' : 'ghost'} 
-                onClick={() => setTheme('light')}
-                className="rounded-xl font-bold"
-              >
-                فاتح
-              </Button>
-              <Button 
-                variant={theme === 'dark' ? 'default' : 'ghost'} 
-                onClick={() => setTheme('dark')}
-                className="rounded-xl font-bold"
-              >
-                داكن
-              </Button>
-              <Button 
-                variant={theme === 'system' ? 'default' : 'ghost'} 
-                onClick={() => setTheme('system')}
-                className="rounded-xl font-bold"
-              >
-                النظام
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -283,3 +312,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

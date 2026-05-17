@@ -28,7 +28,6 @@ import {
   GraduationCap,
   MessageSquareQuote,
   Star,
-  ShieldAlert,
   Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -43,6 +42,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Info } from 'lucide-react';
 import { DeletionRequest, Review } from '@/lib/definitions';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
@@ -139,14 +139,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
+  const handleDeleteReview = (reviewId: string) => {
     if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'reviews', reviewId));
-      toast({ title: "تم حذف التقييم" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل الحذف" });
-    }
+    deleteDocumentNonBlocking(doc(firestore, 'reviews', reviewId));
+    toast({ title: "تم حذف التقييم" });
   };
 
   const calculateRemainingTime = (requestedAt: any) => {

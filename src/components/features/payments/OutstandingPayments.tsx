@@ -2,7 +2,7 @@
 "use client";
 
 import { useStudents, usePayments, usePaymentSettings } from '@/hooks/use-app-data';
-import { Student, PaymentRecord } from '@/lib/definitions';
+import { Student, PaymentRecord, GradePaymentPeriod } from '@/lib/definitions';
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format, parse, startOfMonth, addMonths, isBefore, isSameMonth } from 'date-fns';
-import { Loader2, MessageSquare, CalendarClock, Info } from 'lucide-react';
+import { Loader2, MessageSquare, Info, WalletCards } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ar } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -22,30 +22,36 @@ interface OutstandingPaymentsProps {
   gradeFilter?: string;
 }
 
-const getRequiredMonths = (startMonthStr: string | undefined, endMonthStr: string | undefined): string[] => {
-  if (!startMonthStr) return [];
+/**
+ * دالة ذكية لحساب كافة الشهور المطلوبة من مجموعة فترات زمنية
+ */
+const getAllRequiredMonths = (periods: GradePaymentPeriod[] | undefined): string[] => {
+  if (!periods || !Array.isArray(periods) || periods.length === 0) return [];
   
-  const months: string[] = [];
+  const allMonths = new Set<string>();
   const today = new Date();
   const currentMonthStart = startOfMonth(today);
-  
-  let startDate = parse(startMonthStr, 'yyyy-MM', new Date());
-  let limitDate = currentMonthStart;
-  
-  if (endMonthStr) {
-    const definedEndDate = parse(endMonthStr, 'yyyy-MM', new Date());
-    if (isBefore(definedEndDate, currentMonthStart)) {
-      limitDate = definedEndDate;
-    }
-  }
 
-  let checkDate = startDate;
-  while (isBefore(checkDate, limitDate) || isSameMonth(checkDate, limitDate)) {
-    months.push(format(checkDate, 'yyyy-MM'));
-    checkDate = addMonths(checkDate, 1);
-  }
+  periods.forEach(period => {
+    try {
+      let startDate = parse(period.startMonth, 'yyyy-MM', new Date());
+      let endDate = parse(period.endMonth, 'yyyy-MM', new Date());
+      
+      // نحدد الحد الأقصى للمطالبة وهو إما نهاية الفترة أو الشهر الحالي (أيهما أسبق)
+      let limitDate = isBefore(endDate, currentMonthStart) ? endDate : currentMonthStart;
+
+      let checkDate = startDate;
+      while (isBefore(checkDate, limitDate) || isSameMonth(checkDate, limitDate)) {
+        allMonths.add(format(checkDate, 'yyyy-MM'));
+        checkDate = addMonths(checkDate, 1);
+      }
+    } catch (e) {
+      console.error("Error parsing period:", period);
+    }
+  });
   
-  return months;
+  // تحويل الـ Set إلى مصفوفة مرتبة زمنياً
+  return Array.from(allMonths).sort();
 };
 
 const getOutstandingStudents = (
@@ -57,11 +63,12 @@ const getOutstandingStudents = (
 
   return students
     .map((student) => {
-      // جلب إعدادات الفترة الخاصة بصف هذا الطالب تحديداً
       const gradeConfig = gradeConfigs?.[student.grade];
       if (!gradeConfig) return { ...student, outstandingMonths: [] };
 
-      const requiredMonths = getRequiredMonths(gradeConfig.startMonth, gradeConfig.endMonth);
+      // جلب كافة الشهور المطلوبة بناءً على الفترات المتعددة
+      const requiredMonths = getAllRequiredMonths(gradeConfig.periods);
+      
       const paidMonths = payments
         .filter((p) => p.studentId === student.id)
         .map((p) => p.month);
@@ -168,19 +175,19 @@ export default function OutstandingPayments({ gradeFilter }: OutstandingPayments
           </Table>
         </div>
       ) : (
-        <div className="text-center py-20 bg-emerald-50/50 rounded-[2rem] border-2 border-dashed border-emerald-100">
-           <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Loader2 className="h-8 w-8 text-emerald-500 animate-pulse" />
+        <div className="text-center py-20 bg-emerald-50/50 rounded-[2.5rem] border-2 border-dashed border-emerald-100">
+           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4">
+              <WalletCards className="h-8 w-8 text-emerald-500" />
            </div>
           <p className="text-emerald-700 font-black">لا توجد أي متأخرات مالية حالياً.</p>
-          <p className="text-[10px] text-emerald-600/60 mt-1">كافة الطلاب في هذا الصف قاموا بالسداد وفق الفترة المحددة لهم في الإعدادات.</p>
+          <p className="text-[10px] text-emerald-600/60 mt-1">كافة الطلاب في هذا الصف قاموا بالسداد وفق الفترات المحددة.</p>
         </div>
       )}
 
       <div className="p-4 bg-slate-50 rounded-2xl flex items-start gap-3 border border-dashed">
           <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-[9px] text-slate-500 leading-relaxed font-bold">
-            ملاحظة: يتم حساب المتأخرات بناءً على "الفترة المحاسبية" المحددة لكل صف في الصفحة الرئيسية. إذا لم يظهر طالب، تأكد من ضبط فترة صفه.
+            ملاحظة: المتأخرات تُحسب بناءً على "الفترات المحاسبية" المسجلة لكل صف. يمكنك إضافة فترات مراجعة أو فصول صيفية من خلال زر "الفترة المحاسبية" في الرئيسية.
           </p>
       </div>
     </div>

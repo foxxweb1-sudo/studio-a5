@@ -25,9 +25,14 @@ export type WorkingSchedule = {
   updatedAt?: FieldValue;
 };
 
-export type GradePaymentConfig = {
+export type GradePaymentPeriod = {
+  id: string;
   startMonth: string; // YYYY-MM
-  endMonth?: string;  // YYYY-MM
+  endMonth: string;   // YYYY-MM
+};
+
+export type GradePaymentConfig = {
+  periods: GradePaymentPeriod[];
 };
 
 export type PaymentConfig = {

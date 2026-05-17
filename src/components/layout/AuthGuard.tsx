@@ -116,8 +116,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isUserLoading && !showSplash) {
-      const isPublicRoute = publicRoutes.includes(pathname);
-      if (user && isPublicRoute) {
+      // السماح بالمسارات العامة أو مسارات بوابة ولي الأمر (تبدأ بـ /p/)
+      const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/p/');
+      
+      if (user && isPublicRoute && !pathname.startsWith('/p/')) {
         router.push("/");
       } else if (!user && !isPublicRoute) {
         router.push("/login");
@@ -151,7 +153,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && publicRoutes.includes(pathname)) {
+  // السماح بعرض المحتوى إذا كان المسار يبدأ بـ /p/ حتى لو لم يسجل دخول
+  const isParentPortal = pathname.startsWith('/p/');
+
+  if (!user && (publicRoutes.includes(pathname) || isParentPortal)) {
     return <>{children}</>;
   }
 

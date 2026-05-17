@@ -69,6 +69,10 @@
           "type": "string",
           "description": "The month (YYYY-MM) from which to start calculating arrears."
         },
+        "endMonth": {
+          "type": "string",
+          "description": "The month (YYYY-MM) at which to stop calculating arrears."
+        },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
     },

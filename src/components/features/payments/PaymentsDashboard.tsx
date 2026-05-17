@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CreditCard, AlertCircle, Settings, Save, Loader2, Calendar } from 'lucide-react';
+import { CreditCard, AlertCircle, Settings, Save, Loader2, Calendar, ArrowRightLeft } from 'lucide-react';
 import PaymentTracker from "./PaymentTracker";
 import OutstandingPayments from "./OutstandingPayments";
 import { usePaymentSettings } from '@/hooks/use-app-data';
@@ -18,7 +18,7 @@ interface PaymentsDashboardProps {
   gradeFilter?: string;
 }
 
-const YEARS = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - 1 + i).toString());
+const YEARS = Array.from({ length: 6 }, (_, i) => (new Date().getFullYear() - 1 + i).toString());
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   value: (i + 1).toString().padStart(2, '0'),
   label: format(new Date(2000, i), "MMMM", { locale: ar }),
@@ -30,6 +30,10 @@ export default function PaymentsDashboard({ gradeFilter }: PaymentsDashboardProp
   
   const [startYear, setStartYear] = useState(new Date().getFullYear().toString());
   const [startMonth, setStartMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
+  
+  const [endYear, setEndYear] = useState(new Date().getFullYear().toString());
+  const [endMonth, setEndMonth] = useState('12');
+
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -38,15 +42,24 @@ export default function PaymentsDashboard({ gradeFilter }: PaymentsDashboardProp
       setStartYear(y);
       setStartMonth(m);
     }
+    if (settings?.endMonth) {
+      const [y, m] = settings.endMonth.split('-');
+      setEndYear(y);
+      setEndMonth(m);
+    }
   }, [settings]);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
       await updateSettings({
-        startMonth: `${startYear}-${startMonth}`
+        startMonth: `${startYear}-${startMonth}`,
+        endMonth: `${endYear}-${endMonth}`
       });
-      toast({ title: "تم حفظ الإعدادات", description: "سيتم الآن حساب المتأخرات بناءً على التاريخ الجديد." });
+      toast({ 
+        title: "تم حفظ الإعدادات", 
+        description: "تم تحديث الفترة المحاسبية النشطة بنجاح." 
+      });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الحفظ" });
     } finally {
@@ -57,18 +70,18 @@ export default function PaymentsDashboard({ gradeFilter }: PaymentsDashboardProp
   return (
     <div className="flex flex-col gap-6">
         <Tabs defaultValue="tracker" className="w-full">
-            <TabsList className="bg-slate-100 p-1 rounded-2xl mb-6 w-full flex h-auto">
-                <TabsTrigger value="tracker" className="rounded-xl py-3 font-black flex-1 gap-2">
+            <TabsList className="bg-slate-100 p-1 rounded-2xl mb-6 w-full flex h-auto overflow-x-auto justify-start">
+                <TabsTrigger value="tracker" className="rounded-xl py-3 font-black flex-1 gap-2 whitespace-nowrap">
                 <CreditCard className="h-4 w-4" />
                 تسجيل دفعة
                 </TabsTrigger>
-                <TabsTrigger value="outstanding" className="rounded-xl py-3 font-black flex-1 gap-2">
+                <TabsTrigger value="outstanding" className="rounded-xl py-3 font-black flex-1 gap-2 whitespace-nowrap">
                 <AlertCircle className="h-4 w-4" />
                 المتأخرات
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="rounded-xl py-3 font-black flex-1 gap-2">
+                <TabsTrigger value="settings" className="rounded-xl py-3 font-black flex-1 gap-2 whitespace-nowrap">
                 <Settings className="h-4 w-4" />
-                ضبط البدء
+                الفترة المحاسبية
                 </TabsTrigger>
             </TabsList>
             
@@ -89,9 +102,9 @@ export default function PaymentsDashboard({ gradeFilter }: PaymentsDashboardProp
                      <CardHeader className="bg-rose-50/50 border-b">
                         <CardTitle className="text-xl flex items-center gap-2 text-rose-700">
                             <AlertCircle className="h-5 w-5" />
-                            كشف المتأخرات المالية
+                            كشف المتأخرات المالية الذكي
                         </CardTitle>
-                        <CardDescription>عرض الطلاب الذين لم يسددوا الرسوم عن الشهور المطلوبة.</CardDescription>
+                        <CardDescription>عرض الطلاب الذين لم يسددوا الرسوم ضمن الفترة المحددة فقط.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
                         <OutstandingPayments gradeFilter={gradeFilter} />
@@ -103,51 +116,96 @@ export default function PaymentsDashboard({ gradeFilter }: PaymentsDashboardProp
                 <Card className="border-0 shadow-xl rounded-[2rem] overflow-hidden">
                     <CardHeader className="bg-amber-50 border-b">
                         <CardTitle className="text-xl flex items-center gap-2">
-                            <Calendar className="h-5 w-5 text-amber-600" />
-                            تاريخ بدء المحاسبة
+                            <ArrowRightLeft className="h-5 w-5 text-amber-600" />
+                            ضبط الفترة المحاسبية
                         </CardTitle>
-                        <CardDescription>حدد متى بدأت العمل بالتطبيق ليقوم النظام بحساب المتأخرات من هذا التاريخ فقط.</CardDescription>
+                        <CardDescription>حدد متى يبدأ العام الدراسي ومتى ينتهي لحساب المتأخرات بدقة.</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-8 space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 px-1">سنة البدء</label>
-                                <Select value={startYear} onValueChange={setStartYear}>
-                                    <SelectTrigger className="h-12 rounded-xl">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 px-1">شهر البدء</label>
-                                <Select value={startMonth} onValueChange={setStartMonth}>
-                                    <SelectTrigger className="h-12 rounded-xl">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                    <CardContent className="pt-8 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                           {/* قسم البداية */}
+                           <div className="space-y-4 p-5 rounded-3xl bg-slate-50 border border-slate-100">
+                              <h4 className="font-black text-sm text-primary flex items-center gap-2">
+                                <Calendar className="h-4 w-4" /> بداية الفترة
+                              </h4>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 px-1">السنة</label>
+                                    <Select value={startYear} onValueChange={setStartYear}>
+                                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 px-1">الشهر</label>
+                                    <Select value={startMonth} onValueChange={setStartMonth}>
+                                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                              </div>
+                           </div>
+
+                           {/* قسم النهاية */}
+                           <div className="space-y-4 p-5 rounded-3xl bg-emerald-50/30 border border-emerald-100">
+                              <h4 className="font-black text-sm text-emerald-600 flex items-center gap-2">
+                                <Calendar className="h-4 w-4" /> نهاية الفترة
+                              </h4>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 px-1">السنة</label>
+                                    <Select value={endYear} onValueChange={setEndYear}>
+                                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 px-1">الشهر</label>
+                                    <Select value={endMonth} onValueChange={setEndMonth}>
+                                        <SelectTrigger className="h-11 rounded-xl bg-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                              </div>
+                           </div>
                         </div>
 
-                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-3">
-                            <Settings className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                            <p className="text-xs text-blue-700 leading-relaxed font-bold">
-                                مثال: إذا اخترت "سبتمبر 2025"، فإن النظام لن يطالب الطلاب بأي مبالغ عن شهور أغسطس أو يوليو من نفس السنة، وسيبدأ بمطالبتهم من سبتمبر فصاعداً.
-                            </p>
+                        <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-start gap-4">
+                            <div className="p-2 bg-blue-500 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                                <AlertCircle className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-1">
+                                <h5 className="font-black text-blue-900 text-sm">كيف يعمل النظام الذكي؟</h5>
+                                <p className="text-[11px] text-blue-700 leading-relaxed font-bold">
+                                    سيقوم النظام بحساب الشهور المطلوبة من الطلاب بدءاً من "تاريخ البداية". ولن يطالبهم بأي مبالغ بعد "تاريخ النهاية". 
+                                    كما سيتم تجاهل الشهور التي لم تأتِ بعد داخل هذا النطاق، مما يضمن تقارير مالية دقيقة دائماً.
+                                </p>
+                            </div>
                         </div>
 
                         <Button 
                             onClick={handleSaveSettings} 
                             disabled={isSaving || isLoading}
-                            className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-lg"
+                            className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-lg shadow-primary/20"
                         >
                             {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                            حفظ تاريخ البدء
+                            تفعيل الفترة المحاسبية
                         </Button>
                     </CardContent>
                 </Card>

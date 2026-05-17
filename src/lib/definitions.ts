@@ -27,6 +27,7 @@ export type WorkingSchedule = {
 
 export type PaymentConfig = {
   startMonth: string; // YYYY-MM
+  endMonth?: string;  // YYYY-MM
   updatedAt?: FieldValue;
 };
 

@@ -92,5 +92,6 @@ export type GlobalConfig = {
   telegram?: string;
   techStoreUrl?: string;
   cookiePolicyUrl?: string;
+  updatesUrl?: string;
   lastRulesUpdate?: FieldValue;
 };

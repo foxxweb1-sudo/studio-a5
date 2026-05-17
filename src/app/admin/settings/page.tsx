@@ -30,7 +30,8 @@ import {
   Send,
   LifeBuoy,
   Tag,
-  ShieldCheck
+  ShieldCheck,
+  Bell
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -57,7 +58,8 @@ export default function AdminAppSettingsPage() {
     twitter: '',
     telegram: '',
     techStoreUrl: '',
-    cookiePolicyUrl: ''
+    cookiePolicyUrl: '',
+    updatesUrl: ''
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -88,7 +90,8 @@ export default function AdminAppSettingsPage() {
         twitter: config.twitter || '',
         telegram: config.telegram || '',
         techStoreUrl: config.techStoreUrl || '',
-        cookiePolicyUrl: config.cookiePolicyUrl || ''
+        cookiePolicyUrl: config.cookiePolicyUrl || '',
+        updatesUrl: config.updatesUrl || ''
       });
     }
   }, [config]);
@@ -321,6 +324,17 @@ export default function AdminAppSettingsPage() {
                       value={formData.cookiePolicyUrl}
                       onChange={(e) => setFormData({...formData, cookiePolicyUrl: e.target.value})}
                       placeholder="/privacy"
+                      className="rounded-xl h-11 text-xs font-mono"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-amber-500" /> رابط جرس التحديثات
+                    </Label>
+                    <Input 
+                      value={formData.updatesUrl}
+                      onChange={(e) => setFormData({...formData, updatesUrl: e.target.value})}
+                      placeholder="https://..."
                       className="rounded-xl h-11 text-xs font-mono"
                     />
                   </div>

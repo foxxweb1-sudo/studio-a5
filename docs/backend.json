@@ -238,6 +238,7 @@
         "telegram": { "type": "string" },
         "techStoreUrl": { "type": "string" },
         "cookiePolicyUrl": { "type": "string" },
+        "updatesUrl": { "type": "string" },
         "lastRulesUpdate": { "type": "string", "format": "date-time" }
       }
     }

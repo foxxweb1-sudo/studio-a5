@@ -21,6 +21,7 @@ export const DEFAULT_TWITTER = "https://x.com/tqnyt170296";
 export const DEFAULT_TELEGRAM = "https://t.me/TqnyatStore";
 export const DEFAULT_TECH_STORE = "https://techstore-servers.vercel.app/";
 export const DEFAULT_COOKIE_POLICY_URL = "/privacy";
+export const DEFAULT_UPDATES_URL = "#";
 
 export function useAppConfig() {
   const firestore = useFirestore();
@@ -47,6 +48,7 @@ export function useAppConfig() {
     telegram: config?.telegram || DEFAULT_TELEGRAM,
     techStoreUrl: config?.techStoreUrl || DEFAULT_TECH_STORE,
     cookiePolicyUrl: config?.cookiePolicyUrl || DEFAULT_COOKIE_POLICY_URL,
+    updatesUrl: config?.updatesUrl || DEFAULT_UPDATES_URL,
   }), [
     config?.appName, 
     config?.appLogo, 
@@ -61,7 +63,8 @@ export function useAppConfig() {
     config?.twitter,
     config?.telegram,
     config?.techStoreUrl,
-    config?.cookiePolicyUrl
+    config?.cookiePolicyUrl,
+    config?.updatesUrl
   ]);
 
   return {

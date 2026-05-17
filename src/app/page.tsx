@@ -6,11 +6,13 @@ import { useUser } from '@/firebase';
 import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, Calendar } from 'lucide-react';
+import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, Calendar, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { ADMIN_EMAIL } from '@/lib/constants';
+import { useAppConfig } from '@/hooks/use-app-config';
+import { Button } from '@/components/ui/button';
 
 const stages = [
   {
@@ -38,17 +40,34 @@ const stages = [
 
 export default function Home() {
   const { user } = useUser();
+  const { config } = useAppConfig();
   const { students } = useStudents();
   const { attendance } = useAttendance();
   const { payments } = usePayments();
 
   const [now, setNow] = useState<Date | null>(null);
+  const [hasNewUpdate, setHasNewUpdate] = useState(false);
 
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 1000);
+    
+    // فحص التنبيهات
+    const lastSeenUrl = localStorage.getItem('last_seen_update_url');
+    if (config.updatesUrl && config.updatesUrl !== '#' && lastSeenUrl !== config.updatesUrl) {
+      setHasNewUpdate(true);
+    }
+
     return () => clearInterval(timer);
-  }, []);
+  }, [config.updatesUrl]);
+
+  const handleUpdateClick = () => {
+    if (config.updatesUrl && config.updatesUrl !== '#') {
+      localStorage.setItem('last_seen_update_url', config.updatesUrl);
+      setHasNewUpdate(false);
+      window.open(config.updatesUrl, '_blank');
+    }
+  };
 
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -102,8 +121,27 @@ export default function Home() {
               <Calendar className="w-32 h-32" />
             </div>
             <CardContent className="p-8 flex flex-col justify-center h-full relative z-10">
-              <h2 className="text-2xl font-black mb-2">أهلاً بك، {user?.displayName || 'أستاذنا'} 👋</h2>
-              <p className="text-blue-100 font-bold text-sm">نتمنى لك يوماً دراسياً موفقاً ومليئاً بالإنجازات.</p>
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-black mb-2">أهلاً بك، {user?.displayName || 'أستاذنا'} 👋</h2>
+                  <p className="text-blue-100 font-bold text-sm">نتمنى لك يوماً دراسياً موفقاً ومليئاً بالإنجازات.</p>
+                </div>
+                <div className="relative">
+                  <Button 
+                    onClick={handleUpdateClick}
+                    variant="ghost" 
+                    className="h-14 w-14 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group"
+                  >
+                    <Bell className="h-7 w-7 text-white group-hover:scale-110 transition-transform" />
+                    {hasNewUpdate && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 border-2 border-primary"></span>
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
               <div className="mt-6 flex items-center gap-3 bg-white/10 w-fit px-5 py-2 rounded-2xl backdrop-blur-md border border-white/10">
                  <Calendar className="h-4 w-4 text-blue-200" />
                  <span className="text-sm font-black">{format(now, 'eeee، d MMMM yyyy', { locale: ar })}</span>

@@ -10,7 +10,6 @@ import {
   Share2, 
   MessageCircle, 
   Palette, 
-  Github, 
   AppWindow, 
   Facebook, 
   Twitter, 
@@ -18,8 +17,11 @@ import {
   ExternalLink,
   UserCircle,
   ChevronLeft,
-  Star,
-  Tag
+  Tag,
+  ShieldCheck,
+  FileText,
+  HelpCircle,
+  Users
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -75,7 +77,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* قسم الحساب - نمط فيسبوك المطور مع تأثير النور الدوار */}
+        {/* قسم الحساب */}
         <div className="relative p-[2px] overflow-hidden rounded-[2.5rem] group">
           <div className="absolute inset-[-1000%] animate-spin-border bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,hsl(var(--primary))_50%,transparent_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
           
@@ -101,10 +103,7 @@ export default function SettingsPage() {
                           <span className="text-xs text-muted-foreground font-medium opacity-80">تحديث الاسم، الصورة، وكلمة المرور</span>
                       </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">تعديل</span>
-                    <ChevronLeft className="h-5 w-5 text-primary/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
-                  </div>
+                  <ChevronLeft className="h-5 w-5 text-primary/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
                 </Link>
               </Button>
             </CardContent>
@@ -148,6 +147,61 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* مركز المعلومات والدعم - الصفحات التي كانت مفقودة */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
+                <HelpCircle className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-xl font-black">المعلومات والدعم</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+             <div className="flex flex-col">
+                <Link href="/about" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-sm">من نحن</span>
+                  </div>
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
+                <Link href="/contact" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <MessageCircle className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-sm">تواصل معنا</span>
+                  </div>
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
+                <Link href="/privacy" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                      <ShieldCheck className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-sm">سياسة الخصوصية</span>
+                  </div>
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
+                <Link href="/terms" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-sm">اتفاقية الاستخدام</span>
+                  </div>
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                </Link>
+             </div>
+          </CardContent>
+        </Card>
+
         {/* معلومات التطبيق */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
@@ -169,7 +223,7 @@ export default function SettingsPage() {
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">الإصدار</span>
+                <span className="font-medium text-sm">الإصدار الحالي</span>
               </div>
               <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold">{config.appVersion}</span>
             </div>

@@ -6,7 +6,7 @@ import { useUser } from '@/firebase';
 import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, ArrowRightCircle } from 'lucide-react';
+import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, ArrowRightCircle, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from '@/lib/constants';
@@ -97,8 +97,15 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
               <Link href="/attendance">
-                <button className="px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg">
+                <button className="px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2">
+                  <CalendarCheck className="h-5 w-5" />
                   تسجيل الحضور الآن
+                </button>
+              </Link>
+              <Link href="/schedule">
+                <button className="px-8 py-4 bg-white/10 text-white border border-white/20 rounded-2xl font-bold shadow-lg hover:bg-white/20 transition-all flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  مواعيد العمل
                 </button>
               </Link>
             </div>

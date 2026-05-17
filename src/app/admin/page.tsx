@@ -2,8 +2,8 @@
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy, collectionGroup, doc, getDoc, where } from 'firebase/firestore';
-import { useEffect, useState, useMemo } from 'react';
+import { collection, getDocs, query, orderBy, collectionGroup, doc, deleteDoc, where, getDoc } from 'firebase/firestore';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   PageHeader,
   PageHeaderTitle,
@@ -23,7 +23,9 @@ import {
   Clock,
   UserCheck,
   Search,
-  School
+  School,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -41,7 +43,19 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ADMIN_UID } from '@/lib/constants';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function StatsOverview({ totalStudents, totalMessages, totalTeachers }: { totalStudents: number, totalMessages: number, totalTeachers: number }) {
   const stats = [
@@ -68,28 +82,29 @@ function StatsOverview({ totalStudents, totalMessages, totalTeachers }: { totalS
   );
 }
 
-function TeacherStudentsModal({ teacher, onClose }: { teacher: any, onClose: () => void }) {
+function TeacherStudentsModal({ teacher, onClose, onDeleteStudent }: { teacher: any, onClose: () => void, onDeleteStudent: (sId: string, tId: string) => void }) {
     const firestore = useFirestore();
     const [students, setStudents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchTeacherStudents = async () => {
-            if (!firestore || !teacher) return;
-            setLoading(true);
-            try {
-                const studentsRef = collection(firestore, `users/${teacher.uid}/students`);
-                const snapshot = await getDocs(studentsRef);
-                const studentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setStudents(studentsData);
-            } catch (error) {
-                console.error("Error fetching teacher students:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTeacherStudents();
+    const fetchTeacherStudents = useCallback(async () => {
+        if (!firestore || !teacher) return;
+        setLoading(true);
+        try {
+            const studentsRef = collection(firestore, `users/${teacher.uid}/students`);
+            const snapshot = await getDocs(studentsRef);
+            const studentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setStudents(studentsData);
+        } catch (error) {
+            console.error("Error fetching teacher students:", error);
+        } finally {
+            setLoading(false);
+        }
     }, [firestore, teacher]);
+
+    useEffect(() => {
+        fetchTeacherStudents();
+    }, [fetchTeacherStudents]);
 
     return (
         <Dialog open={!!teacher} onOpenChange={(open) => !open && onClose()}>
@@ -101,7 +116,7 @@ function TeacherStudentsModal({ teacher, onClose }: { teacher: any, onClose: () 
                         </div>
                         <div>
                             <DialogTitle>طلاب المعلم: {teacher?.displayName}</DialogTitle>
-                            <DialogDescription>عرض قائمة الطلاب المسجلين بواسطة هذا المعلم.</DialogDescription>
+                            <DialogDescription>عرض وإدارة قائمة الطلاب المسجلين بواسطة هذا المعلم.</DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>
@@ -117,7 +132,7 @@ function TeacherStudentsModal({ teacher, onClose }: { teacher: any, onClose: () 
                                 <TableRow>
                                     <TableHead className="text-right">اسم الطالب</TableHead>
                                     <TableHead className="text-right">الصف</TableHead>
-                                    <TableHead className="text-right">تاريخ الإضافة</TableHead>
+                                    <TableHead className="text-center">إجراءات</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -127,8 +142,41 @@ function TeacherStudentsModal({ teacher, onClose }: { teacher: any, onClose: () 
                                         <TableCell>
                                             <span className="bg-muted px-2 py-1 rounded text-xs">{student.grade}</span>
                                         </TableCell>
-                                        <TableCell className="text-xs text-muted-foreground">
-                                            {student.createdAt?.toDate ? format(student.createdAt.toDate(), 'yyyy-MM-dd') : '---'}
+                                        <TableCell className="text-center">
+                                            <div className="flex justify-center gap-2">
+                                                <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg">
+                                                    <Link href={`/students/${student.id}`}>
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent className="rounded-[2rem]">
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>حذف الطالب؟</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                هل أنت متأكد من حذف الطالب ({student.name})؟ سيتم إزالة كافة بياناته نهائياً.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+                                                            <AlertDialogAction 
+                                                                className="rounded-xl bg-rose-600 hover:bg-rose-700"
+                                                                onClick={() => {
+                                                                    onDeleteStudent(student.id, teacher.uid);
+                                                                    setStudents(prev => prev.filter(s => s.id !== student.id));
+                                                                }}
+                                                            >
+                                                                تأكيد الحذف
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -145,7 +193,7 @@ function TeacherStudentsModal({ teacher, onClose }: { teacher: any, onClose: () 
     );
 }
 
-function TeachersList() {
+function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId: string) => void }) {
     const firestore = useFirestore();
     const [teachers, setTeachers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -182,7 +230,7 @@ function TeachersList() {
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
                         <CardTitle>قائمة المعلمين</CardTitle>
-                        <CardDescription>عرض جميع مستخدمي النظام المسجلين.</CardDescription>
+                        <CardDescription>عرض جميع مستخدمي النظام المسجلين وإدارة طلابهم.</CardDescription>
                     </div>
                     <div className="relative w-full md:w-64">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -217,7 +265,7 @@ function TeachersList() {
                                             className="rounded-xl hover:bg-primary/10 hover:text-primary gap-1"
                                             onClick={() => setSelectedTeacher(teacher)}
                                         >
-                                            عرض الطلاب
+                                            إدارة الطلاب
                                             <ChevronRight className="h-4 w-4" />
                                         </Button>
                                     </TableCell>
@@ -227,21 +275,30 @@ function TeachersList() {
                     </Table>
                 </div>
             </CardContent>
-            {selectedTeacher && <TeacherStudentsModal teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} />}
+            {selectedTeacher && <TeacherStudentsModal teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} onDeleteStudent={onDeleteStudent} />}
         </Card>
     );
 }
 
-function AllStudentsList() {
+function AllStudentsList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId: string) => void }) {
   const firestore = useFirestore();
   const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [teachersMap, setTeachersMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAllStudents = async () => {
+    const fetchAllData = async () => {
       setLoading(true);
       try {
-        const studentsQuery = query(collectionGroup(firestore, 'students'));
+        // Fetch teachers to map UIDs to Names
+        const teachersSnapshot = await getDocs(collection(firestore!, 'users'));
+        const tMap: Record<string, string> = {};
+        teachersSnapshot.forEach(doc => {
+            tMap[doc.id] = doc.data().displayName || 'مجهول';
+        });
+        setTeachersMap(tMap);
+
+        const studentsQuery = query(collectionGroup(firestore!, 'students'));
         const studentsSnapshot = await getDocs(studentsQuery);
         
         const studentsData = studentsSnapshot.docs.map(studentDoc => {
@@ -253,7 +310,7 @@ function AllStudentsList() {
             id: studentDoc.id,
             ...data,
             teacherUid,
-            owner: teacherUid === ADMIN_UID ? 'المشرف' : `معلم (${teacherUid.substring(0,5)})`,
+            ownerName: tMap[teacherUid] || `معلم (${teacherUid.substring(0,5)})`,
           };
         });
 
@@ -272,7 +329,7 @@ function AllStudentsList() {
     };
 
     if(firestore) {
-      fetchAllStudents();
+      fetchAllData();
     }
   }, [firestore]);
 
@@ -290,7 +347,7 @@ function AllStudentsList() {
         <div className="flex justify-between items-center">
             <div>
                 <CardTitle>سجل الطلاب الكامل</CardTitle>
-                <CardDescription>عرض جميع الطلاب المسجلين عبر كافة الحسابات.</CardDescription>
+                <CardDescription>عرض جميع الطلاب المسجلين عبر كافة الحسابات مع إمكانية الحذف.</CardDescription>
             </div>
             <div className="bg-primary/10 text-primary px-4 py-2 rounded-2xl font-bold text-sm">
                 {allStudents.length} طالب
@@ -303,9 +360,9 @@ function AllStudentsList() {
             <TableHeader className="bg-muted/50 sticky top-0 z-10">
               <TableRow>
                 <TableHead className="text-right">اسم الطالب</TableHead>
-                <TableHead className="text-right">الصف الدراسي</TableHead>
-                <TableHead className="text-right">هوية المعلم</TableHead>
-                <TableHead className="text-center">إجراء</TableHead>
+                <TableHead className="text-right">الصف</TableHead>
+                <TableHead className="text-right">المعلم المسؤول</TableHead>
+                <TableHead className="text-center">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -316,14 +373,45 @@ function AllStudentsList() {
                     <TableCell>
                         <span className="bg-muted px-3 py-1 rounded-lg text-xs font-medium">{student.grade}</span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs font-mono">{student.owner}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs font-medium">{student.ownerName}</TableCell>
                     <TableCell className="text-center">
-                      <Button asChild variant="ghost" size="sm" className="rounded-xl hover:bg-primary/10 hover:text-primary gap-1">
-                        <Link href={`/students/${student.id}`}>
-                          عرض
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
+                      <div className="flex justify-center gap-1">
+                        <Button asChild variant="ghost" size="sm" className="rounded-xl hover:bg-primary/10 hover:text-primary h-8 w-8 p-0">
+                            <Link href={`/students/${student.id}`}>
+                                <ChevronRight className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 h-8 w-8 p-0">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="rounded-[2rem]">
+                                <AlertDialogHeader>
+                                    <div className="flex items-center gap-3 text-rose-600 mb-2">
+                                        <AlertTriangle className="h-6 w-6" />
+                                        <AlertDialogTitle>حذف نهائي للبيانات</AlertDialogTitle>
+                                    </div>
+                                    <AlertDialogDescription>
+                                        أنت على وشك حذف الطالب ({student.name}) المسجل بواسطة ({student.ownerName}). هذا الإجراء سيحذف كافة سجلات الحضور والمدفوعات الخاصة به ولا يمكن التراجع عنه.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel className="rounded-xl">تراجع</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                        className="rounded-xl bg-rose-600 hover:bg-rose-700"
+                                        onClick={() => {
+                                            onDeleteStudent(student.id, student.teacherUid);
+                                            setAllStudents(prev => prev.filter(s => s.id !== student.id));
+                                        }}
+                                    >
+                                        نعم، حذف الطالب
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -354,7 +442,7 @@ function ContactMessagesList() {
         const fetchMessages = async () => {
             setLoading(true);
             try {
-                const messagesQuery = query(collection(firestore, 'contactMessages'), orderBy('createdAt', 'desc'));
+                const messagesQuery = query(collection(firestore!, 'contactMessages'), orderBy('createdAt', 'desc'));
                 const messagesSnapshot = await getDocs(messagesQuery);
                 const messagesData = messagesSnapshot.docs.map(doc => ({
                     id: doc.id,
@@ -427,11 +515,31 @@ export default function AdminPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [totalMessagesCount, setTotalMessagesCount] = useState(0);
   const [totalTeachersCount, setTotalTeachersCount] = useState(0);
 
   const isAdmin = useMemo(() => user?.uid === ADMIN_UID, [user]);
+
+  const handleDeleteStudent = async (studentId: string, teacherUid: string) => {
+    if (!firestore || !isAdmin) return;
+    try {
+        await deleteDoc(doc(firestore, `users/${teacherUid}/students`, studentId));
+        setTotalStudentsCount(prev => prev - 1);
+        toast({
+            title: "تم الحذف",
+            description: "تم حذف الطالب بنجاح من قاعدة البيانات.",
+        });
+    } catch (e) {
+        console.error(e);
+        toast({
+            variant: "destructive",
+            title: "خطأ في الحذف",
+            description: "فشل حذف الطالب. يرجى المحاولة مرة أخرى.",
+        });
+    }
+  };
 
   useEffect(() => {
     if (!isUserLoading && !isAdmin) {
@@ -517,11 +625,11 @@ export default function AdminPage() {
             </TabsList>
             
             <TabsContent value="teachers" className="mt-0 focus-visible:outline-none">
-                <TeachersList />
+                <TeachersList onDeleteStudent={handleDeleteStudent} />
             </TabsContent>
 
             <TabsContent value="students" className="mt-0 focus-visible:outline-none">
-                <AllStudentsList />
+                <AllStudentsList onDeleteStudent={handleDeleteStudent} />
             </TabsContent>
             
             <TabsContent value="messages" className="mt-0 focus-visible:outline-none">
@@ -552,3 +660,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

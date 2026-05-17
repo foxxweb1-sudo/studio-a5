@@ -1,8 +1,7 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, 
@@ -16,14 +15,9 @@ import {
   Twitter, 
   Send, 
   ExternalLink,
-  ShieldCheck,
-  FileText,
-  Users,
   UserCircle,
   ChevronLeft,
-  Star,
-  SendHorizontal,
-  Loader2
+  Star
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -31,51 +25,12 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { useState } from 'react';
-import { doc, setDoc, serverTimestamp, collection, addDoc, deleteDoc } from 'firebase/firestore';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { config } = useAppConfig();
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  // مراجعة إذن التقييم للمستخدم الحالي
-  const permRef = useMemoFirebase(() => user ? doc(firestore, 'reviewPermissions', user.uid) : null, [user, firestore]);
-  const { data: permission } = useDoc<any>(permRef);
-
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmitReview = async () => {
-    if (!user || !firestore || !comment.trim()) return;
-    setIsSubmitting(true);
-    try {
-      await addDoc(collection(firestore, 'reviews'), {
-        userId: user.uid,
-        userName: user.displayName || 'مستخدم مجهول',
-        userPhoto: user.photoURL || '',
-        rating,
-        comment,
-        createdAt: serverTimestamp()
-      });
-      
-      // مسح الإذن بعد التقييم لمرة واحدة
-      await deleteDoc(doc(firestore, 'reviewPermissions', user.uid));
-      
-      toast({ title: "تم إرسال تقييمك بنجاح", description: "شكراً لمساهمتك في تطوير التطبيق!" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "فشل إرسال التقييم" });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleShare = async () => {
     const appUrl = config.techStoreUrl;
@@ -118,49 +73,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* نموذج التقييم - يظهر فقط في حال منح الإذن من الأدمن */}
-        {permission?.canReview && (
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500/10 to-transparent rounded-[2.5rem] overflow-hidden animate-in zoom-in-95 duration-500">
-             <CardHeader>
-                <div className="flex items-center gap-3 text-amber-600">
-                   <div className="p-2 bg-amber-500/20 rounded-xl">
-                      <Star className="h-6 w-6 fill-current" />
-                   </div>
-                   <div>
-                     <CardTitle className="text-xl">تقييم التطبيق</CardTitle>
-                     <CardDescription>يسعدنا سماع رأيك لتحسين التجربة.</CardDescription>
-                   </div>
-                </div>
-             </CardHeader>
-             <CardContent className="space-y-4">
-                <div className="flex justify-center gap-2 mb-2">
-                   {[1, 2, 3, 4, 5].map((s) => (
-                     <button key={s} onClick={() => setRating(s)} className="transition-transform active:scale-125">
-                        <Star className={`h-10 w-10 ${s <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
-                     </button>
-                   ))}
-                </div>
-                <Textarea 
-                  placeholder="أخبرنا عن تجربتك مع التطبيق..." 
-                  className="rounded-2xl min-h-[100px] bg-white border-amber-200 focus-visible:ring-amber-500"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
-                <Button 
-                  onClick={handleSubmitReview} 
-                  disabled={isSubmitting || !comment.trim()}
-                  className="w-full h-12 rounded-2xl bg-amber-600 hover:bg-amber-700 font-bold gap-2"
-                >
-                  {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : <SendHorizontal className="h-5 w-5" />}
-                  إرسال التقييم النهائي
-                </Button>
-             </CardContent>
-          </Card>
-        )}
-
         {/* قسم الحساب - نمط فيسبوك المطور مع تأثير النور الدوار */}
         <div className="relative p-[2px] overflow-hidden rounded-[2.5rem] group">
-          {/* طبقة النور الدوار الخلفية */}
           <div className="absolute inset-[-1000%] animate-spin-border bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,hsl(var(--primary))_50%,transparent_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
           
           <Card className="relative border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.4rem] overflow-hidden">
@@ -169,7 +83,7 @@ export default function SettingsPage() {
                 <div className="p-2 bg-primary/10 text-primary rounded-xl">
                   <UserCircle className="h-5 w-5" />
                 </div>
-                <CardTitle className="text-xl">الحساب</CardTitle>
+                <CardTitle className="text-xl font-black">الحساب</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -202,7 +116,7 @@ export default function SettingsPage() {
               <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
                 <Palette className="h-5 w-5" />
               </div>
-              <CardTitle className="text-xl">المظهر</CardTitle>
+              <CardTitle className="text-xl font-black">المظهر</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -239,7 +153,7 @@ export default function SettingsPage() {
               <div className="p-2 bg-primary/10 text-primary rounded-xl">
                 <Info className="h-5 w-5" />
               </div>
-              <CardTitle className="text-xl">عن التطبيق</CardTitle>
+              <CardTitle className="text-xl font-black">عن التطبيق</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -292,7 +206,7 @@ export default function SettingsPage() {
               <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
                 <Share2 className="h-5 w-5" />
               </div>
-              <CardTitle className="text-xl">تابعونا</CardTitle>
+              <CardTitle className="text-xl font-black">تابعونا</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -332,7 +246,7 @@ export default function SettingsPage() {
               <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
                 <Share2 className="h-5 w-5" />
               </div>
-              <CardTitle className="text-xl">مشاركة وتواصل</CardTitle>
+              <CardTitle className="text-xl font-black">مشاركة وتواصل</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

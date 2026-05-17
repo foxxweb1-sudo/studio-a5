@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { UserCircle2, ShieldCheck, Settings, Home } from 'lucide-react';
+import { ShieldCheck, Settings, Home } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import Link from 'next/link';
@@ -18,12 +18,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Footer from './Footer';
 import { ADMIN_EMAIL } from '@/lib/constants';
+import ReviewPopup from '../features/reviews/ReviewPopup';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const { config } = useAppConfig();
 
-  const isAdmin = React.useMemo(() => user?.email === ADMIN_EMAIL, [user]);
+  const isAdmin = React.useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
@@ -40,6 +41,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background text-right" dir="rtl">
+      {/* نافذة التقييم المنبثقة */}
+      <ReviewPopup />
+
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           

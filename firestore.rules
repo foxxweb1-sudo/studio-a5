@@ -34,7 +34,8 @@ service cloud.firestore {
 
     // Rules for reviews
     match /reviews/{reviewId} {
-      allow read: if true;
+      // السماح بالقراءة الصريحة والإدراج للجميع، والمسح للمسؤول
+      allow get, list: if true;
       allow create: if isSignedIn();
       allow delete: if isAdmin();
     }

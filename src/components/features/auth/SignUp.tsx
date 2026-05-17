@@ -24,12 +24,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, User } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 const formSchema = z.object({
+  displayName: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل."),
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
   password: z.string().min(6, "يجب أن تكون كلمة المرور 6 أحرف على الأقل."),
 });
@@ -42,6 +43,7 @@ export default function SignUp() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      displayName: "",
       email: "",
       password: "",
     },
@@ -50,12 +52,17 @@ export default function SignUp() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      
+      // تحديث الاسم في ملف التعريف الخاص بـ Firebase Auth
+      await updateProfile(userCredential.user, {
+        displayName: values.displayName
+      });
+
       toast({
         title: "تم إنشاء الحساب بنجاح",
-        description: "جاري توجيهك...",
+        description: `مرحباً بك يا ${values.displayName}، جاري توجيهك...`,
       });
-      // onAuthStateChanged will handle the redirect via AuthGuard
     } catch (error: any) {
       let description;
        if (error.code === 'auth/email-already-in-use') {
@@ -92,11 +99,11 @@ export default function SignUp() {
       <div className="absolute top-4 right-4 z-20">
         <ModeToggle />
       </div>
-      <Card className="w-full max-w-md mx-auto z-20 bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md mx-auto z-20 bg-card/80 backdrop-blur-sm shadow-2xl rounded-[2.5rem] border-0">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
-          <CardDescription>
-            املأ النموذج أدناه لإنشاء حسابك
+          <CardTitle className="text-3xl font-black">إنشاء حساب جديد</CardTitle>
+          <CardDescription className="text-muted-foreground font-bold">
+            ابدأ الآن بإدارة فصولك الدراسية بذكاء
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,14 +111,35 @@ export default function SignUp() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-bold">الاسم الكامل</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                        <Input
+                          placeholder="أدخل اسمك بالكامل"
+                          className="pr-10 rounded-xl h-12"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormLabel className="font-bold">البريد الإلكتروني</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="your@email.com"
+                        className="rounded-xl h-12"
                         {...field}
                       />
                     </FormControl>
@@ -124,11 +152,12 @@ export default function SignUp() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>كلمة المرور</FormLabel>
+                    <FormLabel className="font-bold">كلمة المرور</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="********"
+                        className="rounded-xl h-12"
                         {...field}
                       />
                     </FormControl>
@@ -136,19 +165,19 @@ export default function SignUp() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold gap-2 text-lg shadow-lg shadow-primary/30" disabled={isLoading}>
                 {isLoading ? (
-                    <Loader2 className="ms-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    <UserPlus className="ms-2 h-4 w-4" />
+                    <UserPlus className="h-5 w-5" />
                 )}
-                إنشاء حساب
+                إنشاء الحساب
               </Button>
             </form>
           </Form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-sm font-medium">
             لديك حساب بالفعل؟{" "}
-            <Link href="/login" className="underline">
+            <Link href="/login" className="text-primary font-bold hover:underline">
               تسجيل الدخول
             </Link>
           </div>

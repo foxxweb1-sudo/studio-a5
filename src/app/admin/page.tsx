@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy, collectionGroup, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, collectionGroup, doc, getDoc, where } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -19,7 +20,10 @@ import {
   MessageSquare,
   ShieldCheck,
   ChevronRight,
-  Clock
+  Clock,
+  UserCheck,
+  Search,
+  School
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -31,18 +35,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ADMIN_UID } from '@/lib/constants';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
-function StatsOverview({ totalStudents, totalMessages }: { totalStudents: number, totalMessages: number }) {
+function StatsOverview({ totalStudents, totalMessages, totalTeachers }: { totalStudents: number, totalMessages: number, totalTeachers: number }) {
   const stats = [
     { label: 'إجمالي الطلاب', value: totalStudents, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'المعلمون', value: totalTeachers, icon: UserCheck, color: 'text-purple-500', bg: 'bg-purple-500/10' },
     { label: 'الرسائل الواردة', value: totalMessages, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
     { label: 'حالة النظام', value: 'نشط', icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: 'المشرفين', value: '1', icon: ShieldCheck, color: 'text-purple-500', bg: 'bg-purple-500/10' },
   ];
 
   return (
@@ -62,6 +68,170 @@ function StatsOverview({ totalStudents, totalMessages }: { totalStudents: number
   );
 }
 
+function TeacherStudentsModal({ teacher, onClose }: { teacher: any, onClose: () => void }) {
+    const firestore = useFirestore();
+    const [students, setStudents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTeacherStudents = async () => {
+            if (!firestore || !teacher) return;
+            setLoading(true);
+            try {
+                const studentsRef = collection(firestore, `users/${teacher.uid}/students`);
+                const snapshot = await getDocs(studentsRef);
+                const studentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setStudents(studentsData);
+            } catch (error) {
+                console.error("Error fetching teacher students:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTeacherStudents();
+    }, [firestore, teacher]);
+
+    return (
+        <Dialog open={!!teacher} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col rounded-[2rem]">
+                <DialogHeader>
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                            <School className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <DialogTitle>طلاب المعلم: {teacher?.displayName}</DialogTitle>
+                            <DialogDescription>عرض قائمة الطلاب المسجلين بواسطة هذا المعلم.</DialogDescription>
+                        </div>
+                    </div>
+                </DialogHeader>
+                
+                <div className="flex-grow overflow-auto mt-4">
+                    {loading ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : students.length > 0 ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="text-right">اسم الطالب</TableHead>
+                                    <TableHead className="text-right">الصف</TableHead>
+                                    <TableHead className="text-right">تاريخ الإضافة</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {students.map(student => (
+                                    <TableRow key={student.id}>
+                                        <TableCell className="font-bold">{student.name}</TableCell>
+                                        <TableCell>
+                                            <span className="bg-muted px-2 py-1 rounded text-xs">{student.grade}</span>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground">
+                                            {student.createdAt?.toDate ? format(student.createdAt.toDate(), 'yyyy-MM-dd') : '---'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                            لم يقم هذا المعلم بإضافة أي طلاب بعد.
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function TeachersList() {
+    const firestore = useFirestore();
+    const [teachers, setTeachers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchTeachers = async () => {
+            if (!firestore) return;
+            setLoading(true);
+            try {
+                const q = query(collection(firestore, 'users'), orderBy('displayName', 'asc'));
+                const snapshot = await getDocs(q);
+                setTeachers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } catch (error) {
+                console.error("Error fetching teachers:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTeachers();
+    }, [firestore]);
+
+    const filteredTeachers = teachers.filter(t => 
+        t.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        t.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading) return <div className="flex justify-center h-48 items-center"><Loader2 className="animate-spin text-primary" /></div>;
+
+    return (
+        <Card className="border-0 shadow-lg rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
+            <CardHeader className="bg-muted/30">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <CardTitle>قائمة المعلمين</CardTitle>
+                        <CardDescription>عرض جميع مستخدمي النظام المسجلين.</CardDescription>
+                    </div>
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="بحث بالاسم..." 
+                            className="pr-10 rounded-xl bg-white" 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                <div className="max-h-[60vh] overflow-auto">
+                    <Table>
+                        <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                            <TableRow>
+                                <TableHead className="text-right">الاسم</TableHead>
+                                <TableHead className="text-right">البريد الإلكتروني</TableHead>
+                                <TableHead className="text-center">الإجراءات</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredTeachers.map(teacher => (
+                                <TableRow key={teacher.id} className="hover:bg-muted/20">
+                                    <TableCell className="font-bold">{teacher.displayName}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">{teacher.email}</TableCell>
+                                    <TableCell className="text-center">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="rounded-xl hover:bg-primary/10 hover:text-primary gap-1"
+                                            onClick={() => setSelectedTeacher(teacher)}
+                                        >
+                                            عرض الطلاب
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+            {selectedTeacher && <TeacherStudentsModal teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} />}
+        </Card>
+    );
+}
+
 function AllStudentsList() {
   const firestore = useFirestore();
   const [allStudents, setAllStudents] = useState<any[]>([]);
@@ -71,7 +241,6 @@ function AllStudentsList() {
     const fetchAllStudents = async () => {
       setLoading(true);
       try {
-        // تم إزالة orderBy لتجنب الحاجة لإنشاء Index يدوي في Firebase
         const studentsQuery = query(collectionGroup(firestore, 'students'));
         const studentsSnapshot = await getDocs(studentsQuery);
         
@@ -88,7 +257,6 @@ function AllStudentsList() {
           };
         });
 
-        // ترتيب الطلاب برمجياً في المتصفح بدلاً من قاعدة البيانات
         studentsData.sort((a, b) => {
           const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
           const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
@@ -122,7 +290,7 @@ function AllStudentsList() {
         <div className="flex justify-between items-center">
             <div>
                 <CardTitle>سجل الطلاب الكامل</CardTitle>
-                <CardDescription>عرض جميع الطلاب المسجلين عبر كافة حسابات المعلمين.</CardDescription>
+                <CardDescription>عرض جميع الطلاب المسجلين عبر كافة الحسابات.</CardDescription>
             </div>
             <div className="bg-primary/10 text-primary px-4 py-2 rounded-2xl font-bold text-sm">
                 {allStudents.length} طالب
@@ -164,7 +332,7 @@ function AllStudentsList() {
                   <TableCell colSpan={4} className="h-48 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                         <Users className="h-8 w-8 opacity-20" />
-                        لم يتم العثور على طلاب مسجلين في أي حساب.
+                        لم يتم العثور على طلاب مسجلين.
                     </div>
                   </TableCell>
                 </TableRow>
@@ -261,6 +429,7 @@ export default function AdminPage() {
   const firestore = useFirestore();
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [totalMessagesCount, setTotalMessagesCount] = useState(0);
+  const [totalTeachersCount, setTotalTeachersCount] = useState(0);
 
   const isAdmin = useMemo(() => user?.uid === ADMIN_UID, [user]);
 
@@ -274,9 +443,11 @@ export default function AdminPage() {
       const fetchTotals = async () => {
           if (!firestore || !isAdmin) return;
           try {
-              // تم إزالة query و orderBy هنا أيضاً لتجنب خطأ Index
               const studentsSnapshot = await getDocs(collectionGroup(firestore, 'students'));
               setTotalStudentsCount(studentsSnapshot.size);
+
+              const teachersSnapshot = await getDocs(collection(firestore, 'users'));
+              setTotalTeachersCount(teachersSnapshot.size);
 
               const mSnap = await getDocs(collection(firestore, 'contactMessages'));
               setTotalMessagesCount(mSnap.size);
@@ -326,20 +497,29 @@ export default function AdminPage() {
       <StatsOverview 
         totalStudents={totalStudentsCount} 
         totalMessages={totalMessagesCount} 
+        totalTeachers={totalTeachersCount}
       />
 
-       <Tabs defaultValue="students" className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto h-14 bg-muted/50 p-1 rounded-2xl">
+       <Tabs defaultValue="teachers" className="w-full space-y-6">
+            <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto h-14 bg-muted/50 p-1 rounded-2xl">
+                <TabsTrigger value="teachers" className="rounded-xl font-bold data-[state=active]:bg-white data-[state=active]:shadow-md">
+                    <UserCheck className="ms-2 h-4 w-4" />
+                    المعلمون
+                </TabsTrigger>
                 <TabsTrigger value="students" className="rounded-xl font-bold data-[state=active]:bg-white data-[state=active]:shadow-md">
                     <Users className="ms-2 h-4 w-4" />
-                    إدارة الطلاب
+                    كل الطلاب
                 </TabsTrigger>
                 <TabsTrigger value="messages" className="rounded-xl font-bold data-[state=active]:bg-white data-[state=active]:shadow-md">
                     <Mail className="ms-2 h-4 w-4" />
-                    الرسائل الواردة
+                    الرسائل
                 </TabsTrigger>
             </TabsList>
             
+            <TabsContent value="teachers" className="mt-0 focus-visible:outline-none">
+                <TeachersList />
+            </TabsContent>
+
             <TabsContent value="students" className="mt-0 focus-visible:outline-none">
                 <AllStudentsList />
             </TabsContent>

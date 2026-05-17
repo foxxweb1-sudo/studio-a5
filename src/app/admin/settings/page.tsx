@@ -133,7 +133,7 @@ export default function AdminAppSettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-32 px-4">
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-40 px-4 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">إعدادات النظام</PageHeaderTitle>
@@ -354,25 +354,27 @@ export default function AdminAppSettingsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* زر الحفظ الثابت في أسفل الشاشة */}
-      <div className="fixed bottom-10 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving}
-          className="w-full max-w-md h-14 rounded-2xl font-black text-lg gap-3 shadow-2xl hover-lift bg-primary text-white pointer-events-auto"
-        >
-          {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-          حفظ كافة الإعدادات
-        </Button>
-      </div>
-
-      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4 mb-24">
+      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4 mb-10">
         <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <h4 className="font-bold text-amber-900 text-sm">ملاحظة هامة</h4>
           <p className="text-xs text-amber-700/80">
             يرجى التأكد من صحة روابط التواصل (بدءاً بـ https://) لضمان عمل أزرار المشاركة والتواصل لدى المستخدمين بشكل سليم.
           </p>
+        </div>
+      </div>
+
+      {/* شريط الحفظ الثابت في أسفل الصفحة */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-6 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none">
+        <div className="max-w-6xl mx-auto flex justify-center pointer-events-auto">
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="w-full max-w-md h-14 rounded-2xl font-black text-lg gap-3 shadow-2xl hover-lift bg-primary text-white border-t-4 border-white/10"
+          >
+            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+            حفظ كافة الإعدادات
+          </Button>
         </div>
       </div>
     </div>

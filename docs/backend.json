@@ -35,6 +35,31 @@
       },
       "required": ["uid", "email"]
     },
+    "WorkingSchedule": {
+      "title": "WorkingSchedule",
+      "type": "object",
+      "description": "Defines the teacher's working days and hours.",
+      "properties": {
+        "workingDays": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of active working days (e.g., Saturday, Sunday)."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time in 24h format (HH:mm)."
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time in 24h format (HH:mm)."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether to enforce/check schedule."
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "DeletionRequest": {
       "title": "DeletionRequest",
       "type": "object",
@@ -230,6 +255,16 @@
             "$ref": "#/backend/entities/User"
           },
           "description": "Stores core profile data for each user."
+        }
+      },
+      {
+        "path": "/users/{userId}/config/schedule",
+        "definition": {
+          "entityName": "WorkingSchedule",
+          "schema": {
+            "$ref": "#/backend/entities/WorkingSchedule"
+          },
+          "description": "Stores working days and hours for the user."
         }
       },
       {

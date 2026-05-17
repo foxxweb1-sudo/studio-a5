@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile } from "@/lib/definitions";
-import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy } from "firebase/firestore";
+import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule } from "@/lib/definitions";
+import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc } from "firebase/firestore";
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
 
@@ -35,6 +35,34 @@ export function useAllUsers() {
   };
 
   return { users: users || [], isLoading, toggleUserBlock };
+}
+
+// --- Schedule Hook ---
+export function useSchedule() {
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  const scheduleRef = useMemoFirebase(() => 
+    (firestore && user) ? doc(firestore, `users/${user.uid}/config`, 'schedule') : null,
+  [user, firestore]);
+
+  const { data: schedule, isLoading } = useDoc<WorkingSchedule>(scheduleRef);
+
+  const updateSchedule = (data: Partial<WorkingSchedule>) => {
+    if (!user || !firestore || !scheduleRef) return;
+    setDoc(scheduleRef, { 
+      ...data, 
+      updatedAt: serverTimestamp() 
+    }, { merge: true }).catch(error => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: scheduleRef.path,
+        operation: 'write',
+        requestResourceData: data
+      }));
+    });
+  };
+
+  return { schedule, isLoading, updateSchedule };
 }
 
 // --- Students Hook ---

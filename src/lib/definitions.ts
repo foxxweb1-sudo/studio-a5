@@ -11,6 +11,14 @@ export type UserProfile = {
   lastLogin?: FieldValue;
 };
 
+export type WorkingSchedule = {
+  workingDays: string[];
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+  updatedAt?: FieldValue;
+};
+
 export type DeletionRequest = {
   id: string;
   uid: string;

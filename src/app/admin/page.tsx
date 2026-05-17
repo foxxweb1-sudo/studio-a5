@@ -29,7 +29,8 @@ import {
   MessageSquareQuote,
   Star,
   Plus,
-  ShieldAlert
+  ShieldAlert,
+  BadgeCheck
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,8 +63,10 @@ export default function AdminPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [manualUid, setManualUid] = useState('');
+  const [verifyUid, setVerifyUid] = useState('');
   const [reviewUid, setReviewUid] = useState('');
   const [isProcessingManual, setIsProcessingManual] = useState(false);
+  const [isProcessingVerify, setIsProcessingVerify] = useState(false);
   const [isGrantingReview, setIsProcessingReview] = useState(false);
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
@@ -112,7 +115,6 @@ export default function AdminPage() {
   const handleManualBlock = async (action: 'block' | 'unblock') => {
     if (!manualUid.trim() || !firestore) return;
     
-    // منع حظر حساب المسؤول يدوياً عبر الـ UID
     const adminUser = users.find(u => u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase());
     if (action === 'block' && adminUser && manualUid.trim() === adminUser.uid) {
         toast({ variant: "destructive", title: "إجراء غير مسموح", description: "لا يمكن حظر حساب المسؤول الرئيسي للنظام." });
@@ -130,6 +132,23 @@ export default function AdminPage() {
       toast({ variant: "destructive", title: "خطأ في المعرف" });
     } finally {
       setIsProcessingManual(false);
+    }
+  };
+
+  const handleManualVerify = async (action: 'verify' | 'unverify') => {
+    if (!verifyUid.trim() || !firestore) return;
+    
+    setIsProcessingVerify(true);
+    try {
+      const userRef = doc(firestore, 'users', verifyUid.trim());
+      const status = action === 'verify';
+      await setDoc(userRef, { isVerified: status, verifiedAt: status ? serverTimestamp() : null }, { merge: true });
+      toast({ title: status ? "تم توثيق الحساب" : "تم إلغاء التوثيق" });
+      setVerifyUid('');
+    } catch (error) {
+      toast({ variant: "destructive", title: "خطأ في المعرف" });
+    } finally {
+      setIsProcessingVerify(false);
     }
   };
 
@@ -219,7 +238,7 @@ export default function AdminPage() {
             { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50', loading: loadingStudents },
             { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50', loading: usersLoading },
             { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50', loading: false },
-            { label: 'التقييمات', value: reviews?.length || 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-50', loading: reviewsLoading },
+            { label: 'التقييمات', value: reviews?.length || 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-100', loading: reviewsLoading },
             { label: 'طلبات الحذف', value: activeDeletionCount, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: deletionLoading },
         ].map((stat, i) => (
             <Card key={i} className={`border-0 shadow-sm hover-lift`}>
@@ -254,32 +273,64 @@ export default function AdminPage() {
             
             <TabsContent value="users">
                 <div className="space-y-6">
-                  <Card className="border-2 border-rose-500/10 shadow-none rounded-3xl overflow-hidden bg-rose-500/5">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col lg:flex-row gap-4 items-end">
-                        <div className="space-y-2 flex-grow w-full">
-                          <label className="text-xs font-bold text-rose-500 px-1 flex items-center gap-2">
-                            <Fingerprint className="h-4 w-4" />
-                            حظر/فك حظر يدوي بواسطة UID
-                          </label>
-                          <Input 
-                            placeholder="أدخل المعرف (UID) هنا..." 
-                            className="h-12 bg-white rounded-xl border-rose-100"
-                            value={manualUid}
-                            onChange={(e) => setManualUid(e.target.value)}
-                          />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* حظر يدوي */}
+                    <Card className="border-2 border-rose-500/10 shadow-none rounded-3xl overflow-hidden bg-rose-500/5">
+                        <CardContent className="p-6">
+                        <div className="flex flex-col gap-4">
+                            <div className="space-y-2 w-full">
+                            <label className="text-xs font-bold text-rose-500 px-1 flex items-center gap-2">
+                                <Fingerprint className="h-4 w-4" />
+                                حظر/فك حظر يدوي بواسطة UID
+                            </label>
+                            <Input 
+                                placeholder="أدخل المعرف (UID) هنا..." 
+                                className="h-12 bg-white rounded-xl border-rose-100"
+                                value={manualUid}
+                                onChange={(e) => setManualUid(e.target.value)}
+                            />
+                            </div>
+                            <div className="flex gap-2 w-full">
+                            <Button variant="destructive" className="rounded-xl h-12 font-bold px-8 flex-1" onClick={() => handleManualBlock('block')} disabled={isProcessingManual || !manualUid.trim()}>
+                                {isProcessingManual ? <Loader2 className="h-4 w-4 animate-spin" /> : "حظر المعرف"}
+                            </Button>
+                            <Button variant="outline" className="rounded-xl h-12 font-bold px-8 bg-white flex-1" onClick={() => handleManualBlock('unblock')} disabled={isProcessingManual || !manualUid.trim()}>
+                                فك الحظر
+                            </Button>
+                            </div>
                         </div>
-                        <div className="flex gap-2 w-full lg:w-auto">
-                          <Button variant="destructive" className="rounded-xl h-12 font-bold px-8 flex-grow" onClick={() => handleManualBlock('block')} disabled={isProcessingManual || !manualUid.trim()}>
-                            {isProcessingManual ? <Loader2 className="h-4 w-4 animate-spin" /> : "حظر المعرف"}
-                          </Button>
-                          <Button variant="outline" className="rounded-xl h-12 font-bold px-8 bg-white flex-grow" onClick={() => handleManualBlock('unblock')} disabled={isProcessingManual || !manualUid.trim()}>
-                            فك الحظر
-                          </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* توثيق يدوي */}
+                    <Card className="border-2 border-blue-500/10 shadow-none rounded-3xl overflow-hidden bg-blue-500/5">
+                        <CardContent className="p-6">
+                        <div className="flex flex-col gap-4">
+                            <div className="space-y-2 w-full">
+                            <label className="text-xs font-bold text-blue-600 px-1 flex items-center gap-2">
+                                <BadgeCheck className="h-4 w-4" />
+                                توثيق حساب يدوي بواسطة UID
+                            </label>
+                            <Input 
+                                placeholder="أدخل المعرف (UID) للتوثيق..." 
+                                className="h-12 bg-white rounded-xl border-blue-100"
+                                value={verifyUid}
+                                onChange={(e) => setVerifyUid(e.target.value)}
+                            />
+                            </div>
+                            <div className="flex gap-2 w-full">
+                            <Button className="rounded-xl h-12 font-bold px-8 bg-blue-600 hover:bg-blue-700 text-white flex-1" onClick={() => handleManualVerify('verify')} disabled={isProcessingVerify || !verifyUid.trim()}>
+                                {isProcessingVerify ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
+                                توثيق الحساب
+                            </Button>
+                            <Button variant="outline" className="rounded-xl h-12 font-bold px-8 bg-white flex-1 border-blue-100 text-blue-600" onClick={() => handleManualVerify('unverify')} disabled={isProcessingVerify || !verifyUid.trim()}>
+                                سحب التوثيق
+                            </Button>
+                            </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </CardContent>
+                    </Card>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {usersLoading ? (
@@ -294,14 +345,21 @@ export default function AdminPage() {
                                   <AvatarImage src={u.photoURL} />
                                   <AvatarFallback>{u.displayName?.substring(0, 2) || 'U'}</AvatarFallback>
                                 </Avatar>
-                                {isAccountAdmin && (
+                                {isAccountAdmin ? (
                                     <div className="absolute -top-1 -right-1 bg-primary text-white p-1 rounded-full shadow-lg border-2 border-white">
                                         <ShieldAlert className="h-3 w-3" />
+                                    </div>
+                                ) : u.isVerified && (
+                                    <div className="absolute -top-1 -right-1 bg-blue-500 text-white p-1 rounded-full shadow-lg border-2 border-white">
+                                        <BadgeCheck className="h-3 w-3" />
                                     </div>
                                 )}
                               </div>
                               <div className="w-full overflow-hidden">
-                                <h4 className="font-bold text-sm truncate">{u.displayName || 'مستخدم'}</h4>
+                                <h4 className="font-bold text-sm truncate flex items-center justify-center gap-1">
+                                    {u.displayName || 'مستخدم'}
+                                    {u.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500 fill-current" />}
+                                </h4>
                                 <p className="text-[10px] text-muted-foreground font-mono truncate w-full">{u.email}</p>
                                 <code className="text-[8px] opacity-40 select-all block mt-1">{u.uid}</code>
                               </div>
@@ -311,9 +369,11 @@ export default function AdminPage() {
                                       المسؤول الرئيسي
                                   </Badge>
                               ) : (
-                                  <Button variant={u.isBlocked ? "secondary" : "ghost"} onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} className={`w-full rounded-xl font-bold h-9 text-xs ${u.isBlocked ? 'text-emerald-600' : 'text-rose-600 hover:bg-rose-50'}`}>
-                                    {u.isBlocked ? "إلغاء الحظر" : "حظر الحساب"}
-                                  </Button>
+                                  <div className="w-full space-y-2">
+                                    <Button variant={u.isBlocked ? "secondary" : "ghost"} onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} className={`w-full rounded-xl font-bold h-9 text-xs ${u.isBlocked ? 'text-emerald-600' : 'text-rose-600 hover:bg-rose-50'}`}>
+                                        {u.isBlocked ? "إلغاء الحظر" : "حظر الحساب"}
+                                    </Button>
+                                  </div>
                               )}
                             </CardContent>
                           </Card>

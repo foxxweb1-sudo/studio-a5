@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
@@ -67,6 +67,10 @@ export default function AccountManagement() {
   // مراقبة وثيقة طلب الحذف
   const deletionRequestRef = useMemoFirebase(() => user ? doc(firestore, 'deletionRequests', user.uid) : null, [user, firestore]);
   const { data: deletionRequest } = useDoc<any>(deletionRequestRef);
+
+  // مراقبة ملف المستخدم لجلب حالة التوثيق
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<any>(userRef);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -184,8 +188,20 @@ export default function AccountManagement() {
             </Avatar>
         </div>
         <div className="text-center space-y-1">
-            <h2 className="text-2xl font-black tracking-tight">{user?.displayName || 'مستخدم جديد'}</h2>
-            <p className="text-sm text-muted-foreground font-medium">{user?.email}</p>
+            <h2 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
+                {user?.displayName || 'مستخدم جديد'}
+                {userProfile?.isVerified && (
+                    <BadgeCheck className="h-6 w-6 text-blue-500 fill-current animate-in zoom-in duration-500" />
+                )}
+            </h2>
+            <div className="flex flex-col gap-1 items-center">
+                <p className="text-sm text-muted-foreground font-medium">{user?.email}</p>
+                {userProfile?.isVerified && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100 rounded-full font-bold px-3 py-0.5 text-[10px]">
+                        حساب موثق من الإدارة
+                    </Badge>
+                )}
+            </div>
             
             <div className="flex items-center justify-center gap-2 mt-4 group/uid">
                 <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">

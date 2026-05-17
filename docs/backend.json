@@ -23,6 +23,10 @@
           "type": "boolean",
           "description": "Whether the user is blocked from accessing the site."
         },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Whether the account is verified by the administration."
+        },
         "photoURL": {
           "type": "string",
           "description": "URL to the user's profile photo."

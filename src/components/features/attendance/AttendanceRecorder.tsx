@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, ShieldAlert, BadgeCheck } from 'lucide-react';
+import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, ShieldAlert, BadgeCheck, Clock } from 'lucide-react';
 import Link from 'next/link';
 import {
   Table,
@@ -24,6 +25,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from './QRCodeScanner';
 import { Badge } from '@/components/ui/badge';
+import { Student } from '@/lib/definitions';
 
 
 const formSchema = z.object({
@@ -56,30 +58,23 @@ export default function AttendanceRecorder() {
 
   const todayDate = new Date();
   const todayStr = format(todayDate, 'yyyy-MM-dd');
-  const currentDayName = format(todayDate, 'EEEE'); // e.g. Saturday
+  const currentDayName = format(todayDate, 'EEEE');
   const currentTimeStr = format(todayDate, 'HH:mm');
 
-  const isWithinSchedule = useMemo(() => {
-    if (!schedule || !schedule.isActive) return true;
-    
-    const isWorkingDay = schedule.workingDays?.includes(currentDayName);
-    if (!isWorkingDay) return false;
-
-    return currentTimeStr >= schedule.startTime && currentTimeStr <= schedule.endTime;
+  // التحقق من الحصص النشطة حالياً لعرضها في الواجهة
+  const activeSessionsNow = useMemo(() => {
+    if (!schedule?.isActive || !schedule.sessions) return [];
+    return schedule.sessions.filter(s => 
+      s.days.includes(currentDayName) && 
+      currentTimeStr >= s.startTime && 
+      currentTimeStr <= s.endTime
+    );
   }, [schedule, currentDayName, currentTimeStr]);
 
   const recordAttendance = (studentCode: string) => {
-    if (schedule?.isActive && !isWithinSchedule) {
-        toast({
-            variant: "destructive",
-            title: "خارج وقت العمل",
-            description: "لا يمكنك تسجيل الحضور حالياً بناءً على إعدادات جدولك."
-        });
-        return;
-    }
-
     let student = students.find(s => s.id === studentCode);
 
+    // دعم البحث بالرقم التسلسلي (ID)
     if (!student) {
       const sequentialId = parseInt(studentCode, 10);
       if (!isNaN(sequentialId) && sequentialId > 0 && sequentialId <= students.length) {
@@ -94,6 +89,25 @@ export default function AttendanceRecorder() {
         description: 'الطالب غير موجود.',
       });
       return;
+    }
+
+    // التحقق من الجدول الزمني إذا كان مفعلاً
+    if (schedule?.isActive && schedule.sessions) {
+        const hasSessionNow = schedule.sessions.some(s => 
+            s.grade === student!.grade && 
+            s.days.includes(currentDayName) && 
+            currentTimeStr >= s.startTime && 
+            currentTimeStr <= s.endTime
+        );
+
+        if (!hasSessionNow) {
+            toast({
+                variant: "destructive",
+                title: "خارج وقت الحصة",
+                description: `لا توجد حصة مسجلة لـ (${student.grade}) في هذا الوقت.`
+            });
+            return;
+        }
     }
 
     const alreadyAttended = attendance.some(
@@ -133,31 +147,40 @@ export default function AttendanceRecorder() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* عرض شريط حالة العمل */}
+      {/* عرض شريط حالة العمل الذكي */}
       {schedule?.isActive && (
-          <div className={`p-4 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2 ${isWithinSchedule ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-             <div className="flex items-center gap-3">
-                {isWithinSchedule ? (
-                    <div className="p-2 bg-emerald-500 rounded-xl text-white">
-                        <BadgeCheck className="h-5 w-5" />
+          <div className={`p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeSessionsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
+             <div className="flex items-center gap-4 w-full md:w-auto text-center md:text-right">
+                {activeSessionsNow.length > 0 ? (
+                    <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
+                        <BadgeCheck className="h-6 w-6" />
                     </div>
                 ) : (
-                    <div className="p-2 bg-rose-500 rounded-xl text-white">
-                        <ShieldAlert className="h-5 w-5" />
+                    <div className="p-3 bg-slate-400 rounded-2xl text-white">
+                        <Clock className="h-6 w-6" />
                     </div>
                 )}
                 <div>
-                    <h5 className={`font-black text-sm ${isWithinSchedule ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {isWithinSchedule ? 'أنت الآن في وقت العمل الرسمي' : 'أنت الآن خارج وقت العمل الرسمي'}
+                    <h5 className={`font-black text-lg ${activeSessionsNow.length > 0 ? 'text-emerald-700' : 'text-slate-600'}`}>
+                        {activeSessionsNow.length > 0 ? 'وقت الحصص الجارية الآن' : 'لا توجد حصص جارية حالياً'}
                     </h5>
-                    <p className="text-[10px] opacity-70 font-bold">
-                        اليوم: {DAY_MAP[currentDayName]} | الفترة: {schedule.startTime} - {schedule.endTime}
-                    </p>
+                    <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
+                        {activeSessionsNow.length > 0 ? activeSessionsNow.map(s => (
+                            <Badge key={s.id} variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold">
+                                {s.grade} ({s.startTime}-{s.endTime})
+                            </Badge>
+                        )) : (
+                            <span className="text-xs font-bold text-slate-400 italic">بإمكانك إضافة حصص من صفحة "مواعيد العمل"</span>
+                        )}
+                    </div>
                 </div>
              </div>
-             <Badge variant={isWithinSchedule ? "default" : "destructive"} className="rounded-lg">
-                {isWithinSchedule ? 'متاح للتسجيل' : 'التسجيل مغلق'}
-             </Badge>
+             <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{DAY_MAP[currentDayName]} | {currentTimeStr}</span>
+                <Badge variant={activeSessionsNow.length > 0 ? "default" : "secondary"} className="rounded-xl px-4 py-1.5 font-black">
+                    {activeSessionsNow.length > 0 ? 'الاستقبال متاح' : 'الاستقبال مغلق'}
+                </Badge>
+             </div>
           </div>
       )}
 

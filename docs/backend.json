@@ -38,24 +38,24 @@
     "WorkingSchedule": {
       "title": "WorkingSchedule",
       "type": "object",
-      "description": "Defines the teacher's working days and hours.",
+      "description": "Defines the teacher's working sessions.",
       "properties": {
-        "workingDays": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "List of active working days (e.g., Saturday, Sunday)."
-        },
-        "startTime": {
-          "type": "string",
-          "description": "Start time in 24h format (HH:mm)."
-        },
-        "endTime": {
-          "type": "string",
-          "description": "End time in 24h format (HH:mm)."
-        },
         "isActive": {
           "type": "boolean",
-          "description": "Whether to enforce/check schedule."
+          "description": "Whether to enforce schedule checks."
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "grade": { "type": "string" },
+              "days": { "type": "array", "items": { "type": "string" } },
+              "startTime": { "type": "string" },
+              "endTime": { "type": "string" }
+            }
+          }
         },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
@@ -264,7 +264,7 @@
           "schema": {
             "$ref": "#/backend/entities/WorkingSchedule"
           },
-          "description": "Stores working days and hours for the user."
+          "description": "Stores working sessions for the user."
         }
       },
       {

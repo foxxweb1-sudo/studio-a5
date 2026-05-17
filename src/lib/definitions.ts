@@ -11,11 +11,17 @@ export type UserProfile = {
   lastLogin?: FieldValue;
 };
 
-export type WorkingSchedule = {
-  workingDays: string[];
+export type ScheduleSession = {
+  id: string;
+  grade: string;
+  days: string[];
   startTime: string;
   endTime: string;
+};
+
+export type WorkingSchedule = {
   isActive: boolean;
+  sessions: ScheduleSession[];
   updatedAt?: FieldValue;
 };
 

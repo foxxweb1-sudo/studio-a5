@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="hidden lg:flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 px-4 py-1.5 rounded-full border border-slate-100 dark:border-slate-800">
              <Clock className="h-3.5 w-3.5 text-primary" />
              <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 tabular-nums">
-                {time ? format(time, 'HH:mm:ss') : '--:--:--'}
+                {time ? format(time, 'hh:mm:ss a', { locale: ar }) : '--:--:--'}
              </span>
              <span className="text-[10px] font-bold text-slate-400 px-2 border-r border-slate-200 dark:border-slate-700">
                 {time ? format(time, 'eeee', { locale: ar }) : ''}

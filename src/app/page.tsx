@@ -90,9 +90,9 @@ export default function Home() {
       <div className="flex flex-col gap-8 items-center justify-center text-center py-12">
         <PageHeader className="border-0">
             <PageHeaderTitle className="text-4xl md:text-5xl text-primary font-black">مرحباً أيها المشرف</PageHeaderTitle>
-            <PageHeaderDescription className="text-lg">
+            <PageHeaderTitle className="text-lg font-bold opacity-60">
                 أنت تستخدم حساب الإدارة الرئيسي ({ADMIN_EMAIL})
-            </PageHeaderDescription>
+            </PageHeaderTitle>
         </PageHeader>
         <Link href="/admin" className="w-full max-w-md group">
             <Card className="hover-lift overflow-hidden border-2 border-primary/20 bg-white/50 backdrop-blur-md">
@@ -153,8 +153,8 @@ export default function Home() {
             <div className="p-3 bg-primary/10 rounded-2xl mb-2">
               <Clock className="h-6 w-6 text-primary" />
             </div>
-            <div className="text-4xl font-black tracking-tighter text-slate-800 dark:text-white tabular-nums">
-              {format(now, 'HH:mm:ss')}
+            <div className="text-3xl font-black tracking-tighter text-slate-800 dark:text-white tabular-nums">
+              {format(now, 'hh:mm:ss a', { locale: ar })}
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">الوقت الآن بتوقيتك المحلي</p>
           </Card>

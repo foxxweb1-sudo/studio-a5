@@ -66,6 +66,7 @@ export default function AttendanceRecorder() {
   const todayDate = new Date();
   const todayStr = format(todayDate, 'yyyy-MM-dd');
   const currentDayName = format(todayDate, 'EEEE');
+  // المقارنة تتم بصيغة 24 ساعة لضمان الصحة برمجياً
   const currentTimeStr = liveTime ? format(liveTime, 'HH:mm') : format(todayDate, 'HH:mm');
 
   // الحصص النشطة الآن
@@ -204,8 +205,8 @@ export default function AttendanceRecorder() {
           </div>
 
           <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 rounded-[2rem] flex flex-col items-center justify-center p-4 text-center border-b-4 border-b-primary overflow-hidden">
-             <div className="text-2xl font-black tracking-tighter text-primary tabular-nums">
-                {liveTime ? format(liveTime, 'HH:mm:ss') : '--:--:--'}
+             <div className="text-xl font-black tracking-tighter text-primary tabular-nums">
+                {liveTime ? format(liveTime, 'hh:mm:ss a', { locale: ar }) : '--:--:--'}
              </div>
              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">توقيت التسجيل</p>
           </Card>

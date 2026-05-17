@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy, collectionGroup, doc, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
   PageHeaderTitle,
@@ -13,21 +14,13 @@ import {
   ArrowLeft, 
   Loader2, 
   Users, 
-  Mail, 
   LayoutDashboard, 
-  TrendingUp, 
   MessageSquare,
   ShieldCheck,
-  ChevronRight,
-  Clock,
   UserCheck,
   Search,
-  School,
   Trash2,
-  AlertTriangle,
-  Fingerprint,
-  Copy,
-  RefreshCw
+  Copy
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -40,12 +33,11 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ADMIN_UID } from '@/lib/constants';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -74,57 +66,56 @@ export default function AdminPage() {
 
   const isAdmin = useMemo(() => user?.uid === ADMIN_UID, [user]);
 
-  const fetchData = useCallback(async () => {
-    if (!firestore || !isAdmin) return;
-    setLoading(true);
-    try {
-      // 1. جلب كافة المستخدمين (المعلمين)
-      const usersSnap = await getDocs(collection(firestore, 'users'));
-      const teachersList = usersSnap.docs.map(doc => ({
-        uid: doc.id,
-        ...doc.data()
-      }));
-
-      // 2. جلب كافة الطلاب (Collection Group)
-      const studentsSnap = await getDocs(collectionGroup(firestore, 'students'));
-      const studentsList = studentsSnap.docs.map(doc => {
-        const pathSegments = doc.ref.path.split('/');
-        const teacherUid = pathSegments[1];
-        return {
-          id: doc.id,
-          teacherUid,
-          ...doc.data()
-        };
-      });
-
-      // 3. جلب الرسائل
-      const messagesSnap = await getDocs(query(collection(firestore, 'contactMessages'), orderBy('createdAt', 'desc')));
-      const messagesList = messagesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      setTeachers(teachersList);
-      setAllStudents(studentsList);
-      setMessages(messagesList);
-    } catch (error) {
-      console.error("Admin Fetch Error:", error);
-      toast({ variant: "destructive", title: "خطأ في جلب البيانات", description: "تعذر الاتصال بقاعدة البيانات." });
-    } finally {
-      setLoading(false);
-    }
-  }, [firestore, isAdmin, toast]);
-
   useEffect(() => {
-    if (!isUserLoading && !isAdmin) {
+    if (isUserLoading) return;
+    
+    if (!isAdmin) {
       router.push('/');
-    } else if (isAdmin) {
-      fetchData();
+      return;
     }
-  }, [user, isUserLoading, isAdmin, router, fetchData]);
+
+    if (!firestore) return;
+
+    setLoading(true);
+
+    // مراقبة فورية لقائمة المعلمين (المستخدمين) من Firestore
+    const unsubTeachers = onSnapshot(collection(firestore, 'users'), (snap) => {
+      const list = snap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+      setTeachers(list);
+      setLoading(false);
+    }, (error) => {
+        console.error("Teachers listener error:", error);
+        setLoading(false);
+    });
+
+    // مراقبة فورية لكافة الطلاب عبر المجموعات
+    const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
+      const list = snap.docs.map(doc => {
+        const pathSegments = doc.ref.path.split('/');
+        // المسار عادة يكون users/{userId}/students/{studentId}
+        const teacherUid = pathSegments[1]; 
+        return { id: doc.id, teacherUid, ...doc.data() };
+      });
+      setAllStudents(list);
+    });
+
+    // مراقبة فورية للرسائل
+    const unsubMessages = onSnapshot(query(collection(firestore, 'contactMessages'), orderBy('createdAt', 'desc')), (snap) => {
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMessages(list);
+    });
+
+    return () => {
+      unsubTeachers();
+      unsubStudents();
+      unsubMessages();
+    };
+  }, [firestore, isAdmin, isUserLoading, router]);
 
   const handleDeleteStudent = async (studentId: string, teacherUid: string) => {
     if (!firestore || !isAdmin) return;
     try {
       await deleteDoc(doc(firestore, `users/${teacherUid}/students`, studentId));
-      setAllStudents(prev => prev.filter(s => s.id !== studentId));
       toast({ title: "تم الحذف", description: "تم حذف الطالب بنجاح." });
     } catch (e) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل الحذف." });
@@ -166,10 +157,6 @@ export default function AdminPage() {
           </div>
         </PageHeader>
         <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchData} className="rounded-xl h-12 font-bold">
-                <RefreshCw className={`ms-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                تحديث
-            </Button>
             <Button variant="outline" onClick={() => router.push('/')} className="rounded-xl h-12 font-bold">
                 <ArrowLeft className="ms-2 h-5 w-5" />
                 رجوع
@@ -189,7 +176,7 @@ export default function AdminPage() {
                     <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
                         <stat.icon className="w-6 h-6" />
                     </div>
-                    <div className="text-2xl font-black">{stat.value}</div>
+                    <div className="text-2xl font-black">{loading ? '...' : stat.value}</div>
                     <div className="text-xs text-muted-foreground font-bold">{stat.label}</div>
                 </CardContent>
             </Card>
@@ -209,7 +196,7 @@ export default function AdminPage() {
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                             <div>
                                 <CardTitle>الحسابات المسجلة ({teachers.length})</CardTitle>
-                                <CardDescription>إدارة المعلمين والوصول لبياناتهم.</CardDescription>
+                                <CardDescription>يتم عرض كافة المستخدمين الذين قاموا بتسجيل الدخول للتطبيق.</CardDescription>
                             </div>
                             <div className="relative w-full md:w-64">
                                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -228,17 +215,17 @@ export default function AdminPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredTeachers.map(t => (
+                                {filteredTeachers.length > 0 ? filteredTeachers.map(t => (
                                     <TableRow key={t.uid}>
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="font-bold">{t.displayName || 'بدون اسم'}</span>
+                                                <span className="font-bold">{t.displayName || 'مستخدم جديد'}</span>
                                                 <span className="text-[10px] text-muted-foreground">{t.email}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2 group">
-                                                <code className="text-[10px] bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg border">{t.uid}</code>
+                                                <code className="text-[10px] bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg border font-mono">{t.uid}</code>
                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(t.uid)}><Copy className="h-3 w-3"/></Button>
                                             </div>
                                         </TableCell>
@@ -248,10 +235,16 @@ export default function AdminPage() {
                                             </span>
                                         </TableCell>
                                         <TableCell className="text-center">
-                                            <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => setSelectedTeacher(t)}>إدارة</Button>
+                                            <Button variant="outline" size="sm" className="rounded-xl text-xs" onClick={() => setSelectedTeacher(t)}>عرض الطلاب</Button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                            {loading ? 'جاري التحميل...' : 'لا توجد حسابات مسجلة حالياً في Firestore.'}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -261,8 +254,8 @@ export default function AdminPage() {
             <TabsContent value="students">
                 <Card className="border-0 shadow-lg rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
                     <CardHeader className="bg-muted/30">
-                        <CardTitle>كل الطلاب في النظام</CardTitle>
-                        <CardDescription>عرض وحذف الطلاب من أي حساب.</CardDescription>
+                        <CardTitle>كل الطلاب في النظام ({allStudents.length})</CardTitle>
+                        <CardDescription>عرض وحذف الطلاب من أي حساب للمعلمين.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
@@ -275,12 +268,12 @@ export default function AdminPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {allStudents.map(student => (
+                                {allStudents.length > 0 ? allStudents.map(student => (
                                     <TableRow key={student.id}>
                                         <TableCell className="font-bold">{student.name}</TableCell>
                                         <TableCell><span className="text-xs bg-muted p-1 rounded">{student.grade}</span></TableCell>
                                         <TableCell className="text-xs text-muted-foreground">
-                                            {teachers.find(t => t.uid === student.teacherUid)?.displayName || 'غير معروف'}
+                                            {teachers.find(t => t.uid === student.teacherUid)?.displayName || student.teacherUid || 'غير معروف'}
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <AlertDialog>
@@ -300,7 +293,13 @@ export default function AdminPage() {
                                             </AlertDialog>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                            لا يوجد طلاب مسجلين في النظام.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -309,7 +308,7 @@ export default function AdminPage() {
 
             <TabsContent value="messages">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {messages.map(msg => (
+                    {messages.length > 0 ? messages.map(msg => (
                         <Card key={msg.id} className="border-0 shadow-sm rounded-3xl bg-white dark:bg-slate-900 p-6">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
@@ -320,7 +319,11 @@ export default function AdminPage() {
                             </div>
                             <p className="text-sm text-slate-600">{msg.message}</p>
                         </Card>
-                    ))}
+                    )) : (
+                        <div className="col-span-full py-12 text-center text-muted-foreground">
+                            لا توجد رسائل واردة.
+                        </div>
+                    )}
                 </div>
             </TabsContent>
         </Tabs>
@@ -329,7 +332,7 @@ export default function AdminPage() {
             <Dialog open={!!selectedTeacher} onOpenChange={() => setSelectedTeacher(null)}>
                 <DialogContent className="max-w-3xl rounded-[2rem]">
                     <DialogHeader>
-                        <DialogTitle>طلاب المعلم: {selectedTeacher.displayName}</DialogTitle>
+                        <DialogTitle>طلاب المعلم: {selectedTeacher.displayName || selectedTeacher.uid}</DialogTitle>
                     </DialogHeader>
                     <div className="max-h-[60vh] overflow-auto mt-4">
                         <Table>
@@ -341,15 +344,23 @@ export default function AdminPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {allStudents.filter(s => s.teacherUid === selectedTeacher.uid).map(s => (
-                                    <TableRow key={s.id}>
-                                        <TableCell>{s.name}</TableCell>
-                                        <TableCell>{s.grade}</TableCell>
-                                        <TableCell className="text-center">
-                                            <Button variant="ghost" size="sm" onClick={() => handleDeleteStudent(s.id, selectedTeacher.uid)} className="text-rose-500"><Trash2 className="h-4 w-4"/></Button>
+                                {allStudents.filter(s => s.teacherUid === selectedTeacher.uid).length > 0 ? (
+                                    allStudents.filter(s => s.teacherUid === selectedTeacher.uid).map(s => (
+                                        <TableRow key={s.id}>
+                                            <TableCell>{s.name}</TableCell>
+                                            <TableCell>{s.grade}</TableCell>
+                                            <TableCell className="text-center">
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteStudent(s.id, selectedTeacher.uid)} className="text-rose-500"><Trash2 className="h-4 w-4"/></Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                                            هذا المعلم لم يقم بإضافة طلاب بعد.
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )}
                             </TableBody>
                         </Table>
                     </div>

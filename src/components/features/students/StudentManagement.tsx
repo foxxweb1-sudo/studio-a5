@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, Share2, GraduationCap } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -115,26 +114,6 @@ export default function StudentManagement() {
         description: "تم حذف الطالب بنجاح."
     });
   }
-
-  const handleShareParentLink = (student: Student) => {
-    if (!user) return;
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const shareUrl = `${origin}/p/${user.uid}/${student.id}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `متابعة الطالب: ${student.name}`,
-        text: `ولي أمر الطالب/ة: ${student.name}\nيمكنكم متابعة الحضور والمدفوعات عبر الرابط التالي:`,
-        url: shareUrl,
-      });
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: "تم نسخ الرابط",
-        description: "يمكنك الآن إرساله لولي الأمر عبر واتساب.",
-      });
-    }
-  };
 
   const filteredStudents = students.filter(student => 
     (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -266,9 +245,6 @@ export default function StudentManagement() {
                           </TableCell>
                            {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
                           <TableCell className="flex justify-center gap-1">
-                            <Button variant="ghost" size="icon" title="رابط ولي الأمر" className="rounded-xl text-emerald-600 hover:bg-emerald-50" onClick={() => handleShareParentLink(student)}>
-                                <Share2 className="h-4 w-4" />
-                            </Button>
                             <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl" onClick={() => setSelectedStudentForQR(student)}>
                               <QrCode className="h-4 w-4" />
                             </Button>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
@@ -7,19 +6,17 @@ import { useUser } from '@/firebase';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, User, GraduationCap, Phone, BadgeDollarSign, ArrowLeft, Share2 } from 'lucide-react';
+import { Loader2, User, GraduationCap, Phone, ArrowLeft } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
 
 export default function StudentProfilePage() {
   const params = useParams();
   const router = useRouter();
   const studentId = params.studentId as string;
   const { user } = useUser();
-  const { toast } = useToast();
 
   const { students, isLoading: studentsLoading } = useStudents();
   const { attendance, isLoading: attendanceLoading } = useAttendance();
@@ -30,26 +27,6 @@ export default function StudentProfilePage() {
   const studentPayments = payments.filter((p) => p.studentId === studentId);
 
   const isLoading = studentsLoading || attendanceLoading || paymentsLoading;
-
-  const handleShareParentLink = () => {
-    if (!user || !student) return;
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const shareUrl = `${origin}/p/${user.uid}/${student.id}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `متابعة الطالب: ${student.name}`,
-        text: `ولي أمر الطالب/ة: ${student.name}\nيمكنكم متابعة الحضور والمدفوعات عبر الرابط التالي:`,
-        url: shareUrl,
-      });
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: "تم نسخ الرابط",
-        description: "الرابط جاهز للإرسال لولي الأمر.",
-      });
-    }
-  };
 
   if (isLoading) {
     return (
@@ -82,10 +59,6 @@ export default function StudentProfilePage() {
             <PageHeaderDescription>عرض جميع تفاصيل وسجلات الطالب.</PageHeaderDescription>
          </PageHeader>
          <div className="flex gap-2 w-full md:w-auto">
-            <Button onClick={handleShareParentLink} className="rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold gap-2 flex-1 md:flex-none">
-                <Share2 className="h-4 w-4" />
-                رابط ولي الأمر
-            </Button>
             <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-primary/20 hover:bg-primary/5 flex-1 md:flex-none">
                 <ArrowLeft className="ms-2 h-4 w-4" />
                 العودة

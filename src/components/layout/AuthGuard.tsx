@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore } from "@/firebase";
@@ -25,7 +26,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [isUserLoading]);
 
-  // تسجيل بيانات المستخدم في الفايرستور ليظهر للأدمن
+  // تسجيل بيانات المستخدم في الفايرستور ليظهر للأدمن فور تسجيل الدخول
   useEffect(() => {
     if (user && firestore) {
       const userDocRef = doc(firestore, "users", user.uid);

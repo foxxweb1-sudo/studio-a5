@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, Loader2 } from "lucide-react";
+import { LogIn, Loader2, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -38,6 +38,7 @@ export default function Login() {
   const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,7 +56,6 @@ export default function Login() {
         title: "تم تسجيل الدخول بنجاح",
         description: "جاري توجيهك...",
       });
-      // onAuthStateChanged will handle the redirect via AuthGuard
     } catch (error: any) {
       let description;
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -124,11 +124,21 @@ export default function Login() {
                   <FormItem>
                     <FormLabel>كلمة المرور</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="********"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="********"
+                          className="pl-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

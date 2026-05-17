@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Loader2, User } from "lucide-react";
+import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -39,6 +39,7 @@ export default function SignUp() {
   const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,7 +55,6 @@ export default function SignUp() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       
-      // تحديث الاسم في ملف التعريف الخاص بـ Firebase Auth
       await updateProfile(userCredential.user, {
         displayName: values.displayName
       });
@@ -136,12 +136,15 @@ export default function SignUp() {
                   <FormItem>
                     <FormLabel className="font-bold">البريد الإلكتروني</FormLabel>
                     <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="your@email.com"
-                        className="rounded-xl h-12"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <MailIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                        <Input
+                          type="email"
+                          placeholder="your@email.com"
+                          className="pr-10 rounded-xl h-12"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,12 +157,21 @@ export default function SignUp() {
                   <FormItem>
                     <FormLabel className="font-bold">كلمة المرور</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="********"
-                        className="rounded-xl h-12"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="********"
+                          className="pl-10 rounded-xl h-12"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

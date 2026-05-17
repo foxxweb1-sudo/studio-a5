@@ -65,6 +65,7 @@ export default function ContactPage() {
         email: values.email,
         whatsapp: fullWhatsapp,
         message: values.message,
+        status: 'pending', // الحالة الافتراضية
         createdAt: serverTimestamp(),
       });
       

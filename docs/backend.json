@@ -143,6 +143,11 @@
           "type": "string",
           "description": "The content of the message."
         },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "reviewed", "replied", "rejected"],
+          "description": "The current status of the message."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",

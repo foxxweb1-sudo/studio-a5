@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { useEffect, useMemo } from 'react';
+import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { useEffect, useMemo, useState } from 'react';
 import {
   PageHeader,
   PageHeaderTitle,
@@ -22,7 +23,10 @@ import {
   ExternalLink,
   ShieldCheck,
   Smartphone,
-  Clock
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Info
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ADMIN_EMAIL } from '@/lib/constants';
@@ -41,6 +45,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
+  pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
+  reviewed: { label: 'تمت المراجعة', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Info },
+  replied: { label: 'تم الرد', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
+  rejected: { label: 'مرفوض', color: 'bg-rose-100 text-rose-700 border-rose-200', icon: XCircle },
+};
 
 export default function MessageDetailPage() {
   const params = useParams();
@@ -49,6 +61,7 @@ export default function MessageDetailPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
@@ -64,6 +77,21 @@ export default function MessageDetailPage() {
       router.push('/');
     }
   }, [isAdmin, isUserLoading, router]);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!firestore || !messageId) return;
+    setIsUpdatingStatus(true);
+    
+    try {
+      const docRef = doc(firestore, 'contactMessages', messageId);
+      await updateDoc(docRef, { status: newStatus });
+      toast({ title: "تم تحديث الحالة بنجاح" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "فشل تحديث الحالة" });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   const handleDelete = () => {
     if (!firestore || !messageId) return;
@@ -121,6 +149,9 @@ export default function MessageDetailPage() {
     );
   }
 
+  const currentStatus = message.status || 'pending';
+  const statusInfo = STATUS_CONFIG[currentStatus];
+
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-20 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -155,7 +186,43 @@ export default function MessageDetailPage() {
       </div>
 
       <div className="flex flex-col gap-6">
-        {/* قسم بيانات المرسل - أفقي ومنظم */}
+        {/* قسم إدارة الحالة */}
+        <Card className="border-0 shadow-sm rounded-3xl bg-white dark:bg-slate-900 overflow-hidden border-r-4 border-primary">
+          <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4 w-full">
+              <div className={`p-4 rounded-2xl ${statusInfo.color} shrink-0`}>
+                <statusInfo.icon className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-black text-sm">حالة الطلب الحالية</h4>
+                <Badge variant="outline" className={`${statusInfo.color} font-bold rounded-lg px-3 py-1`}>
+                  {statusInfo.label}
+                </Badge>
+              </div>
+            </div>
+            
+            <div className="w-full sm:w-64 space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-400 px-1">تحديث الحالة</label>
+              <Select defaultValue={currentStatus} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
+                <SelectTrigger className="rounded-xl h-12 bg-slate-50 border-slate-200">
+                  <SelectValue placeholder="اختر حالة..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+                    <SelectItem key={key} value={key} className="rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <config.icon className="h-4 w-4" />
+                        {config.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* قسم بيانات المرسل */}
         <Card className="border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden">
           <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -207,7 +274,7 @@ export default function MessageDetailPage() {
           </CardContent>
         </Card>
 
-        {/* قسم محتوى الرسالة - عمودي وواسع */}
+        {/* قسم محتوى الرسالة */}
         <Card className="border-0 shadow-lg rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden">
              <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -222,11 +289,11 @@ export default function MessageDetailPage() {
              </CardContent>
         </Card>
 
-        {/* ملاحظة إدارية في الأسفل */}
+        {/* ملاحظة إدارية */}
         <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 rounded-2xl flex items-start gap-3">
           <ShieldCheck className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
           <p className="text-xs text-blue-700/70 dark:text-blue-300/60 leading-relaxed font-medium">
-            يرجى مراجعة محتوى الرسالة بعناية. يمكنك استخدام أزرار التواصل أعلاه للرد السريع على المستخدم.
+            يرجى مراجعة محتوى الرسالة بعناية. يمكنك استخدام أزرار التواصل أعلاه للرد السريع على المستخدم، وتحديث حالة الطلب لتنظيم سير العمل.
           </p>
         </div>
       </div>

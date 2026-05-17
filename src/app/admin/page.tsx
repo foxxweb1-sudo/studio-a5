@@ -22,7 +22,10 @@ import {
   RefreshCw,
   Database,
   ChevronRight,
-  Clock
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Info
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,6 +38,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAppConfig } from '@/hooks/use-app-config';
+
+const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
+  pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
+  reviewed: { label: 'تمت المراجعة', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Info },
+  replied: { label: 'تم الرد', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
+  rejected: { label: 'مرفوض', color: 'bg-rose-100 text-rose-700 border-rose-200', icon: XCircle },
+};
 
 export default function AdminPage() {
   const router = useRouter();
@@ -317,42 +327,48 @@ export default function AdminPage() {
 
             <TabsContent value="messages">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {messages.map(msg => (
-                        <Card 
-                          key={msg.id} 
-                          className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer bg-white group rounded-[1.5rem] overflow-hidden flex flex-col h-full border-t-4 border-t-primary/10"
-                          onClick={() => router.push(`/admin/messages/${msg.id}`)}
-                        >
-                          <CardContent className="p-6 flex flex-col h-full gap-4">
-                              <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2.5 bg-primary/5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                                    <MessageSquare className="h-5 w-5" />
-                                  </div>
-                                  <div className="overflow-hidden">
-                                    <h4 className="font-bold text-sm text-slate-800 line-clamp-1">{msg.name}</h4>
-                                    <p className="text-[10px] text-muted-foreground font-mono truncate">{msg.email}</p>
+                    {messages.map(msg => {
+                        const status = msg.status || 'pending';
+                        const statusInfo = STATUS_MAP[status];
+                        return (
+                          <Card 
+                            key={msg.id} 
+                            className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer bg-white group rounded-[1.5rem] overflow-hidden flex flex-col h-full border-t-4 border-t-primary/10"
+                            onClick={() => router.push(`/admin/messages/${msg.id}`)}
+                          >
+                            <CardContent className="p-6 flex flex-col h-full gap-4">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2.5 bg-primary/5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                      <MessageSquare className="h-5 w-5" />
+                                    </div>
+                                    <div className="overflow-hidden">
+                                      <h4 className="font-bold text-sm text-slate-800 line-clamp-1">{msg.name}</h4>
+                                      <Badge variant="outline" className={`${statusInfo.color} text-[8px] h-4 rounded-md border-transparent`}>
+                                        {statusInfo.label}
+                                      </Badge>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              <div className="flex-grow bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl text-slate-600 dark:text-slate-300 text-xs italic leading-relaxed line-clamp-3 border border-slate-100 dark:border-slate-800">
-                                "{msg.message}"
-                              </div>
-
-                              <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800">
-                                <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground font-bold">
-                                  <Clock className="h-3 w-3" />
-                                  {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
+                                <div className="flex-grow bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl text-slate-600 dark:text-slate-300 text-xs italic leading-relaxed line-clamp-3 border border-slate-100 dark:border-slate-800">
+                                  "{msg.message}"
                                 </div>
-                                <span className="text-[10px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                                  عرض التفاصيل
-                                  <ChevronRight className="h-3 w-3" />
-                                </span>
-                              </div>
-                          </CardContent>
-                        </Card>
-                    ))}
+
+                                <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800">
+                                  <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground font-bold">
+                                    <Clock className="h-3 w-3" />
+                                    {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
+                                  </div>
+                                  <span className="text-[10px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                    عرض التفاصيل
+                                    <ChevronRight className="h-3 w-3" />
+                                  </span>
+                                </div>
+                            </CardContent>
+                          </Card>
+                        )
+                    })}
                     {messages.length === 0 && (
                       <div className="col-span-full py-20 text-center text-slate-400">
                          <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-10" />

@@ -1,12 +1,10 @@
-
 'use client';
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, UserCircle2, ShieldCheck, Settings, Home } from 'lucide-react';
-import { useAuth, useUser } from '@/firebase';
+import { UserCircle2, ShieldCheck, Settings, Home } from 'lucide-react';
+import { useUser } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -22,25 +20,11 @@ import Footer from './Footer';
 import { ADMIN_EMAIL } from '@/lib/constants';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const auth = useAuth();
   const { user } = useUser();
   const { config } = useAppConfig();
-  const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
 
   const isAdmin = React.useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
-  React.useEffect(() => {
-    setCurrentDateTime(new Date());
-    const timer = setInterval(() => {
-      setCurrentDateTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleSignOut = () => {
-    signOut(auth);
-  };
-  
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
     const names = name.split(' ');
@@ -121,13 +105,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <span className="font-bold">الإعدادات</span>
                       <Settings className="mr-2 h-4 w-4 text-primary" />
                     </Link>
-                  </DropdownMenuItem>
-                </div>
-                <DropdownMenuSeparator />
-                <div className="p-1">
-                  <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-3 text-destructive justify-end">
-                    <span className="font-bold">تسجيل الخروج</span>
-                    <LogOut className="mr-2 h-4 w-4" />
                   </DropdownMenuItem>
                 </div>
               </DropdownMenuContent>

@@ -23,10 +23,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, Image as ImageIcon, User as UserIcon, ExternalLink } from 'lucide-react';
-import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, ExternalLink, LogOut, Trash2, AlertTriangle } from 'lucide-react';
+import { updateProfile, sendPasswordResetEmail, signOut, deleteUser } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'الاسم مطلوب.'),
@@ -39,6 +50,7 @@ export default function AccountManagement() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -100,6 +112,38 @@ export default function AccountManagement() {
       setIsSendingEmail(false);
     }
   };
+
+  const handleSignOut = () => {
+    signOut(auth);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setIsDeleting(true);
+    try {
+      await deleteUser(user);
+      toast({
+        title: 'تم حذف الحساب',
+        description: 'تم حذف حسابك نهائياً من النظام.',
+      });
+    } catch (error: any) {
+      if (error.code === 'auth/requires-recent-login') {
+        toast({
+          variant: 'destructive',
+          title: 'إعادة تسجيل الدخول مطلوبة',
+          description: 'لحذف الحساب، يجب عليك تسجيل الخروج ثم الدخول مرة أخرى لإثبات هويتك.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'خطأ',
+          description: error.message || 'فشل حذف الحساب. يرجى المحاولة مرة أخرى.',
+        });
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   const handleCopyUid = () => {
     if (!user?.uid) return;
@@ -128,7 +172,7 @@ export default function AccountManagement() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto pb-20">
       <div className="md:col-span-1 flex flex-col items-center gap-6">
          <div className="relative group">
             <Avatar className="h-40 w-40 border-4 border-white dark:border-slate-800 shadow-2xl transition-transform group-hover:scale-105 duration-300">
@@ -260,6 +304,54 @@ export default function AccountManagement() {
                    </Button>
                  </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* التحكم في الحساب */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 border-t-4 border-t-rose-500/20">
+          <CardHeader className="bg-rose-500/5 border-b border-rose-500/10">
+            <CardTitle className="text-xl flex items-center gap-2 text-rose-600">
+              <AlertTriangle className="h-5 w-5" />
+              إجراءات الحساب
+            </CardTitle>
+            <CardDescription>
+              الخروج من النظام أو حذف الحساب نهائياً.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+              className="w-full h-12 rounded-xl font-bold gap-2 border-slate-200 hover:bg-slate-50"
+            >
+              <LogOut className="h-4 w-4" />
+              تسجيل الخروج من الحساب
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full h-12 rounded-xl font-bold gap-2 shadow-lg shadow-rose-500/20"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  حذف الحساب نهائياً
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-[2.5rem]">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-right">هل أنت متأكد تماماً؟</AlertDialogTitle>
+                  <AlertDialogDescription className="text-right">
+                    هذا الإجراء لا يمكن التراجع عنه. سيتم حذف كافة بياناتك وسجلاتك من النظام نهائياً.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-row-reverse gap-2">
+                  <AlertDialogAction onClick={handleDeleteAccount} className="bg-rose-600 hover:bg-rose-700 rounded-xl">نعم، احذف حسابي</AlertDialogAction>
+                  <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </div>

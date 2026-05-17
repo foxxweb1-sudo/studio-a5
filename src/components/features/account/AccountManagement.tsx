@@ -179,7 +179,7 @@ export default function AccountManagement() {
   }
 
   const nameText = user?.displayName || 'مستخدم جديد';
-  const showBadgeOnRight = !isArabic(nameText);
+  const showBadgeBefore = isArabic(nameText); // Reversed logic: Arabic -> Before (Right)
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto pb-20">
@@ -199,11 +199,11 @@ export default function AccountManagement() {
         </div>
         <div className="text-center space-y-1">
             <h2 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
-                {userProfile?.isVerified && showBadgeOnRight && (
+                {userProfile?.isVerified && showBadgeBefore && (
                     <BadgeCheck className="h-6 w-6 fill-blue-500 text-white animate-in zoom-in duration-500" />
                 )}
                 {nameText}
-                {userProfile?.isVerified && !showBadgeOnRight && (
+                {userProfile?.isVerified && !showBadgeBefore && (
                     <BadgeCheck className="h-6 w-6 fill-blue-500 text-white animate-in zoom-in duration-500" />
                 )}
             </h2>

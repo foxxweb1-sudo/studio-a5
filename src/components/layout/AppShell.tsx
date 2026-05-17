@@ -59,7 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const displayName = user.displayName || 'مستخدم';
-  const showBadgeBefore = !isArabic(displayName);
+  const showBadgeBefore = isArabic(displayName); // Reversed: Arabic -> Before (Right)
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background text-right" dir="rtl">

@@ -109,7 +109,7 @@ export default function AdminPage() {
       unsubStudents();
       unsubMessages();
     };
-  }, [firestore, isAdmin, iisUserLoading, router]);
+  }, [firestore, isAdmin, isUserLoading, router]);
 
   const handleManualBlock = async (action: 'block' | 'unblock') => {
     if (!manualUid.trim() || !firestore) return;
@@ -339,7 +339,7 @@ export default function AdminPage() {
                     ) : users.map((u) => {
                         const isAccountAdmin = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
                         const uDisplayName = u.displayName || 'مستخدم';
-                        const showBadgeBefore = !isArabic(uDisplayName);
+                        const showBadgeBefore = isArabic(uDisplayName); // Reversed: Arabic -> Before (Right)
                         
                         return (
                           <Card key={u.uid} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'} ${isAccountAdmin ? 'border-2 border-primary/20' : ''}`}>

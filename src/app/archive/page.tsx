@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useStudents } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import {
   AlertTriangle,
   FolderOpen
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -47,15 +47,18 @@ const GRADES = [
   'الصف الأول الثانوي', 'الصف الثاني الثانوي', 'الصف الثالث الثانوي'
 ];
 
-export default function GlobalArchivePage() {
+function ArchiveContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const gradeFilter = searchParams.get('grade') || '';
+  
   const { students, isLoading, updateStudent, deleteStudent } = useStudents();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
 
   const archivedStudents = useMemo(() => 
-    students.filter(s => s.isArchived), 
-  [students]);
+    students.filter(s => s.isArchived && (!gradeFilter || s.grade === gradeFilter)), 
+  [students, gradeFilter]);
 
   const filtered = archivedStudents.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,13 +89,17 @@ export default function GlobalArchivePage() {
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-20 px-4">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <PageHeader className="border-0 pb-0">
-          <div className="flex items-center gap-3 text-amber-600 mb-2">
-            <div className="p-3 bg-amber-500/10 rounded-2xl">
+          <div className="flex items-center gap-3 text-rose-600 mb-2">
+            <div className="p-3 bg-rose-500/10 rounded-2xl">
                <Archive className="h-6 w-6" />
             </div>
-            <PageHeaderTitle className="text-3xl font-black">أرشيف الطلاب العام</PageHeaderTitle>
+            <PageHeaderTitle className="text-3xl font-black">
+                {gradeFilter ? `أرشيف ${gradeFilter}` : 'أرشيف الطلاب العام'}
+            </PageHeaderTitle>
           </div>
-          <PageHeaderDescription>كافة الطلاب غير النشطين منظمين حسب الصف الدراسي.</PageHeaderDescription>
+          <PageHeaderDescription>
+              {gradeFilter ? 'هنا تجد كافة الطلاب الذين تم استبعادهم من القوائم النشطة لهذا الصف.' : 'كافة الطلاب غير النشطين في المنظومة منظمين حسب الصف الدراسي.'}
+          </PageHeaderDescription>
         </PageHeader>
         <Button 
           variant="outline" 
@@ -115,15 +122,15 @@ export default function GlobalArchivePage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <Badge variant="secondary" className="rounded-full px-4 py-1.5 font-bold bg-amber-50 text-amber-700 border-amber-100">
-                {archivedStudents.length} إجمالي المؤرشفين
+            <Badge variant="secondary" className="rounded-full px-4 py-1.5 font-bold bg-rose-50 text-rose-700 border-rose-100">
+                {archivedStudents.length} طلاب مؤرشفين
             </Badge>
         </div>
 
         {isLoading ? (
             <div className="py-20 flex flex-col items-center gap-4">
                 <Loader2 className="h-12 w-12 animate-spin text-primary/30" />
-                <p className="text-slate-400 font-bold">جاري تحميل الأرشيف...</p>
+                <p className="text-slate-400 font-bold">جاري تحميل البيانات...</p>
             </div>
         ) : Object.keys(groupedStudents).length > 0 ? (
             <div className="space-y-10">
@@ -210,7 +217,7 @@ export default function GlobalArchivePage() {
                 <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto border-2 border-dashed shadow-sm">
                     <Archive className="h-8 w-8 text-slate-300" />
                 </div>
-                <p className="text-slate-400 font-black">لا توجد نتائج مطابقة في الأرشيف.</p>
+                <p className="text-slate-400 font-black">لا توجد سجلات مؤرشفة لهذا العرض حالياً.</p>
             </div>
         )}
       </div>
@@ -218,3 +225,10 @@ export default function GlobalArchivePage() {
   );
 }
 
+export default function GlobalArchivePage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center"><Loader2 className="animate-spin h-10 w-10 mx-auto" /></div>}>
+        <ArchiveContent />
+    </Suspense>
+  );
+}

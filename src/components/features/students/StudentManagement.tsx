@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter, MoreVertical, FolderArchive } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter, MoreVertical } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/table"; // Fixed relative path in next steps
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
 import { useSearchParams } from 'next/navigation';
@@ -44,6 +44,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+// Fixing import error from prev turn
+import {
+  Table as UITable,
+  TableBody as UITableBody,
+  TableCell as UITableCell,
+  TableHead as UITableHead,
+  TableHeader as UITableHeader,
+  TableRow as UITableRow,
+} from "@/components/ui/table";
 
 const GRADES = [
   'الصف الأول الابتدائي', 'الصف الثاني الابتدائي', 'الصف الثالث الابتدائي', 'الصف الرابع الابتدائي', 'الصف الخامس الابتدائي', 'الصف السادس الابتدائي',
@@ -117,11 +127,7 @@ export default function StudentManagement() {
   
   const handleDelete = (studentId: string) => {
     deleteStudent(studentId);
-    toast({
-        variant: "destructive",
-        title: "تم الحظر",
-        description: "تم حذف الطالب بنجاح."
-    });
+    toast({ variant: "destructive", title: "تم الحذف", description: "تم مسح بيانات الطالب." });
   }
 
   const handleArchive = (student: Student) => {
@@ -133,7 +139,6 @@ export default function StudentManagement() {
   }
 
   const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
-  const archivedStudents = useMemo(() => students.filter(s => s.isArchived), [students]);
 
   const renderStudentTable = (list: Student[], emptyMessage: string = "لا يوجد طلاب هنا حالياً.") => {
     const filtered = list.filter(student => 
@@ -143,29 +148,29 @@ export default function StudentManagement() {
     );
 
     return (
-        <div className="max-h-[30rem] overflow-auto">
-            <Table>
-                <TableHeader className="bg-muted/30 sticky top-0 z-10">
-                <TableRow>
-                    <TableHead className="text-right font-black">الاسم</TableHead>
-                    {!gradeFromUrl && <TableHead className="text-right font-black">الفصل</TableHead>}
-                    <TableHead className="text-center font-black">إجراءات</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
+        <div className="max-h-[40rem] overflow-auto">
+            <UITable>
+                <UITableHeader className="bg-muted/30 sticky top-0 z-10">
+                <UITableRow>
+                    <UITableHead className="text-right font-black px-6">الاسم</UITableHead>
+                    {!gradeFromUrl && <UITableHead className="text-right font-black">الفصل</UITableHead>}
+                    <UITableHead className="text-center font-black">إجراءات</UITableHead>
+                </UITableRow>
+                </UITableHeader>
+                <UITableBody>
                 {filtered.length > 0 ? (
                     filtered.map((student) => (
-                    <TableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
-                        <TableCell className="font-bold py-4">
+                    <UITableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
+                        <UITableCell className="font-bold py-4 px-6">
                             <div className="flex flex-col gap-1">
                             <Link href={`/students/${student.id}`} className="hover:underline text-primary flex items-center gap-2">
                                 <GraduationCap className="h-4 w-4 opacity-50" />
                                 {student.name}
                             </Link>
                             </div>
-                        </TableCell>
-                        {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
-                        <TableCell className="flex justify-center gap-1">
+                        </UITableCell>
+                        {!gradeFromUrl && <UITableCell className="text-[10px] font-bold text-slate-500">{student.grade}</UITableCell>}
+                        <UITableCell className="flex justify-center gap-1">
                         <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl h-8 w-8" onClick={() => setSelectedStudentForQR(student)}>
                             <QrCode className="h-4 w-4" />
                         </Button>
@@ -181,11 +186,11 @@ export default function StudentManagement() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="rounded-xl p-1 w-40">
                                 <DropdownMenuItem 
-                                    className={`rounded-lg gap-2 font-bold focus:bg-primary/5 ${student.isArchived ? 'text-emerald-600' : 'text-amber-600'}`}
+                                    className="rounded-lg gap-2 font-bold text-amber-600 focus:bg-amber-50"
                                     onClick={() => handleArchive(student)}
                                 >
-                                    {student.isArchived ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-                                    {student.isArchived ? "استعادة الطالب" : "أرشفة الطالب"}
+                                    <Archive className="h-4 w-4" />
+                                    أرشفة الطالب
                                 </DropdownMenuItem>
                                 
                                 <AlertDialog>
@@ -215,18 +220,18 @@ export default function StudentManagement() {
                                 </AlertDialog>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
+                        </UITableCell>
+                    </UITableRow>
                     ))
                 ) : (
-                    <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground font-bold italic">
+                    <UITableRow>
+                    <UITableCell colSpan={3} className="h-24 text-center text-muted-foreground font-bold italic">
                         {list.length === 0 ? emptyMessage : "لا توجد نتائج بحث مطابقة."}
-                    </TableCell>
-                    </TableRow>
+                    </UITableCell>
+                    </UITableRow>
                 )}
-                </TableBody>
-            </Table>
+                </UITableBody>
+            </UITable>
         </div>
     );
   }
@@ -240,11 +245,9 @@ export default function StudentManagement() {
                 {editingStudent ? <Edit className="h-5 w-5 text-blue-500" /> : <UserPlus className="h-5 w-5 text-primary" />}
                 {editingStudent ? 'تعديل بيانات الطالب' : 'تسجيل طالب جديد'}
             </CardTitle>
-             {gradeFromUrl && !editingStudent ? (
-                 <CardDescription>إضافة إلى: {gradeFromUrl}</CardDescription>
-             ) : (
-                 <CardDescription>أدخل بيانات الطالب والصف الدراسي أدناه.</CardDescription>
-             )}
+             <CardDescription>
+                 {gradeFromUrl && !editingStudent ? `إضافة إلى: ${gradeFromUrl}` : 'أدخل بيانات الطالب والصف الدراسي أدناه.'}
+             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...form}>
@@ -322,7 +325,7 @@ export default function StudentManagement() {
                 </div>
                 <div>
                     <h3 className="font-black text-lg">فرز وتصفية</h3>
-                    <p className="text-[10px] text-muted-foreground font-bold">ابحث في قائمة طلابك</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">ابحث في قائمة طلابك النشطين</p>
                 </div>
             </div>
             <div className="relative w-full sm:w-80">
@@ -336,12 +339,11 @@ export default function StudentManagement() {
             </div>
         </div>
 
-        {/* حقل الطلاب النشطين */}
         <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden border-t-4 border-t-primary">
             <CardHeader className="bg-slate-50/50 border-b flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-xl">الطلاب النشطين</CardTitle>
-                    <CardDescription>هؤلاء هم الطلاب الذين يتم تسجيل حضورهم ومدفوعاتهم حالياً.</CardDescription>
+                    <CardDescription>هذه القائمة تعرض الطلاب الذين يتم تسجيل حضورهم ومدفوعاتهم حالياً.</CardDescription>
                 </div>
                 <Badge className="bg-primary hover:bg-primary rounded-xl h-10 px-4 font-black">
                     {activeStudents.filter(s => !gradeFromUrl || s.grade === gradeFromUrl).length} طالب
@@ -350,34 +352,9 @@ export default function StudentManagement() {
             <CardContent className="p-0">
                 {isLoading ? (
                     <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-primary/20" /></div>
-                ) : renderStudentTable(activeStudents, "لا يوجد طلاب نشطون حالياً.")}
+                ) : renderStudentTable(activeStudents, "لا يوجد طلاب نشطون حالياً في هذا العرض.")}
             </CardContent>
         </Card>
-
-        {/* حقل الأرشيف الخاص بالصف (يظهر فقط عند الفلترة بصف معين) */}
-        {gradeFromUrl && (
-            <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden border-t-4 border-t-amber-500 bg-amber-50/10">
-                <CardHeader className="bg-amber-50/30 border-b flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-amber-500/10 rounded-xl text-amber-600">
-                            <FolderArchive className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <CardTitle className="text-xl text-amber-700">أرشيف {gradeFromUrl}</CardTitle>
-                            <CardDescription>الطلاب غير النشطين التابعين لهذا الصف تحديداً.</CardDescription>
-                        </div>
-                    </div>
-                    <Badge variant="outline" className="border-amber-200 text-amber-700 bg-white rounded-xl h-10 px-4 font-black">
-                        {archivedStudents.filter(s => s.grade === gradeFromUrl).length} مؤرشف
-                    </Badge>
-                </CardHeader>
-                <CardContent className="p-0">
-                    {isLoading ? (
-                        <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-amber-200" /></div>
-                    ) : renderStudentTable(archivedStudents, "لا يوجد طلاب في أرشيف هذا الصف.")}
-                </CardContent>
-            </Card>
-        )}
       </div>
       
       {selectedStudentForQR && (

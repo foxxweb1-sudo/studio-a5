@@ -4,7 +4,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, CalendarCheck, FileText, CreditCard, ArrowLeft } from 'lucide-react';
+import { Users, CalendarCheck, FileText, CreditCard, ArrowLeft, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function GradeDashboardPage() {
@@ -25,8 +25,15 @@ export default function GradeDashboardPage() {
       name: 'إدارة الطلاب',
       icon: Users,
       href: `/students?grade=${encodeURIComponent(gradeName)}`,
-      description: 'إضافة وتعديل بيانات الطلاب.',
+      description: 'إضافة وتعديل بيانات الطلاب النشطين.',
       color: 'bg-emerald-500/10 text-emerald-500',
+    },
+    {
+      name: 'الأرشيف',
+      icon: Archive,
+      href: `/archive?grade=${encodeURIComponent(gradeName)}`,
+      description: 'عرض واستعادة الطلاب غير النشطين.',
+      color: 'bg-rose-500/10 text-rose-500',
     },
     {
       name: 'التقارير',
@@ -62,7 +69,7 @@ export default function GradeDashboardPage() {
           العودة
         </Button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {dashboardItems.map((item) => (
           <button 
             key={item.name} 
@@ -76,7 +83,7 @@ export default function GradeDashboardPage() {
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-xs text-muted-foreground">{item.description}</p>
                 </div>
               </CardContent>
             </Card>

@@ -5,13 +5,14 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    /* لوحة ألوان احترافية هادئة */
+    --background: 210 40% 99%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
+    --primary: 217 91% 60%; /* أزرق تقني عصري */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 47% 11.2%;
@@ -23,8 +24,8 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
-    --radius: 1.5rem;
+    --ring: 217 91% 60%;
+    --radius: 1.25rem;
   }
 
   .dark {
@@ -34,7 +35,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 217 91% 60%;
     --primary-foreground: 222 47% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -57,19 +58,24 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    line-height: 1.6; /* تحسين تباعد الأسطر للنصوص */
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-black;
   }
 }
 
 .glass-card {
-  @apply bg-card/60 backdrop-blur-md border-white/10 shadow-xl;
+  @apply bg-card/60 backdrop-blur-md border-white/10 shadow-sm;
 }
 
 .hover-lift {
-  @apply transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl;
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5;
 }
 
+/* تحسين شكل السكرول بار */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -77,15 +83,5 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30 transition-colors;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
+  @apply bg-muted-foreground/10 rounded-full hover:bg-muted-foreground/20 transition-colors;
 }

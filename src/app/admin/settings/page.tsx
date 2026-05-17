@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Save, Image as ImageIcon, Layout, Wallpaper, Database, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Image as ImageIcon, Layout, Wallpaper, Database, RefreshCw, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { serverTimestamp } from 'firebase/firestore';
@@ -67,14 +67,14 @@ export default function AdminAppSettingsPage() {
     try {
       await updateConfig(formData);
       toast({
-        title: "تم الحفظ بنجاح",
-        description: "تم تحديث إعدادات الهوية البصرية للتطبيق."
+        title: "تم الحفظ",
+        description: "تم تحديث هوية التطبيق بنجاح."
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "خطأ في الحفظ",
-        description: "تعذر تحديث الإعدادات حالياً."
+        title: "خطأ",
+        description: "تعذر التحديث حالياً."
       });
     } finally {
       setIsSaving(false);
@@ -87,76 +87,75 @@ export default function AdminAppSettingsPage() {
       await updateConfig({
         lastRulesUpdate: serverTimestamp()
       });
-      
       toast({
-        title: "بدء التزامن",
-        description: "جاري تحديث ونشر قواعد الأمان على الخادم."
+        title: "تزامن القواعد",
+        description: "جاري نشر قواعد الأمان الجديدة."
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "فشل التزامن",
-        description: "حدث خطأ غير متوقع أثناء تحديث القواعد."
+        title: "خطأ",
+        description: "فشل التزامن."
       });
     } finally {
-      setTimeout(() => setIsUpdatingRules(false), 2500);
+      setTimeout(() => setIsUpdatingRules(false), 2000);
     }
   };
 
   if (isUserLoading || !isAdmin) {
     return (
-      <div className="flex justify-center items-center h-screen bg-slate-900">
-        <Loader2 className="h-14 w-14 animate-spin text-primary" />
+      <div className="flex justify-center items-center h-screen bg-white">
+        <Loader2 className="h-10 w-10 animate-spin text-primary/20" />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-10 max-w-5xl mx-auto pb-32 pt-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <PageHeader className="border-0 pb-0">
-          <PageHeaderTitle className="text-4xl font-black text-slate-900">إعدادات الهوية والنظام</PageHeaderTitle>
-          <PageHeaderDescription className="text-lg font-medium opacity-70">التحكم في المظهر وتزامن قواعد البيانات.</PageHeaderDescription>
-        </PageHeader>
-        <Button variant="outline" onClick={() => router.back()} className="rounded-2xl h-14 px-8 font-black border-slate-300 gap-3">
-          <ArrowLeft className="h-5 w-5" />
-          رجوع للخلف
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-black">إعدادات الهوية والنظام</h1>
+          <p className="text-slate-400 text-sm font-medium">تخصيص المظهر الخارجي وتزامن البيانات</p>
+        </div>
+        <Button variant="ghost" onClick={() => router.back()} className="rounded-xl font-bold gap-2 text-slate-500">
+          <ArrowLeft className="h-4 w-4" />
+          رجوع
         </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* هوية الموقع */}
-        <Card className="border-0 shadow-2xl rounded-[3rem] bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100">
-          <CardHeader className="bg-primary/5 border-b-2 border-primary/5 p-8">
-            <CardTitle className="text-2xl font-black flex items-center gap-3">
-              <Layout className="h-7 w-7 text-primary" />
+        <Card className="border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+          <CardHeader className="bg-slate-50/50 p-6 border-b">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Layout className="h-5 w-5 text-primary" />
               هوية الموقع
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8 space-y-8">
-            <div className="space-y-3">
-              <Label className="font-black text-slate-700 text-sm">اسم التطبيق الرئيسي</Label>
+          <CardContent className="p-8 space-y-6">
+            <div className="space-y-2">
+              <Label className="font-bold text-xs text-slate-400">اسم التطبيق</Label>
               <Input 
                 value={formData.appName}
                 onChange={(e) => setFormData({...formData, appName: e.target.value})}
-                placeholder="أدخل الاسم الذي سيظهر في الهيدر..."
-                className="rounded-2xl h-14 bg-slate-50 border-slate-200 focus:bg-white transition-all text-lg font-bold"
+                placeholder="اسم الموقع في الهيدر..."
+                className="rounded-xl h-11 bg-slate-50 border-slate-200"
               />
             </div>
-            <div className="space-y-3">
-              <Label className="font-black text-slate-700 text-sm">رابط اللوجو (Logo URL)</Label>
+            <div className="space-y-2">
+              <Label className="font-bold text-xs text-slate-400">رابط اللوجو</Label>
               <div className="flex gap-4 items-center">
                 <Input 
                   value={formData.appLogo}
                   onChange={(e) => setFormData({...formData, appLogo: e.target.value})}
-                  placeholder="رابط مباشر للصورة (PNG/JPG)..."
-                  className="rounded-2xl h-14 bg-slate-50 border-slate-200 focus:bg-white transition-all font-mono text-xs"
+                  placeholder="رابط الصورة المباشر..."
+                  className="rounded-xl h-11 bg-slate-50 border-slate-200 font-mono text-xs"
                 />
-                <div className="relative w-16 h-16 rounded-2xl border-4 border-primary/10 bg-white overflow-hidden shrink-0 shadow-inner flex items-center justify-center p-2">
+                <div className="relative w-12 h-12 rounded-xl border bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                    {formData.appLogo ? (
                      <Image src={formData.appLogo} alt="Preview" fill className="object-contain p-2" />
                    ) : (
-                     <ImageIcon className="h-8 w-8 text-slate-300" />
+                     <ImageIcon className="h-5 w-5 text-slate-300" />
                    )}
                 </div>
               </div>
@@ -165,96 +164,84 @@ export default function AdminAppSettingsPage() {
         </Card>
 
         {/* صور الخلفية */}
-        <Card className="border-0 shadow-2xl rounded-[3rem] bg-white dark:bg-slate-900 overflow-hidden ring-1 ring-slate-100">
-          <CardHeader className="bg-emerald-500/5 border-b-2 border-emerald-500/5 p-8">
-            <CardTitle className="text-2xl font-black flex items-center gap-3">
-              <Wallpaper className="h-7 w-7 text-emerald-500" />
+        <Card className="border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+          <CardHeader className="bg-slate-50/50 p-6 border-b">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wallpaper className="h-5 w-5 text-emerald-500" />
               صور الخلفية
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8 space-y-8">
-            <div className="space-y-3">
-              <Label className="font-black text-slate-700 text-sm">خلفية تسجيل الدخول (Login Page)</Label>
+          <CardContent className="p-8 space-y-6">
+            <div className="space-y-2">
+              <Label className="font-bold text-xs text-slate-400">خلفية تسجيل الدخول</Label>
               <Input 
                 value={formData.loginBg}
                 onChange={(e) => setFormData({...formData, loginBg: e.target.value})}
                 placeholder="رابط صورة الخلفية..."
-                className="rounded-2xl h-14 bg-slate-50 border-slate-200 font-mono text-xs"
+                className="rounded-xl h-11 bg-slate-50 border-slate-200 font-mono text-xs"
               />
             </div>
-            <div className="space-y-3">
-              <Label className="font-black text-slate-700 text-sm">خلفية إنشاء الحساب (Sign Up)</Label>
+            <div className="space-y-2">
+              <Label className="font-bold text-xs text-slate-400">خلفية إنشاء الحساب</Label>
               <Input 
                 value={formData.signupBg}
                 onChange={(e) => setFormData({...formData, signupBg: e.target.value})}
                 placeholder="رابط صورة الخلفية..."
-                className="rounded-2xl h-14 bg-slate-50 border-slate-200 font-mono text-xs"
+                className="rounded-xl h-11 bg-slate-50 border-slate-200 font-mono text-xs"
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* إدارة قواعد البيانات */}
-        <Card className="border-4 border-blue-500/10 shadow-2xl rounded-[3rem] bg-white dark:bg-slate-900 overflow-hidden lg:col-span-2">
-          <CardHeader className="bg-blue-600/5 border-b-2 border-blue-500/5 p-8">
-            <CardTitle className="text-2xl font-black flex items-center gap-3">
-              <Database className="h-7 w-7 text-blue-600" />
-              صيانة وأمان قواعد البيانات
+        {/* إدارة القواعد */}
+        <Card className="border border-blue-100 rounded-3xl overflow-hidden shadow-sm lg:col-span-2">
+          <CardHeader className="bg-blue-50/50 p-6 border-b">
+            <CardTitle className="text-lg flex items-center gap-2 text-blue-600">
+              <Database className="h-5 w-5" />
+              صيانة قواعد البيانات
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-10">
-            <div className="space-y-4 text-right flex-grow">
-              <h4 className="font-black text-xl text-blue-700 flex items-center gap-2">
-                تحديث مخطط الأمان الشامل
-                <Badge variant="outline" className="border-blue-300 text-blue-600 rounded-lg">مستحسن</Badge>
+          <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-2 text-right">
+              <h4 className="font-bold text-base flex items-center gap-2">
+                تحديث قواعد الأمان
+                <Badge variant="outline" className="text-[10px] rounded-lg">مستحسن</Badge>
               </h4>
-              <p className="text-base text-muted-foreground leading-relaxed max-w-2xl font-medium">
-                هذا الخيار يقوم بإرسال نبضة برمجية لخادم Firebase لإعادة قراءة وتفعيل القواعد الأمنية المحدثة. استخدمه دائماً بعد إجراء أي تعديلات جذرية في هيكل الحسابات أو الطلاب لضمان الحماية القصوى.
+              <p className="text-xs text-slate-400 max-w-xl font-medium">
+                استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم Firebase لضمان حماية بيانات الطلاب.
               </p>
             </div>
             <Button 
               onClick={handleUpdateRules} 
               disabled={isUpdatingRules}
               variant="outline"
-              className="w-full md:w-auto h-20 rounded-[2rem] font-black px-12 gap-4 border-2 border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all text-blue-600 shadow-xl hover:shadow-blue-500/30 text-lg group"
+              className="w-full md:w-auto h-12 rounded-xl font-bold px-8 gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
             >
-              {isUpdatingRules ? (
-                <Loader2 className="h-7 w-7 animate-spin" />
-              ) : (
-                <RefreshCw className="h-7 w-7 group-hover:rotate-180 transition-transform duration-700" />
-              )}
-              تحديث ومزامنة القواعد
+              {isUpdatingRules ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              تزامن الآن
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      <div className="sticky bottom-8 z-30 px-4">
+      <div className="fixed bottom-10 left-0 right-0 z-50 flex justify-center px-4">
         <Button 
           onClick={handleSave} 
           disabled={isSaving}
-          className="w-full h-20 rounded-[2.5rem] font-black text-2xl gap-4 shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:scale-[1.02] transition-all relative overflow-hidden group"
+          className="w-full max-w-lg h-16 rounded-2xl font-black text-lg gap-3 shadow-2xl shadow-primary/30 hover-lift"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-          {isSaving ? (
-            <Loader2 className="h-8 w-8 animate-spin relative z-10" />
-          ) : (
-            <Save className="h-8 w-8 relative z-10" />
-          )}
-          <span className="relative z-10">حفظ كافة التغييرات على الهوية</span>
+          {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+          حفظ كافة التغييرات
         </Button>
       </div>
 
-      <div className="p-8 bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-900/30 rounded-[2.5rem] flex items-start gap-5 shadow-sm">
-        <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-2xl">
-          <AlertCircle className="h-8 w-8 text-amber-600" />
-        </div>
-        <div className="space-y-2">
-          <h4 className="font-black text-amber-800 dark:text-amber-500 text-lg">تنبيهات هامة للمشرف الفني</h4>
-          <ul className="text-sm text-amber-700/80 dark:text-amber-400/80 space-y-1 font-bold leading-relaxed">
-            <li>• تأكد من صحة روابط الصور المباشرة؛ الروابط الخاطئة ستؤدي لعدم ظهور الشعار.</li>
-            <li>• عملية تحديث القواعد قد تستغرق بضع ثوانٍ لتظهر فعاليتها لدى كافة المستخدمين.</li>
-            <li>• اسم التطبيق سيظهر في الهيدر، وفي شاشات الدخول، وفي رسائل المساعد الذكي.</li>
+      <div className="p-6 bg-amber-50/50 border border-amber-100 rounded-2xl flex items-start gap-4">
+        <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <h4 className="font-bold text-amber-900 text-sm">تنبيهات هامة</h4>
+          <ul className="text-xs text-amber-700/80 space-y-1 font-medium leading-relaxed">
+            <li>• تأكد من استخدام روابط صور مباشرة (تنتهي بـ .jpg أو .png).</li>
+            <li>• اسم التطبيق سيتم تحديثه في الهيدر وشاشات الدخول فور الحفظ.</li>
           </ul>
         </div>
       </div>

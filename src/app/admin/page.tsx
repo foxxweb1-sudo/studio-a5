@@ -21,7 +21,8 @@ import {
   Fingerprint,
   Settings,
   RefreshCw,
-  Database
+  Database,
+  LayoutDashboard
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -101,14 +102,14 @@ export default function AdminPage() {
 
       toast({
         title: status ? "تم الحظر" : "تم إلغاء الحظر",
-        description: `تم تحديث حالة المعرف ${manualUid} بنجاح.`,
+        description: `تم تحديث حالة المعرف بنجاح.`,
       });
       setManualUid('');
     } catch (error) {
       toast({
         variant: "destructive",
         title: "خطأ",
-        description: "تعذر تحديث حالة الحظر. تأكد من صحة الـ UID."
+        description: "تأكد من صحة الـ UID."
       });
     } finally {
       setIsProcessingManual(false);
@@ -123,7 +124,7 @@ export default function AdminPage() {
       });
       toast({
         title: "جاري المزامنة",
-        description: "تم إرسال طلب تحديث قواعد البيانات بنجاح.",
+        description: "تم إرسال طلب تحديث القواعد.",
       });
     } catch (error) {
       toast({
@@ -154,57 +155,55 @@ export default function AdminPage() {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-slate-900 text-white gap-6">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        <p className="font-bold text-lg">جاري التحقق من الصلاحيات الإدارية...</p>
+        <p className="font-bold text-lg">التحقق من الصلاحيات...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-20 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <PageHeader className="border-0 pb-0">
-          <div className="flex items-center gap-4">
-             <div className="p-4 bg-primary text-white rounded-[1.5rem] shadow-xl shadow-primary/20 rotate-3">
-                <ShieldCheck className="h-8 w-8" />
-             </div>
-             <div>
-                <PageHeaderTitle className="text-4xl font-black">لوحة التحكم العليا</PageHeaderTitle>
-                <PageHeaderDescription className="text-lg font-medium opacity-70">إدارة المستخدمين، الطلاب، والرسائل.</PageHeaderDescription>
-             </div>
-          </div>
-        </PageHeader>
+    <div className="flex flex-col gap-10 pb-20 max-w-7xl mx-auto">
+      {/* رأس الصفحة المحسن */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-5">
+           <div className="p-4 bg-primary/10 text-primary rounded-2xl">
+              <ShieldCheck className="h-8 w-8" />
+           </div>
+           <div>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white">لوحة التحكم العليا</h1>
+              <p className="text-slate-500 font-medium text-sm">إدارة المستخدمين والأنظمة المركزية</p>
+           </div>
+        </div>
         <div className="flex flex-wrap gap-3">
           <Button 
             variant="outline" 
             onClick={() => router.push('/admin/settings')} 
-            className="rounded-2xl h-14 font-black px-8 border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition-all shadow-lg hover:shadow-emerald-500/20 gap-3"
+            className="rounded-xl h-12 font-bold px-6 border-slate-200 hover:bg-slate-50 gap-2"
           >
-              <Settings className="h-5 w-5" />
-              إعدادات النظام
+              <Settings className="h-4 w-4" />
+              الإعدادات
           </Button>
           <Button 
-            variant="outline" 
             onClick={() => router.push('/')} 
-            className="rounded-2xl h-14 font-black px-8 border-slate-300 hover:bg-slate-100 transition-all gap-3"
+            className="rounded-xl h-12 font-bold px-6 gap-2"
           >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
               الرئيسية
           </Button>
         </div>
       </div>
 
+      {/* إحصائيات بأسلوب عصري */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-            { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-            { label: 'إجمالي المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-600', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-            { label: 'الرسائل الواردة', value: messages.length, icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+            { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
+            { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
+            { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50' },
             { 
-              label: 'تحديث القواعد', 
-              value: 'مزامنة الآن', 
+              label: 'مزامنة القواعد', 
+              value: 'تحديث', 
               icon: RefreshCw, 
-              color: 'text-amber-600', 
-              bg: 'bg-amber-500/10',
-              border: 'border-amber-500/40',
+              color: 'text-amber-500', 
+              bg: 'bg-amber-50',
               onClick: handleUpdateRules,
               loading: isUpdatingRules,
               isAction: true
@@ -212,16 +211,16 @@ export default function AdminPage() {
         ].map((stat, i) => (
             <Card 
               key={i} 
-              className={`border-2 ${stat.border} shadow-lg rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden transition-all duration-300 ${stat.onClick ? 'hover:scale-105 cursor-pointer ring-offset-4 ring-amber-500/10' : ''}`}
+              className={`border border-slate-100 hover-lift ${stat.onClick ? 'cursor-pointer' : ''}`}
               onClick={stat.onClick}
             >
-                <CardContent className={`p-8 flex flex-col items-center gap-4 text-center ${stat.isAction ? 'bg-gradient-to-b from-amber-500/5 to-transparent' : ''}`}>
-                    <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color} shadow-inner`}>
-                        {stat.loading ? <Loader2 className="w-8 h-8 animate-spin" /> : <stat.icon className="w-8 h-8" />}
+                <CardContent className="p-6 flex items-center gap-4">
+                    <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
+                        {stat.loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
                     </div>
-                    <div className="space-y-1">
-                      <div className={`text-3xl font-black ${stat.isAction ? 'text-amber-600' : ''}`}>{loading ? '...' : stat.value}</div>
-                      <div className="text-xs text-muted-foreground font-black uppercase tracking-widest">{stat.label}</div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">{stat.label}</div>
+                      <div className="text-xl font-black">{loading ? '...' : stat.value}</div>
                     </div>
                 </CardContent>
             </Card>
@@ -229,44 +228,43 @@ export default function AdminPage() {
       </div>
 
        <Tabs defaultValue="users" className="w-full space-y-8">
-            <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto h-16 bg-white border-2 p-1.5 rounded-3xl shadow-sm">
-                <TabsTrigger value="users" className="rounded-2xl font-black text-sm sm:text-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all">المستخدمين</TabsTrigger>
-                <TabsTrigger value="teacher-uids" className="rounded-2xl font-black text-sm sm:text-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all">المعرفات</TabsTrigger>
-                <TabsTrigger value="messages" className="rounded-2xl font-black text-sm sm:text-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all">الرسائل</TabsTrigger>
+            <TabsList className="flex w-fit bg-slate-100/50 p-1 rounded-xl mx-auto mb-10 border">
+                <TabsTrigger value="users" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">المستخدمين</TabsTrigger>
+                <TabsTrigger value="teacher-uids" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">المعرفات</TabsTrigger>
+                <TabsTrigger value="messages" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">الرسائل</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users">
                 <div className="space-y-10">
-                  <Card className="border-0 shadow-2xl rounded-[3rem] bg-slate-950 text-white overflow-hidden ring-4 ring-primary/10">
-                    <CardHeader className="bg-gradient-to-r from-rose-600/20 to-transparent p-8">
-                      <CardTitle className="text-2xl font-black flex items-center gap-3">
-                        <Ban className="h-7 w-7 text-rose-500" />
-                        نظام الحظر الفوري (Manual Block)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-10 space-y-6">
-                      <div className="flex flex-col lg:flex-row gap-4">
-                        <div className="relative flex-grow">
-                          <Fingerprint className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-500" />
+                  {/* قسم الحظر اليدوي الأنيق */}
+                  <Card className="border-2 border-rose-500/10 shadow-sm rounded-3xl overflow-hidden bg-white dark:bg-slate-900">
+                    <div className="bg-rose-500/5 p-6 border-b border-rose-500/10 flex items-center gap-3">
+                        <Fingerprint className="h-5 w-5 text-rose-500" />
+                        <h3 className="font-black text-rose-900 dark:text-rose-400">نظام التحكم اليدوي بالوصول</h3>
+                    </div>
+                    <CardContent className="p-8">
+                      <div className="flex flex-col lg:flex-row gap-4 items-end">
+                        <div className="space-y-2 flex-grow w-full">
+                          <label className="text-xs font-bold text-slate-400 px-1">معرف المستخدم (UID)</label>
                           <Input 
-                            placeholder="أدخل الـ UID المراد التحكم في وصوله..." 
-                            className="bg-slate-900/50 border-slate-700 h-16 pr-12 rounded-2xl text-xl font-mono text-emerald-400 placeholder:text-slate-600 focus-visible:ring-primary focus-visible:border-primary transition-all"
+                            placeholder="الصق المعرف هنا للتحكم في وصوله..." 
+                            className="h-12 bg-slate-50 border-slate-200 rounded-xl font-mono text-sm"
                             value={manualUid}
                             onChange={(e) => setManualUid(e.target.value)}
                           />
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-2 w-full lg:w-auto">
                           <Button 
                             variant="destructive" 
-                            className="rounded-2xl h-16 font-black px-10 text-lg shadow-xl shadow-rose-600/20 hover:scale-105 active:scale-95 transition-all flex-grow lg:flex-grow-0"
+                            className="rounded-xl h-12 font-bold px-8 flex-grow lg:flex-grow-0"
                             onClick={() => handleManualBlock('block')}
                             disabled={isProcessingManual || !manualUid.trim()}
                           >
-                            {isProcessingManual ? <Loader2 className="h-6 w-6 animate-spin" /> : "حظر الدخول"}
+                            {isProcessingManual ? <Loader2 className="h-4 w-4 animate-spin" /> : "حظر"}
                           </Button>
                           <Button 
                             variant="outline" 
-                            className="rounded-2xl h-16 font-black px-10 text-lg border-slate-700 hover:bg-slate-800 text-white transition-all flex-grow lg:flex-grow-0"
+                            className="rounded-xl h-12 font-bold px-8 border-slate-200 flex-grow lg:flex-grow-0"
                             onClick={() => handleManualBlock('unblock')}
                             disabled={isProcessingManual || !manualUid.trim()}
                           >
@@ -277,121 +275,101 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
 
-                  <div className="space-y-8">
-                    <div className="flex items-center justify-between px-6 border-r-4 border-primary">
-                        <h3 className="text-2xl font-black">إدارة مستخدمي المنصة ({users.length})</h3>
-                        <Badge variant="outline" className="rounded-full px-4 py-1 font-bold">نشطين الآن</Badge>
-                    </div>
+                  {/* شبكة المستخدمين */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {usersLoading ? (
+                      <div className="col-span-full py-20 flex flex-col items-center gap-4">
+                        <Loader2 className="h-10 w-10 animate-spin text-primary/30" />
+                      </div>
+                    ) : users.length > 0 ? users.map((u) => (
+                        <Card 
+                          key={u.uid} 
+                          className={`group border border-slate-100 rounded-3xl overflow-hidden transition-all hover:border-primary/20 ${u.isBlocked ? 'bg-rose-50/30' : 'bg-white'}`}
+                        >
+                          <CardContent className="p-6 flex flex-col items-center gap-5 text-center">
+                            <Avatar className="h-20 w-20 border-2 border-slate-50 shadow-sm">
+                              <AvatarImage src={u.photoURL} className="object-cover" />
+                              <AvatarFallback className="bg-slate-100 text-slate-400 font-bold">
+                                {u.displayName?.substring(0, 2).toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {usersLoading ? (
-                        <div className="col-span-full py-20 flex flex-col items-center gap-4">
-                          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                          <span className="font-bold text-xl">جاري جلب القائمة...</span>
-                        </div>
-                      ) : users.length > 0 ? users.map((u) => (
-                          <Card 
-                            key={u.uid} 
-                            className={`group border-2 shadow-lg rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-2xl ${u.isBlocked ? 'border-rose-500/50 grayscale opacity-80' : 'border-transparent'}`}
-                          >
-                            <CardContent className="p-8 flex flex-col items-center gap-6 text-center">
-                              <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-lg group-hover:scale-110 transition-transform duration-500">
-                                <AvatarImage src={u.photoURL} className="object-cover" />
-                                <AvatarFallback className="text-3xl font-black bg-primary/10 text-primary">
-                                  {u.displayName?.substring(0, 2).toUpperCase() || 'U'}
-                                </AvatarFallback>
-                              </Avatar>
+                            <div className="space-y-1">
+                              <h4 className="font-black text-base line-clamp-1">{u.displayName || 'مستخدم جديد'}</h4>
+                              <p className="text-[10px] text-slate-400 font-medium">{u.email}</p>
+                            </div>
 
-                              <div className="space-y-2">
-                                <h4 className="font-black text-xl line-clamp-1">{u.displayName || 'مستخدم جديد'}</h4>
-                                <p className="text-xs text-muted-foreground font-medium opacity-60">{u.email}</p>
-                                <div 
-                                  className="bg-muted/50 p-2.5 rounded-xl mt-3 font-mono text-[10px] sm:text-xs break-all border-2 border-dashed border-primary/20 text-primary/80 cursor-pointer hover:bg-primary/5 transition-colors" 
-                                  onClick={() => {
-                                    setManualUid(u.uid);
-                                    toast({ title: "تم نسخ الـ UID للتحكم اليدوي" });
-                                  }}
-                                >
-                                  UID: {u.uid}
-                                </div>
-                              </div>
+                            <code 
+                              className="text-[10px] bg-slate-100 px-3 py-1 rounded-lg text-slate-500 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
+                              onClick={() => {
+                                setManualUid(u.uid);
+                                toast({ title: "تم نسخ المعرف" });
+                              }}
+                            >
+                              {u.uid.substring(0, 12)}...
+                            </code>
 
-                              <Button 
-                                variant={u.isBlocked ? "outline" : "destructive"} 
-                                onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)}
-                                className="w-full rounded-2xl font-black h-12 text-sm shadow-md"
-                              >
-                                {u.isBlocked ? "إلغاء الحظر" : "حظر المستخدم"}
-                              </Button>
-                            </CardContent>
-                          </Card>
-                      )) : (
-                        <div className="col-span-full py-32 text-center bg-white dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-muted">
-                           <UserCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-20" />
-                          <p className="text-xl text-muted-foreground font-black">لا يوجد مستخدمون مسجلون حتى الآن.</p>
-                        </div>
-                      )}
-                    </div>
+                            <Button 
+                              variant={u.isBlocked ? "secondary" : "ghost"} 
+                              onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)}
+                              className={`w-full rounded-xl font-bold h-10 text-xs ${u.isBlocked ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-rose-600 hover:bg-rose-50'}`}
+                            >
+                              {u.isBlocked ? "إلغاء الحظر" : "حظر الدخول"}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                    )) : (
+                      <div className="col-span-full py-20 text-center opacity-40">لا يوجد مستخدمون.</div>
+                    )}
                   </div>
                 </div>
             </TabsContent>
 
             <TabsContent value="teacher-uids">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {uidsWithStudents.length > 0 ? uidsWithStudents.map((teacher) => (
-                        <Card key={teacher.uid} className="border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 p-8 text-center flex flex-col items-center gap-6 group hover:shadow-primary/5 transition-all">
-                             <div className="p-5 bg-primary/5 rounded-[2rem] text-primary group-hover:rotate-12 transition-transform shadow-inner">
-                                <Database className="h-10 w-10" />
+                        <Card key={teacher.uid} className="border border-slate-100 rounded-3xl p-6 text-center flex flex-col items-center gap-4 hover-lift">
+                             <div className="p-3 bg-primary/5 rounded-xl text-primary">
+                                <Database className="h-6 w-6" />
                             </div>
-                            <div className="space-y-1">
-                              <h4 className="font-black text-xl">{teacher.displayName}</h4>
-                              <p className="text-xs text-muted-foreground">{teacher.email}</p>
+                            <div>
+                              <h4 className="font-black text-sm">{teacher.displayName}</h4>
+                              <p className="text-[10px] text-slate-400">{teacher.email}</p>
                             </div>
-                            <Badge className="rounded-full px-6 py-2 font-black bg-primary text-white border-0 shadow-lg shadow-primary/20">
-                                {teacher.count} طالباً
+                            <Badge variant="secondary" className="rounded-full px-4 font-bold bg-slate-100 text-slate-600 border-0">
+                                {teacher.count} طلاب
                             </Badge>
-                            <Button asChild className="w-full rounded-2xl h-14 font-black text-lg gap-2 shadow-lg hover:scale-105 transition-all">
+                            <Button asChild className="w-full rounded-xl h-10 font-bold text-xs mt-2">
                                 <Link href={`/admin/teacher/${teacher.uid}`}>
                                   إدارة السجلات
                                 </Link>
                             </Button>
                         </Card>
                     )) : (
-                      <div className="col-span-full py-32 text-center bg-white dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-muted">
-                         <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-20" />
-                         <p className="text-xl text-muted-foreground font-black">لا توجد سجلات طلاب مرتبطة بمعرفات حتى الآن.</p>
-                      </div>
+                      <div className="col-span-full py-20 text-center opacity-40">لا توجد بيانات طلاب حالياً.</div>
                     )}
                 </div>
             </TabsContent>
 
             <TabsContent value="messages">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {messages.length > 0 ? messages.map(msg => (
-                        <Card key={msg.id} className="border-0 shadow-xl rounded-[3rem] bg-white dark:bg-slate-900 p-10 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[5rem] -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700" />
-                            <div className="relative z-10">
-                              <div className="flex justify-between items-start mb-6">
-                                <div>
-                                  <h4 className="font-black text-2xl text-primary">{msg.name}</h4>
-                                  <p className="text-sm font-bold text-muted-foreground">{msg.email}</p>
+                        <Card key={msg.id} className="border border-slate-100 rounded-3xl p-8 bg-white dark:bg-slate-900 group">
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="space-y-1">
+                                  <h4 className="font-black text-lg text-primary">{msg.name}</h4>
+                                  <p className="text-xs font-medium text-slate-400">{msg.email}</p>
                                 </div>
-                                <div className="p-3 bg-muted rounded-2xl">
-                                  <MessageSquare className="h-6 w-6 text-slate-400" />
+                                <div className="text-[10px] font-bold text-slate-300">
+                                  {new Date(msg.createdAt?.toDate()).toLocaleDateString('ar-EG')}
                                 </div>
                               </div>
-                              <div className="bg-muted/40 p-6 rounded-[2rem] border-2 border-dashed border-muted italic text-lg leading-relaxed">
+                              <div className="bg-slate-50 p-5 rounded-2xl text-slate-600 text-sm leading-relaxed italic border border-slate-100">
                                 "{msg.message}"
                               </div>
-                              <div className="mt-6 flex justify-end">
-                                <Badge variant="secondary" className="rounded-xl font-bold px-4">{new Date(msg.createdAt?.toDate()).toLocaleDateString('ar-EG')}</Badge>
-                              </div>
-                            </div>
                         </Card>
                     )) : (
-                      <div className="col-span-full py-32 text-center bg-white dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-muted">
-                        <p className="text-xl text-muted-foreground font-black">لا توجد رسائل واردة حالياً.</p>
-                      </div>
+                      <div className="col-span-full py-20 text-center opacity-40">صندوق الرسائل فارغ.</div>
                     )}
                 </div>
             </TabsContent>

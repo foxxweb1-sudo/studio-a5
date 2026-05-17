@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -350,8 +349,8 @@ export default function AdminPage() {
                                         <ShieldAlert className="h-3 w-3" />
                                     </div>
                                 ) : u.isVerified && (
-                                    <div className="absolute -top-1 -right-1 bg-blue-500 text-white p-1 rounded-full shadow-lg border-2 border-white">
-                                        <BadgeCheck className="h-3 w-3" />
+                                    <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5 shadow-md z-10">
+                                        <BadgeCheck className="h-5 w-5 text-blue-500 fill-current" />
                                     </div>
                                 )}
                               </div>

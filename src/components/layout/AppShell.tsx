@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Settings, Home, Clock, Archive } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { ShieldCheck, Settings, Home, Clock, Archive, BadgeCheck } from 'lucide-react';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -21,10 +21,12 @@ import { ADMIN_EMAIL } from '@/lib/constants';
 import ReviewPopup from '../features/reviews/ReviewPopup';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { doc } from 'firebase/firestore';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const { config } = useAppConfig();
+  const firestore = useFirestore();
   const [time, setTime] = React.useState<Date | null>(null);
 
   React.useEffect(() => {
@@ -32,6 +34,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // جلب بيانات ملف المستخدم للتحقق من التوثيق في الهيدر
+  const userDocRef = useMemoFirebase(() => 
+    user ? doc(firestore, 'users', user.uid) : null,
+  [user, firestore]);
+  const { data: userProfile } = useDoc<any>(userDocRef);
 
   const isAdmin = React.useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
@@ -85,19 +93,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl bg-muted p-0 border overflow-hidden">
-                  <Avatar className="h-full w-full rounded-none">
-                    <AvatarImage src={user.photoURL || ''} className="object-cover" />
-                    <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-bold">
-                      {getInitials(user.displayName)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
+                <div className="relative group cursor-pointer">
+                  <Button variant="ghost" className="relative h-11 w-11 rounded-2xl bg-muted p-0 border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                    <Avatar className="h-full w-full rounded-none">
+                      <AvatarImage src={user.photoURL || ''} className="object-cover" />
+                      <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-bold">
+                        {getInitials(user.displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                  {userProfile?.isVerified && (
+                    <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5 shadow-md z-10 animate-in zoom-in duration-300">
+                      <BadgeCheck className="h-4.5 w-4.5 text-blue-500 fill-current" />
+                    </div>
+                  )}
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-64 rounded-2xl p-2 shadow-2xl" align="start">
                 <DropdownMenuLabel className="p-4 text-right">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
+                      {userProfile?.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500 fill-current" />}
+                    </div>
                     <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>

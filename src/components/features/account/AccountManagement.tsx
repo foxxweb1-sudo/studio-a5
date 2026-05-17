@@ -186,6 +186,11 @@ export default function AccountManagement() {
                     {user?.displayName?.substring(0, 2).toUpperCase() || 'U'}
                 </AvatarFallback>
             </Avatar>
+            {userProfile?.isVerified && (
+                <div className="absolute bottom-2 right-2 bg-white dark:bg-slate-900 rounded-full p-1 shadow-lg border-2 border-slate-50 dark:border-slate-800 animate-in zoom-in duration-700">
+                    <BadgeCheck className="h-8 w-8 text-blue-500 fill-current" />
+                </div>
+            )}
         </div>
         <div className="text-center space-y-1">
             <h2 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
@@ -197,8 +202,8 @@ export default function AccountManagement() {
             <div className="flex flex-col gap-1 items-center">
                 <p className="text-sm text-muted-foreground font-medium">{user?.email}</p>
                 {userProfile?.isVerified && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100 rounded-full font-bold px-3 py-0.5 text-[10px]">
-                        حساب موثق من الإدارة
+                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100 rounded-full font-bold px-3 py-0.5 text-[10px] mt-2">
+                        حساب موثق رسمياً
                     </Badge>
                 )}
             </div>

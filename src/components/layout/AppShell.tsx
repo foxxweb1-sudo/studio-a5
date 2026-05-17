@@ -114,7 +114,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
-                      {userProfile?.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500 fill-current" />}
+                      {userProfile?.isVerified && (
+                        <BadgeCheck className="h-4 w-4 text-blue-500 fill-current" />
+                      )}
                     </div>
                     <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                   </div>

@@ -10,7 +10,8 @@ import {
   Mail, 
   ExternalLink, 
   Send,
-  MessageSquare
+  MessageSquare,
+  LifeBuoy
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -102,6 +103,16 @@ export default function ContactPage() {
                     <div className="flex flex-col items-start">
                         <span className="text-xs font-bold">واتساب فريق TECH</span>
                         <span className="text-[10px] text-muted-foreground text-left font-mono">{config.contactPhone}+</span>
+                    </div>
+                </a>
+              </Button>
+
+              <Button asChild variant="outline" className="w-full justify-start h-14 rounded-2xl gap-3 border-blue-500/20 hover:bg-blue-500/5">
+                <a href={config.supportUrl} target="_blank" rel="noopener noreferrer">
+                    <LifeBuoy className="h-5 w-5 text-blue-600" />
+                    <div className="flex flex-col items-start">
+                        <span className="text-xs font-bold">الدعم الفني المباشر</span>
+                        <span className="text-[10px] text-muted-foreground">فتح تذكرة دعم جديدة</span>
                     </div>
                 </a>
               </Button>

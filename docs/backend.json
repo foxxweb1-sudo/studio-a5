@@ -158,6 +158,7 @@
         "signupBg": { "type": "string" },
         "contactPhone": { "type": "string" },
         "contactEmail": { "type": "string" },
+        "supportUrl": { "type": "string", "description": "Technical support portal URL" },
         "whatsappChannel": { "type": "string" },
         "facebook": { "type": "string" },
         "twitter": { "type": "string" },

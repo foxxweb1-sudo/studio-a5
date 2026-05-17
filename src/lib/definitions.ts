@@ -49,6 +49,7 @@ export type GlobalConfig = {
   signupBg?: string;
   contactPhone?: string;
   contactEmail?: string;
+  supportUrl?: string;
   whatsappChannel?: string;
   facebook?: string;
   twitter?: string;

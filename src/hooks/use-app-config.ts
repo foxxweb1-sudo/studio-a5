@@ -13,6 +13,7 @@ export const DEFAULT_SIGNUP_BG = "https://picsum.photos/seed/lake/1920/1080";
 
 export const DEFAULT_CONTACT_PHONE = "201121473424";
 export const DEFAULT_CONTACT_EMAIL = "techstore.eg.app@gmail.com";
+export const DEFAULT_SUPPORT_URL = "https://tech-support-team.vercel.app/support/new";
 export const DEFAULT_WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbCCufAGOj9nfuY9o93L";
 export const DEFAULT_FACEBOOK = "https://web.facebook.com/share/g/18Ky7vbzqF/";
 export const DEFAULT_TWITTER = "https://x.com/tqnyt170296";
@@ -36,6 +37,7 @@ export function useAppConfig() {
     signupBg: config?.signupBg || DEFAULT_SIGNUP_BG,
     contactPhone: config?.contactPhone || DEFAULT_CONTACT_PHONE,
     contactEmail: config?.contactEmail || DEFAULT_CONTACT_EMAIL,
+    supportUrl: config?.supportUrl || DEFAULT_SUPPORT_URL,
     whatsappChannel: config?.whatsappChannel || DEFAULT_WHATSAPP_CHANNEL,
     facebook: config?.facebook || DEFAULT_FACEBOOK,
     twitter: config?.twitter || DEFAULT_TWITTER,
@@ -48,6 +50,7 @@ export function useAppConfig() {
     config?.signupBg,
     config?.contactPhone,
     config?.contactEmail,
+    config?.supportUrl,
     config?.whatsappChannel,
     config?.facebook,
     config?.twitter,

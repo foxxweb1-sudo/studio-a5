@@ -27,7 +27,8 @@ import {
   Mail,
   Facebook,
   Twitter,
-  Send
+  Send,
+  LifeBuoy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -47,6 +48,7 @@ export default function AdminAppSettingsPage() {
     signupBg: '',
     contactPhone: '',
     contactEmail: '',
+    supportUrl: '',
     whatsappChannel: '',
     facebook: '',
     twitter: '',
@@ -75,6 +77,7 @@ export default function AdminAppSettingsPage() {
         signupBg: config.signupBg || '',
         contactPhone: config.contactPhone || '',
         contactEmail: config.contactEmail || '',
+        supportUrl: config.supportUrl || '',
         whatsappChannel: config.whatsappChannel || '',
         facebook: config.facebook || '',
         twitter: config.twitter || '',
@@ -134,7 +137,6 @@ export default function AdminAppSettingsPage() {
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-40 px-4 relative">
-      {/* هيدر ثابت يحتوي على أزرار الحفظ والرجوع */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">إعدادات النظام</PageHeaderTitle>
@@ -260,6 +262,15 @@ export default function AdminAppSettingsPage() {
                     onChange={(e) => setFormData({...formData, contactEmail: e.target.value})}
                     placeholder="support@example.com"
                     className="rounded-xl h-11 font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold">رابط تذاكر الدعم الفني</Label>
+                  <Input 
+                    value={formData.supportUrl}
+                    onChange={(e) => setFormData({...formData, supportUrl: e.target.value})}
+                    placeholder="https://support-portal.com/new"
+                    className="rounded-xl h-11 font-mono text-xs"
                   />
                 </div>
               </CardContent>

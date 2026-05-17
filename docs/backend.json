@@ -155,7 +155,8 @@
         "appName": { "type": "string" },
         "appLogo": { "type": "string" },
         "loginBg": { "type": "string" },
-        "signupBg": { "type": "string" }
+        "signupBg": { "type": "string" },
+        "lastRulesUpdate": { "type": "string", "format": "date-time" }
       }
     }
   },

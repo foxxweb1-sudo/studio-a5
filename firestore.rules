@@ -47,5 +47,8 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // Security Rules Sync: Last update triggered on 2024-05-20 12:00:00
+    // This comment ensures that the security rules file is considered updated by the watcher.
   }
 }

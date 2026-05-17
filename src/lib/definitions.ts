@@ -30,6 +30,8 @@ export type AttendanceRecord = {
   createdAt: FieldValue;
 };
 
+export type NewPayment = Omit<PaymentRecord, 'id' | 'createdAt' | 'date'>;
+
 export type PaymentRecord = {
   id: string;
   studentId: string;
@@ -39,12 +41,11 @@ export type PaymentRecord = {
   createdAt: FieldValue;
 };
 
-export type NewPayment = Omit<PaymentRecord, 'id' | 'createdAt' | 'date'>;
-
 export type GlobalConfig = {
   id: string;
   appName?: string;
   appLogo?: string;
   loginBg?: string;
   signupBg?: string;
+  lastRulesUpdate?: FieldValue;
 };

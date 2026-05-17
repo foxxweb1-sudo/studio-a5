@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -26,10 +26,13 @@ import {
   Trash2,
   CalendarClock,
   GraduationCap,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Star,
+  ShieldAlert,
+  Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import Link from 'next/link';
@@ -39,7 +42,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Info } from 'lucide-react';
-import { DeletionRequest } from '@/lib/definitions';
+import { DeletionRequest, Review } from '@/lib/definitions';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
@@ -58,15 +61,21 @@ export default function AdminPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [manualUid, setManualUid] = useState('');
+  const [reviewUid, setReviewUid] = useState('');
   const [isProcessingManual, setIsProcessingManual] = useState(false);
+  const [isGrantingReview, setIsProcessingReview] = useState(false);
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
-  // جلب طلبات الحذف من المجموعة المستقلة
   const deletionRequestsQuery = useMemoFirebase(() => 
     firestore ? collection(firestore, 'deletionRequests') : null,
   [firestore]);
   const { data: deletionRequests, isLoading: deletionLoading } = useCollection<DeletionRequest>(deletionRequestsQuery);
+
+  const reviewsQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'reviews'), orderBy('createdAt', 'desc')) : null,
+  [firestore]);
+  const { data: reviews, isLoading: reviewsLoading } = useCollection<Review>(reviewsQuery);
 
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
@@ -112,6 +121,31 @@ export default function AdminPage() {
       toast({ variant: "destructive", title: "خطأ في المعرف" });
     } finally {
       setIsProcessingManual(false);
+    }
+  };
+
+  const handleGrantReview = async () => {
+    if (!reviewUid.trim() || !firestore) return;
+    setIsProcessingReview(true);
+    try {
+      const permRef = doc(firestore, 'reviewPermissions', reviewUid.trim());
+      await setDoc(permRef, { canReview: true, grantedAt: serverTimestamp() });
+      toast({ title: "تم منح الإذن بنجاح", description: "سيظهر نموذج التقييم للمستخدم الآن." });
+      setReviewUid('');
+    } catch (error) {
+      toast({ variant: "destructive", title: "خطأ في منح الإذن" });
+    } finally {
+      setIsProcessingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'reviews', reviewId));
+      toast({ title: "تم حذف التقييم" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "فشل الحذف" });
     }
   };
 
@@ -175,11 +209,12 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
             { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50', loading: loadingStudents },
             { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50', loading: usersLoading },
             { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50', loading: false },
+            { label: 'التقييمات', value: reviews?.length || 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-50', loading: reviewsLoading },
             { label: 'طلبات الحذف', value: activeDeletionCount, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: deletionLoading },
         ].map((stat, i) => (
             <Card key={i} className={`border-0 shadow-sm hover-lift`}>
@@ -199,6 +234,7 @@ export default function AdminPage() {
        <Tabs defaultValue="users" className="w-full">
             <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 w-full flex overflow-x-auto justify-start h-auto">
                 <TabsTrigger value="users" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المستخدمين</TabsTrigger>
+                <TabsTrigger value="reviews" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">التقييمات</TabsTrigger>
                 <TabsTrigger value="deletions" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial relative">
                     طلبات الحذف
                     {activeDeletionCount > 0 && (
@@ -253,6 +289,7 @@ export default function AdminPage() {
                             <div>
                               <h4 className="font-bold text-sm">{u.displayName || 'مستخدم'}</h4>
                               <p className="text-[10px] text-muted-foreground font-mono truncate w-[140px]">{u.email}</p>
+                              <code className="text-[8px] opacity-40 select-all">{u.uid}</code>
                             </div>
                             <Button variant={u.isBlocked ? "secondary" : "ghost"} onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} className={`w-full rounded-xl font-bold h-9 text-xs ${u.isBlocked ? 'text-emerald-600' : 'text-rose-600 hover:bg-rose-50'}`}>
                               {u.isBlocked ? "إلغاء الحظر" : "حظر الحساب"}
@@ -260,6 +297,72 @@ export default function AdminPage() {
                           </CardContent>
                         </Card>
                     ))}
+                  </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="reviews">
+                <div className="space-y-6">
+                  {/* منح إذن تقييم */}
+                  <Card className="border-2 border-amber-500/10 shadow-none rounded-3xl overflow-hidden bg-amber-500/5">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col lg:flex-row gap-4 items-end">
+                        <div className="space-y-2 flex-grow w-full">
+                          <label className="text-xs font-bold text-amber-600 px-1 flex items-center gap-2">
+                            <Star className="h-4 w-4" />
+                            منح إذن تقييم للمستخدم (UID)
+                          </label>
+                          <Input 
+                            placeholder="أدخل الـ UID لإظهار نموذج التقييم للمستخدم..." 
+                            className="h-12 bg-white rounded-xl border-amber-100"
+                            value={reviewUid}
+                            onChange={(e) => setReviewUid(e.target.value)}
+                          />
+                        </div>
+                        <Button className="rounded-xl h-12 font-bold px-8 bg-amber-600 hover:bg-amber-700 w-full lg:w-auto" onClick={handleGrantReview} disabled={isGrantingReview || !reviewUid.trim()}>
+                           {isGrantingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                           منح الإذن
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* قائمة التقييمات */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {reviews?.map((rev) => (
+                      <Card key={rev.id} className="border-0 shadow-sm bg-white overflow-hidden rounded-[2rem]">
+                        <CardHeader className="p-5 pb-2 flex flex-row items-center justify-between">
+                           <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={rev.userPhoto} />
+                                <AvatarFallback className="bg-amber-100 text-amber-600 font-bold">{rev.userName?.substring(0,1)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h4 className="font-bold text-xs">{rev.userName}</h4>
+                                <div className="flex text-amber-400">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star key={i} className={`h-3 w-3 ${i < rev.rating ? 'fill-current' : 'text-slate-200'}`} />
+                                  ))}
+                                </div>
+                              </div>
+                           </div>
+                           <Button variant="ghost" size="icon" className="text-rose-500 rounded-full" onClick={() => handleDeleteReview(rev.id)}>
+                              <Trash2 className="h-4 w-4" />
+                           </Button>
+                        </CardHeader>
+                        <CardContent className="p-5 pt-0">
+                           <div className="p-4 bg-slate-50 rounded-2xl text-xs text-slate-600 leading-relaxed min-h-[60px]">
+                              "{rev.comment}"
+                           </div>
+                           <p className="text-[9px] text-slate-400 mt-2 font-mono">UID: {rev.userId}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {(!reviews || reviews.length === 0) && !reviewsLoading && (
+                      <div className="col-span-full py-20 text-center text-slate-400 font-bold bg-slate-50 rounded-[2rem] border border-dashed">
+                        لا توجد تقييمات منشورة حالياً.
+                      </div>
+                    )}
                   </div>
                 </div>
             </TabsContent>

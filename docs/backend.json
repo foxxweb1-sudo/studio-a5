@@ -171,6 +171,29 @@
       },
       "required": ["name", "message", "createdAt"]
     },
+    "Review": {
+      "title": "Review",
+      "type": "object",
+      "description": "Stores application reviews from users.",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "rating", "createdAt"]
+    },
+    "ReviewPermission": {
+      "title": "ReviewPermission",
+      "type": "object",
+      "description": "Indicates if a user has permission to submit a review.",
+      "properties": {
+        "canReview": { "type": "boolean" },
+        "grantedAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "GlobalConfig": {
       "title": "GlobalConfig",
       "type": "object",
@@ -217,6 +240,26 @@
             "$ref": "#/backend/entities/DeletionRequest"
           },
           "description": "Stores active account deletion requests."
+        }
+      },
+      {
+        "path": "/reviewPermissions/{userId}",
+        "definition": {
+          "entityName": "ReviewPermission",
+          "schema": {
+             "$ref": "#/backend/entities/ReviewPermission"
+          },
+          "description": "Permissions for users to write reviews."
+        }
+      },
+      {
+        "path": "/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+             "$ref": "#/backend/entities/Review"
+          },
+          "description": "Public application reviews."
         }
       },
       {

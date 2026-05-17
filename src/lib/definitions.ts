@@ -22,6 +22,16 @@ export type DeletionRequest = {
   studentCount: number;
 };
 
+export type Review = {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  rating: number;
+  comment: string;
+  createdAt: FieldValue | any;
+};
+
 export type Student = {
   id: string;
   name: string;

@@ -25,7 +25,9 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  Info
+  Info,
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -161,6 +163,25 @@ export default function AdminPage() {
     });
   }, [allStudents, users]);
 
+  const deletionRequests = useMemo(() => {
+    return users.filter(u => !!u.deletionRequestedAt);
+  }, [users]);
+
+  const calculateRemainingTime = (requestedAt: any) => {
+    if (!requestedAt) return "غير معروف";
+    const date = requestedAt.toDate ? requestedAt.toDate() : new Date(requestedAt);
+    const executionDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const diff = executionDate.getTime() - now.getTime();
+    
+    if (diff <= 0) return "بانتظار التنفيذ";
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    return `${days} يوم و ${hours} ساعة`;
+  };
+
   if (isUserLoading || !isAdmin) {
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-6">
@@ -195,13 +216,11 @@ export default function AdminPage() {
             { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
             { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50' },
             { 
-              label: 'مزامنة القواعد', 
-              value: 'تحديث الآن', 
-              icon: RefreshCw, 
-              color: 'text-amber-500', 
-              bg: 'bg-amber-50',
-              onClick: handleUpdateRules,
-              loading: isUpdatingRules
+              label: 'طلبات الحذف', 
+              value: deletionRequests.length, 
+              icon: Trash2, 
+              color: 'text-rose-500', 
+              bg: 'bg-rose-50'
             },
         ].map((stat, i) => (
             <Card key={i} className={`border-0 shadow-sm hover-lift ${stat.onClick ? 'cursor-pointer' : ''}`} onClick={stat.onClick}>
@@ -221,6 +240,14 @@ export default function AdminPage() {
        <Tabs defaultValue="users" className="w-full">
             <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 w-full flex overflow-x-auto justify-start h-auto">
                 <TabsTrigger value="users" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المستخدمين</TabsTrigger>
+                <TabsTrigger value="deletions" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial relative">
+                    طلبات الحذف
+                    {deletionRequests.length > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] text-white">
+                        {deletionRequests.length}
+                      </span>
+                    )}
+                </TabsTrigger>
                 <TabsTrigger value="teacher-uids" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المعرفات</TabsTrigger>
                 <TabsTrigger value="messages" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">الرسائل</TabsTrigger>
             </TabsList>
@@ -298,6 +325,57 @@ export default function AdminPage() {
                         </Card>
                     ))}
                   </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="deletions">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {deletionRequests.map((req) => (
+                    <Card key={req.uid} className="border-0 shadow-lg rounded-3xl overflow-hidden bg-white border-t-4 border-rose-500">
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-12 w-12 border-2 border-rose-100">
+                            <AvatarImage src={req.photoURL} />
+                            <AvatarFallback>{req.displayName?.substring(0, 2)}</AvatarFallback>
+                          </Avatar>
+                          <div className="overflow-hidden">
+                            <h4 className="font-black text-sm truncate">{req.displayName}</h4>
+                            <p className="text-[10px] text-muted-foreground truncate">{req.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-rose-50 p-4 rounded-2xl space-y-3">
+                          <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className="text-rose-600 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              الوقت المتبقي:
+                            </span>
+                            <span className="text-rose-700">{calculateRemainingTime(req.deletionRequestedAt)}</span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <span className="text-[9px] text-rose-400 font-bold block uppercase">معرف المستخدم (UID)</span>
+                            <code className="text-[9px] block bg-white/50 p-2 rounded-lg font-mono break-all text-rose-900/70 border border-rose-100">
+                              {req.uid}
+                            </code>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                          <p className="text-[10px] text-amber-700 leading-relaxed">
+                            سيتم حذف كافة بيانات الطلاب والمدفوعات الخاصة بهذا المعرف تلقائياً عند انتهاء المدة.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {deletionRequests.length === 0 && (
+                    <div className="col-span-full py-20 text-center space-y-4 opacity-40">
+                      <Trash2 className="h-20 w-20 mx-auto text-slate-300" />
+                      <p className="text-xl font-black">لا توجد طلبات حذف معلقة</p>
+                    </div>
+                  )}
                 </div>
             </TabsContent>
 

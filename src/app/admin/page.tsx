@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -17,15 +17,16 @@ import {
   MessageSquare,
   ShieldCheck,
   UserCircle,
-  ExternalLink,
   Mail,
   Ban,
   ShieldAlert,
   UserX,
-  Fingerprint
+  Fingerprint,
+  Search,
+  UserCheck
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,15 +35,20 @@ import Link from 'next/link';
 import { useAllUsers } from '@/hooks/use-app-data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [manualUid, setManualUid] = useState('');
+  const [isProcessingManual, setIsProcessingManual] = useState(false);
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
@@ -60,7 +66,6 @@ export default function AdminPage() {
 
     setLoading(true);
 
-    // جلب كافة الطلاب من كافة المسارات لحساب العدد لكل معلم
     const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
       const list = snap.docs.map(doc => {
         const pathSegments = doc.ref.path.split('/');
@@ -82,7 +87,37 @@ export default function AdminPage() {
     };
   }, [firestore, isAdmin, isUserLoading, router]);
 
-  // استخراج المعرفات التي لديها طلاب فقط
+  const handleManualBlock = async (action: 'block' | 'unblock') => {
+    if (!manualUid.trim() || !firestore) return;
+    
+    setIsProcessingManual(true);
+    try {
+      const userRef = doc(firestore, 'users', manualUid.trim());
+      const userSnap = await getDoc(userRef);
+      
+      const status = action === 'block';
+      
+      await setDoc(userRef, { 
+        isBlocked: status,
+        updatedAt: new Date()
+      }, { merge: true });
+
+      toast({
+        title: status ? "تم الحظر" : "تم إلغاء الحظر",
+        description: `تم تحديث حالة المعرف ${manualUid} بنجاح.`,
+      });
+      setManualUid('');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "تعذر تحديث حالة الحظر. تأكد من صحة الـ UID."
+      });
+    } finally {
+      setIsProcessingManual(false);
+    }
+  };
+
   const uidsWithStudents = useMemo(() => {
     const uids = Array.from(new Set(allStudents.map(s => s.teacherUid)));
     return uids.map(uid => {
@@ -152,72 +187,123 @@ export default function AdminPage() {
             </TabsList>
             
             <TabsContent value="users">
-                <div className="space-y-6">
-                  <div className="text-right px-4">
-                    <h3 className="text-xl font-black">إدارة مستخدمي الموقع ({users.length})</h3>
-                    <p className="text-sm text-muted-foreground">عرض كافة الحسابات المسجلة وإمكانية حظرها من الوصول.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {usersLoading ? (
-                       <div className="col-span-full py-20 flex flex-col items-center gap-4">
-                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                         <span className="font-bold">جاري جلب المستخدمين...</span>
-                       </div>
-                    ) : users.length > 0 ? users.map((u) => (
-                        <Card 
-                          key={u.uid} 
-                          className={`group border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-xl ${u.isBlocked ? 'border-2 border-rose-500/50 grayscale opacity-75' : ''}`}
-                        >
-                          <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
-                            <div className="relative">
-                              <Avatar className="h-20 w-20 border-4 border-primary/10">
-                                <AvatarImage src={u.photoURL} />
-                                <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">
-                                  {u.displayName?.substring(0, 2).toUpperCase() || 'U'}
-                                </AvatarFallback>
-                              </Avatar>
-                              {u.isBlocked && (
-                                <div className="absolute -top-1 -right-1 bg-rose-500 text-white p-1 rounded-full border-2 border-white shadow-lg">
-                                  <Ban className="h-4 w-4" />
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="space-y-1">
-                              <h4 className="font-black text-lg">{u.displayName || 'مستخدم جديد'}</h4>
-                              <p className="text-xs text-muted-foreground">{u.email}</p>
-                              <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70">
-                                UID: {u.uid}
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
-                              <Button 
-                                variant={u.isBlocked ? "outline" : "destructive"} 
-                                onClick={() => toggleUserBlock(u.id, !!u.isBlocked)}
-                                className="w-full rounded-xl font-bold gap-2 h-11 transition-all"
-                              >
-                                {u.isBlocked ? (
-                                  <>
-                                    <ShieldAlert className="h-4 w-4" />
-                                    إلغاء حظر المستخدم
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserX className="h-4 w-4" />
-                                    حظر من الوصول
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                    )) : (
-                      <div className="col-span-full py-20 text-center text-muted-foreground font-bold bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
-                        لا يوجد مستخدمون مسجلون حالياً.
+                <div className="space-y-8">
+                  {/* قسم الحظر اليدوي */}
+                  <Card className="border-0 shadow-lg rounded-[2rem] bg-slate-900 text-white overflow-hidden">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <Ban className="h-5 w-5 text-rose-500" />
+                        حظر يدوي بواسطة المعرف (UID)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4 space-y-4">
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-grow">
+                          <Fingerprint className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                          <Input 
+                            placeholder="أدخل الـ UID المراد حظره..." 
+                            className="bg-slate-800 border-slate-700 h-12 pr-10 rounded-xl text-white placeholder:text-slate-500 focus-visible:ring-primary"
+                            value={manualUid}
+                            onChange={(e) => setManualUid(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="destructive" 
+                            className="rounded-xl h-12 font-bold px-6 flex-grow sm:flex-grow-0"
+                            onClick={() => handleManualBlock('block')}
+                            disabled={isProcessingManual || !manualUid.trim()}
+                          >
+                            {isProcessingManual ? <Loader2 className="h-4 w-4 animate-spin" /> : "حظر الآن"}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="rounded-xl h-12 font-bold px-6 border-slate-700 hover:bg-slate-800 text-white flex-grow sm:flex-grow-0"
+                            onClick={() => handleManualBlock('unblock')}
+                            disabled={isProcessingManual || !manualUid.trim()}
+                          >
+                            إلغاء الحظر
+                          </Button>
+                        </div>
                       </div>
-                    )}
+                      <p className="text-[10px] text-slate-400 font-bold">
+                        * ملاحظة: يمكنك حظر أي UID حتى لو لم يكن مسجلاً في القائمة أدناه؛ سيتم منعه بمجرد محاولته دخول الموقع.
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <div className="space-y-6">
+                    <div className="text-right px-4 flex justify-between items-end">
+                      <div>
+                        <h3 className="text-xl font-black">إدارة مستخدمي الموقع ({users.length})</h3>
+                        <p className="text-sm text-muted-foreground">عرض كافة الحسابات المسجلة وإمكانية حظرها.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {usersLoading ? (
+                        <div className="col-span-full py-20 flex flex-col items-center gap-4">
+                          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                          <span className="font-bold">جاري جلب المستخدمين...</span>
+                        </div>
+                      ) : users.length > 0 ? users.map((u) => (
+                          <Card 
+                            key={u.uid} 
+                            className={`group border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 overflow-hidden transition-all hover:shadow-xl ${u.isBlocked ? 'border-2 border-rose-500/50 grayscale opacity-75 shadow-rose-500/5' : ''}`}
+                          >
+                            <CardContent className="p-8 flex flex-col items-center gap-4 text-center">
+                              <div className="relative">
+                                <Avatar className="h-20 w-20 border-4 border-primary/10">
+                                  <AvatarImage src={u.photoURL} />
+                                  <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">
+                                    {u.displayName?.substring(0, 2).toUpperCase() || 'U'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                {u.isBlocked && (
+                                  <div className="absolute -top-1 -right-1 bg-rose-500 text-white p-1 rounded-full border-2 border-white shadow-lg">
+                                    <Ban className="h-4 w-4" />
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="space-y-1">
+                                <h4 className="font-black text-lg">{u.displayName || 'مستخدم جديد'}</h4>
+                                <p className="text-xs text-muted-foreground">{u.email}</p>
+                                <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70 cursor-pointer hover:bg-primary/5 transition-colors" onClick={() => {
+                                  setManualUid(u.uid);
+                                  toast({ title: "تم نسخ الـ UID", description: "يمكنك الآن تعديله في حقل الحظر اليدوي." });
+                                }}>
+                                  UID: {u.uid}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
+                                <Button 
+                                  variant={u.isBlocked ? "outline" : "destructive"} 
+                                  onClick={() => toggleUserBlock(u.id, !!u.isBlocked)}
+                                  className="w-full rounded-xl font-bold gap-2 h-11 transition-all"
+                                >
+                                  {u.isBlocked ? (
+                                    <>
+                                      <UserCheck className="h-4 w-4" />
+                                      إلغاء حظر المستخدم
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShieldAlert className="h-4 w-4" />
+                                      حظر من الوصول
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                      )) : (
+                        <div className="col-span-full py-20 text-center text-muted-foreground font-bold bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
+                          لا يوجد مستخدمون مسجلون حالياً.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
             </TabsContent>
@@ -262,7 +348,7 @@ export default function AdminPage() {
                             <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
                               <Button asChild variant="default" className="w-full rounded-xl h-12 font-bold bg-primary shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
                                 <Link href={`/admin/teacher/${teacher.uid}`}>
-                                  <ExternalLink className="h-4 w-4 ms-2" />
+                                  <Search className="h-4 w-4 ms-2" />
                                   إدارة طلاب هذا المعرف
                                 </Link>
                               </Button>

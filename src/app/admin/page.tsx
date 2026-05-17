@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, getDocs, query, orderBy, collectionGroup, doc, deleteDoc, where, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, collectionGroup, doc, deleteDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   PageHeader,
@@ -25,7 +24,9 @@ import {
   Search,
   School,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Fingerprint,
+  Copy
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -43,7 +44,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ADMIN_UID } from '@/lib/constants';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -195,6 +196,7 @@ function TeacherStudentsModal({ teacher, onClose, onDeleteStudent }: { teacher: 
 
 function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId: string) => void }) {
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [teachers, setTeachers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -205,7 +207,6 @@ function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId:
             if (!firestore) return;
             setLoading(true);
             try {
-                // جلب كافة المعلمين بدون ترتيب سيرفر لضمان جلب من ليس لديهم displayName
                 const snapshot = await getDocs(collection(firestore, 'users'));
                 const teachersData = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
                 
@@ -222,9 +223,18 @@ function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId:
         fetchTeachers();
     }, [firestore]);
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: "تم النسخ",
+            description: "تم نسخ UID إلى الحافظة.",
+        });
+    };
+
     const filteredTeachers = teachers.filter(t => 
         (t.displayName?.toLowerCase().includes(searchTerm.toLowerCase())) || 
-        (t.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+        (t.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (t.uid?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     if (loading) return <div className="flex justify-center h-48 items-center"><Loader2 className="animate-spin text-primary" /></div>;
@@ -234,13 +244,13 @@ function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId:
             <CardHeader className="bg-muted/30">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
-                        <CardTitle>قائمة المعلمين</CardTitle>
-                        <CardDescription>عرض جميع مستخدمي النظام المسجلين وإدارة طلابهم.</CardDescription>
+                        <CardTitle>قائمة الحسابات المسجلة</CardTitle>
+                        <CardDescription>إدارة جميع المعلمين والوصول إلى بياناتهم ومعرفاتهم التقنية.</CardDescription>
                     </div>
                     <div className="relative w-full md:w-64">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="بحث بالاسم أو الإيميل..." 
+                            placeholder="بحث بالاسم أو UID..." 
                             className="pr-10 rounded-xl bg-white" 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -253,26 +263,48 @@ function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId:
                     <Table>
                         <TableHeader className="bg-muted/50 sticky top-0 z-10">
                             <TableRow>
-                                <TableHead className="text-right">الاسم</TableHead>
-                                <TableHead className="text-right">البريد الإلكتروني</TableHead>
-                                <TableHead className="text-center">الإجراءات</TableHead>
+                                <TableHead className="text-right">المعلم</TableHead>
+                                <TableHead className="text-right">UID (معرف المستخدم)</TableHead>
+                                <TableHead className="text-center">الطلاب</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredTeachers.length > 0 ? (
                                 filteredTeachers.map(teacher => (
                                     <TableRow key={teacher.uid} className="hover:bg-muted/20">
-                                        <TableCell className="font-bold">{teacher.displayName || 'بدون اسم'}</TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">{teacher.email}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold">{teacher.displayName || 'بدون اسم'}</span>
+                                                <span className="text-[10px] text-muted-foreground">{teacher.email}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 group">
+                                                <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center gap-2 border">
+                                                    <Fingerprint className="h-3 w-3 text-primary" />
+                                                    <code className="text-[10px] font-mono tracking-tighter text-emerald-600 dark:text-emerald-400">
+                                                        {teacher.uid}
+                                                    </code>
+                                                </div>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => copyToClipboard(teacher.uid)}
+                                                >
+                                                    <Copy className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="text-center">
                                             <Button 
-                                                variant="ghost" 
+                                                variant="outline" 
                                                 size="sm" 
-                                                className="rounded-xl hover:bg-primary/10 hover:text-primary gap-1"
+                                                className="rounded-xl hover:bg-primary/10 hover:text-primary gap-1 border-primary/20 text-xs font-bold"
                                                 onClick={() => setSelectedTeacher(teacher)}
                                             >
                                                 إدارة الطلاب
-                                                <ChevronRight className="h-4 w-4" />
+                                                <ChevronRight className="h-3 w-3" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -280,7 +312,7 @@ function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId:
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={3} className="h-48 text-center text-muted-foreground">
-                                        لم يتم العثور على أي معلمين.
+                                        لم يتم العثور على أي حسابات.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -296,20 +328,17 @@ function TeachersList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId:
 function AllStudentsList({ onDeleteStudent }: { onDeleteStudent: (sId: string, tId: string) => void }) {
   const firestore = useFirestore();
   const [allStudents, setAllStudents] = useState<any[]>([]);
-  const [teachersMap, setTeachersMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        // Fetch teachers to map UIDs to Names
         const teachersSnapshot = await getDocs(collection(firestore!, 'users'));
         const tMap: Record<string, string> = {};
         teachersSnapshot.forEach(doc => {
             tMap[doc.id] = doc.data().displayName || doc.data().email || 'مجهول';
         });
-        setTeachersMap(tMap);
 
         const studentsQuery = query(collectionGroup(firestore!, 'students'));
         const studentsSnapshot = await getDocs(studentsQuery);
@@ -327,10 +356,9 @@ function AllStudentsList({ onDeleteStudent }: { onDeleteStudent: (sId: string, t
           };
         });
 
-        // ترتيب في المتصفح حسب التاريخ
         studentsData.sort((a, b) => {
-          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
-          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+          const dateA = a.createdAt?.toDate?.() || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || new Date(0);
           return dateB.getTime() - dateA.getTime();
         });
 

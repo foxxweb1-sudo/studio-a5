@@ -21,8 +21,8 @@ import {
   Settings,
   RefreshCw,
   Database,
-  ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -72,7 +72,6 @@ export default function AdminPage() {
         const teacherUid = pathSegments[1]; 
         return { id: doc.id, teacherUid, ...doc.data() };
       });
-      allStudents.length === 0 && setAllStudents(list); // Prevent redundant sets if needed
       setAllStudents(list);
       setLoading(false);
     });
@@ -162,13 +161,13 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-20 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-8 pb-20 max-w-7xl mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
           <PageHeaderDescription>إدارة المستخدمين والأنظمة المركزية</PageHeaderDescription>
         </PageHeader>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2">
               <Settings className="h-4 w-4" />
               إعدادات الهوية
@@ -210,10 +209,10 @@ export default function AdminPage() {
       </div>
 
        <Tabs defaultValue="users" className="w-full">
-            <TabsList className="bg-slate-100 p-1 rounded-xl mb-6">
-                <TabsTrigger value="users" className="rounded-lg px-6 font-bold">المستخدمين</TabsTrigger>
-                <TabsTrigger value="teacher-uids" className="rounded-lg px-6 font-bold">المعرفات</TabsTrigger>
-                <TabsTrigger value="messages" className="rounded-lg px-6 font-bold">الرسائل</TabsTrigger>
+            <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 w-full flex overflow-x-auto justify-start h-auto">
+                <TabsTrigger value="users" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المستخدمين</TabsTrigger>
+                <TabsTrigger value="teacher-uids" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المعرفات</TabsTrigger>
+                <TabsTrigger value="messages" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">الرسائل</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users">
@@ -267,10 +266,10 @@ export default function AdminPage() {
                             </Avatar>
                             <div>
                               <h4 className="font-bold text-sm">{u.displayName || 'مستخدم'}</h4>
-                              <p className="text-[10px] text-slate-400 font-mono">{u.email}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">{u.email}</p>
                             </div>
                             <code 
-                              className="text-[9px] bg-slate-100 px-2 py-1 rounded cursor-pointer hover:bg-primary/10"
+                              className="text-[9px] bg-muted px-2 py-1 rounded cursor-pointer hover:bg-primary/10 transition-colors"
                               onClick={() => {
                                 setManualUid(u.uid);
                                 toast({ title: "تم النسخ" });
@@ -295,13 +294,13 @@ export default function AdminPage() {
             <TabsContent value="teacher-uids">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {uidsWithStudents.map((teacher) => (
-                        <Card key={teacher.uid} className="border-0 shadow-sm p-6 text-center flex flex-col items-center gap-4">
+                        <Card key={teacher.uid} className="border-0 shadow-sm p-6 text-center flex flex-col items-center gap-4 bg-white">
                              <div className="p-3 bg-primary/5 rounded-xl text-primary">
                                 <Database className="h-6 w-6" />
                             </div>
-                            <div>
+                            <div className="space-y-1">
                               <h4 className="font-bold text-sm">{teacher.displayName}</h4>
-                              <p className="text-[10px] text-slate-400">{teacher.email}</p>
+                              <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">{teacher.email}</p>
                             </div>
                             <Badge variant="secondary" className="rounded-full px-4 font-bold">
                                 {teacher.count} طلاب
@@ -317,49 +316,47 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="messages">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {messages.map(msg => (
                         <Card 
                           key={msg.id} 
-                          className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer bg-white group rounded-[1.5rem] overflow-hidden"
+                          className="border-0 shadow-sm hover:shadow-md transition-all cursor-pointer bg-white group rounded-[1.5rem] overflow-hidden flex flex-col h-full border-t-4 border-t-primary/10"
                           onClick={() => router.push(`/admin/messages/${msg.id}`)}
                         >
-                          <CardContent className="p-5 flex flex-col h-full">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                  <div className="p-2 bg-primary/5 rounded-lg text-primary">
-                                    <MessageSquare className="h-4 w-4" />
+                          <CardContent className="p-6 flex flex-col h-full gap-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2.5 bg-primary/5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <MessageSquare className="h-5 w-5" />
                                   </div>
-                                  <div>
+                                  <div className="overflow-hidden">
                                     <h4 className="font-bold text-sm text-slate-800 line-clamp-1">{msg.name}</h4>
-                                    <p className="text-[10px] text-slate-400 font-mono">{msg.email}</p>
+                                    <p className="text-[10px] text-muted-foreground font-mono truncate">{msg.email}</p>
                                   </div>
-                                </div>
-                                <div className="text-[9px] text-slate-300 font-bold">
-                                  {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
                                 </div>
                               </div>
-                              <div className="flex-grow bg-slate-50 p-3 rounded-xl text-slate-500 text-xs italic line-clamp-2 border border-slate-100">
+
+                              <div className="flex-grow bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl text-slate-600 dark:text-slate-300 text-xs italic leading-relaxed line-clamp-3 border border-slate-100 dark:border-slate-800">
                                 "{msg.message}"
                               </div>
-                              <div className="mt-4 flex justify-between items-center pt-3 border-t border-slate-50">
+
+                              <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800">
+                                <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground font-bold">
+                                  <Clock className="h-3 w-3" />
+                                  {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
+                                </div>
                                 <span className="text-[10px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                                   عرض التفاصيل
                                   <ChevronRight className="h-3 w-3" />
                                 </span>
-                                {msg.whatsapp && (
-                                  <Badge variant="outline" className="text-[9px] border-emerald-100 text-emerald-600 bg-emerald-50 rounded-md px-2">
-                                    WhatsApp
-                                  </Badge>
-                                )}
                               </div>
                           </CardContent>
                         </Card>
                     ))}
                     {messages.length === 0 && (
                       <div className="col-span-full py-20 text-center text-slate-400">
-                         <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                         <p className="font-bold">لا توجد رسائل تواصل حالياً</p>
+                         <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-10" />
+                         <p className="font-bold text-lg">لا توجد رسائل تواصل حالياً</p>
                       </div>
                     )}
                 </div>

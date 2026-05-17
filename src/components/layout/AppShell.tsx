@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, UserCircle2, ShieldCheck, Settings, Home } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
+import { useAppConfig } from '@/hooks/use-app-config';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -23,6 +24,7 @@ import { ADMIN_EMAIL } from '@/lib/constants';
 export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const { user } = useUser();
+  const { config } = useAppConfig();
   const [currentDateTime, setCurrentDateTime] = React.useState<Date | null>(null);
 
   const isAdmin = React.useMemo(() => user?.email === ADMIN_EMAIL, [user]);
@@ -61,14 +63,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/" className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white">
                 <Image 
-                  src="https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19"
+                  src={config.appLogo}
                   alt="Logo"
                   fill
                   className="object-contain"
                 />
               </div>
               <h1 className="font-bold text-xl tracking-tight hidden sm:block">
-                الحضور
+                {config.appName}
               </h1>
             </Link>
           </div>

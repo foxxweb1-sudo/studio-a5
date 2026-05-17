@@ -146,6 +146,17 @@
         }
       },
       "required": ["name", "message", "createdAt"]
+    },
+    "GlobalConfig": {
+      "title": "GlobalConfig",
+      "type": "object",
+      "description": "Stores global application settings.",
+      "properties": {
+        "appName": { "type": "string" },
+        "appLogo": { "type": "string" },
+        "loginBg": { "type": "string" },
+        "signupBg": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -203,6 +214,16 @@
             "$ref": "#/backend/entities/ContactMessage"
           },
           "description": "Stores messages sent via the contact form."
+        }
+      },
+      {
+        "path": "/appConfig/{configId}",
+        "definition": {
+          "entityName": "GlobalConfig",
+          "schema": {
+            "$ref": "#/backend/entities/GlobalConfig"
+          },
+          "description": "Stores global application configuration like logo and backgrounds."
         }
       }
     ]

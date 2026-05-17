@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
+import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Loader2 } from "lucide-react";
@@ -35,6 +37,7 @@ const formSchema = z.object({
 
 export default function ForgotPassword() {
   const auth = useAuth();
+  const { config } = useAppConfig();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
@@ -69,12 +72,12 @@ export default function ForgotPassword() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
       <Image
-        src="https://picsum.photos/seed/path/1920/1080"
-        alt="خلفية طبيعية"
+        src={config.loginBg}
+        alt="Forgot Password Background"
         fill
         style={{ objectFit: 'cover' }}
         className="z-0"
-        data-ai-hint="path"
+        data-ai-hint="background"
         priority
       />
       <div className="absolute inset-0 bg-black/60 z-10" />
@@ -85,7 +88,7 @@ export default function ForgotPassword() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">إعادة تعيين كلمة المرور</CardTitle>
           <CardDescription>
-            أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة مرورك.
+            أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة مرورك لتطبيق {config.appName}.
           </CardDescription>
         </CardHeader>
         <CardContent>

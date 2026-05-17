@@ -41,5 +41,11 @@ service cloud.firestore {
       allow create: if true; 
       allow update, delete: if false; 
     }
+
+    // Rules for global app configuration
+    match /appConfig/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
+import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, Loader2, Eye, EyeOff } from "lucide-react";
@@ -36,6 +38,7 @@ const formSchema = z.object({
 
 export default function Login() {
   const auth = useAuth();
+  const { config } = useAppConfig();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -78,12 +81,12 @@ export default function Login() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
       <Image
-        src="https://picsum.photos/seed/dunes/1920/1080"
-        alt="خلفية صحراوية"
+        src={config.loginBg}
+        alt="Login Background"
         fill
         style={{ objectFit: 'cover' }}
         className="z-0"
-        data-ai-hint="dunes"
+        data-ai-hint="background"
         priority
       />
       <div className="absolute inset-0 bg-black/60 z-10" />
@@ -94,7 +97,7 @@ export default function Login() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">تسجيل الدخول</CardTitle>
           <CardDescription>
-            أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى حسابك
+            أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى حسابك في {config.appName}
           </CardDescription>
         </CardHeader>
         <CardContent>

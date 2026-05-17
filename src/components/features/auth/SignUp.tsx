@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
+import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon } from "lucide-react";
@@ -37,6 +39,7 @@ const formSchema = z.object({
 
 export default function SignUp() {
   const auth = useAuth();
+  const { config } = useAppConfig();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -87,12 +90,12 @@ export default function SignUp() {
   return (
     <div className="relative flex items-center justify-center min-h-screen">
        <Image
-        src="https://picsum.photos/seed/lake/1920/1080"
-        alt="خلفية طبيعية"
+        src={config.signupBg}
+        alt="Signup Background"
         fill
         style={{ objectFit: 'cover' }}
         className="z-0"
-        data-ai-hint="lake"
+        data-ai-hint="background"
         priority
       />
       <div className="absolute inset-0 bg-black/60 z-10" />
@@ -103,7 +106,7 @@ export default function SignUp() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-black">إنشاء حساب جديد</CardTitle>
           <CardDescription className="text-muted-foreground font-bold">
-            ابدأ الآن بإدارة فصولك الدراسية بذكاء
+            ابدأ الآن بإدارة فصولك الدراسية بذكاء في {config.appName}
           </CardDescription>
         </CardHeader>
         <CardContent>

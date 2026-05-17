@@ -40,3 +40,11 @@ export type PaymentRecord = {
 };
 
 export type NewPayment = Omit<PaymentRecord, 'id' | 'createdAt' | 'date'>;
+
+export type GlobalConfig = {
+  id: string;
+  appName?: string;
+  appLogo?: string;
+  loginBg?: string;
+  signupBg?: string;
+};

@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -17,18 +17,12 @@ import {
   MessageSquare,
   ShieldCheck,
   UserCircle,
-  Mail,
   Ban,
-  ShieldAlert,
-  UserX,
   Fingerprint,
-  Search,
-  UserCheck
+  Layout
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import Link from 'next/link';
@@ -153,10 +147,16 @@ export default function AdminPage() {
              </div>
           </div>
         </PageHeader>
-        <Button variant="outline" onClick={() => router.push('/')} className="rounded-xl h-12 font-bold px-6 border-primary/20 hover:bg-primary/5 transition-all">
-            <ArrowLeft className="ms-2 h-5 w-5" />
-            الرئيسية
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl h-12 font-bold px-6 border-emerald-500/20 hover:bg-emerald-500/5 transition-all text-emerald-600">
+              <Layout className="ms-2 h-5 w-5" />
+              إعدادات الهوية
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/')} className="rounded-xl h-12 font-bold px-6 border-primary/20 hover:bg-primary/5 transition-all">
+              <ArrowLeft className="ms-2 h-5 w-5" />
+              الرئيسية
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

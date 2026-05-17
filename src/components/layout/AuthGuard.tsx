@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import SplashScreen from "./SplashScreen";
 import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { Ban, LogOut, Trash2 } from "lucide-react";
+import { Ban, LogOut, Trash2, Clock } from "lucide-react";
 import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
 import { useAuth } from "@/firebase";
@@ -46,10 +46,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [isUserLoading]);
 
-  // منطق إلغاء الحذف (عند تسجيل الدخول الجديد) أو التنفيذ النهائي
+  // منطق الحذف المجدول: الإلغاء عند العودة أو التنفيذ بعد 7 أيام
   useEffect(() => {
     if (user && deletionRequest && !isDeletionLoading && !hasCheckedDeletion.current) {
-      const requestedAt = deletionRequest.requestedAt?.toDate ? deletionRequest.requestedAt.toDate() : new Date(deletionRequest.requestedAt);
+      const requestedAtRaw = deletionRequest.requestedAt;
+      const requestedAt = requestedAtRaw?.toDate ? requestedAtRaw.toDate() : (requestedAtRaw ? new Date(requestedAtRaw) : null);
+      
       if (!requestedAt) return;
 
       const now = new Date();
@@ -57,14 +59,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
       if (diffDays < 7) {
-        // المستخدم دخل قبل 7 أيام -> إلغاء طلب الحذف فوراً
+        // المستخدم دخل خلال فترة السماح (أقل من 7 أيام) -> نلغي الطلب ونستعيد الحساب
         const dRef = doc(firestore, 'deletionRequests', user.uid);
-        hasCheckedDeletion.current = true; // منع التكرار
+        hasCheckedDeletion.current = true; 
         
         deleteDoc(dRef).then(() => {
            toast({
-            title: "تم استعادة الحساب بنجاح!",
-            description: "يسعدنا عودتك. تم إلغاء طلب الحذف المجدول وإيقاف الجدول الزمني.",
+            title: "أهلاً بك مجدداً!",
+            description: "لقد تم إلغاء طلب حذف حسابك المجدول تلقائياً فور دخولك.",
           });
         }).catch(() => {
           hasCheckedDeletion.current = false;
@@ -81,23 +83,25 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!user || !firestore) return;
     setIsFinalizingDeletion(true);
     try {
-      // 1. مسح وثيقة طلب الحذف ووثيقة المستخدم من Firestore (دائماً تنجح)
-      await deleteDoc(doc(firestore, 'deletionRequests', user.uid));
-      await deleteDoc(doc(firestore, 'users', user.uid));
-      
-      // 2. محاولة مسح المستخدم من Firebase Auth (تحتاج دخول حديث)
+      // محاولة مسح المستخدم من Firebase Auth (تحتاج دخول حديث)
       try {
         await deleteUser(user);
+        
+        // إذا نجح حذف الـ Auth، نمسح بيانات Firestore
+        await deleteDoc(doc(firestore, 'deletionRequests', user.uid));
+        await deleteDoc(doc(firestore, 'users', user.uid));
+
         toast({
           title: "تم مسح الحساب نهائياً",
-          description: "انتهت فترة السماح وتم مسح كافة بياناتك من النظام.",
+          description: "انتهت فترة السماح وتم مسح كافة بياناتك من النظام بنجاح.",
         });
       } catch (authError: any) {
+        // إذا فشل بسبب "دخول قديم"، لا نحذف البيانات من Firestore لكي يتمكن من المحاولة لاحقاً
         if (authError.code === 'auth/requires-recent-login') {
             toast({
                 variant: "destructive",
                 title: "تأكيد أمني مطلوب",
-                description: "يرجى تسجيل الدخول مرة أخرى ثم الذهاب للإعدادات لحذف بريدك نهائياً من سجلات جوجل.",
+                description: "انتهت مهلة الحذف (7 أيام)، ولكن جوجل تطلب إعادة تسجيل دخولك الآن لحذف البريد نهائياً.",
             });
             await signOut(auth);
         } else {
@@ -114,7 +118,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   // مزامنة بيانات المستخدم الأساسية عند كل دخول
   useEffect(() => {
-    if (user && firestore) {
+    if (user && firestore && !deletionRequest) {
       const uRef = doc(firestore, 'users', user.uid);
       setDoc(uRef, {
         uid: user.uid,
@@ -122,9 +126,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         displayName: user.displayName || 'مستخدم جديد',
         photoURL: user.photoURL || '',
         lastLogin: serverTimestamp(),
+        isBlocked: userProfile?.isBlocked || false,
       }, { merge: true });
     }
-  }, [user, firestore]);
+  }, [user, firestore, deletionRequest, userProfile?.isBlocked]);
 
   useEffect(() => {
     if (!isUserLoading && !showSplash) {

@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // السماح للمشرف بقراءة كافة الطلاب والمدفوعات والحضور عبر Collection Groups
     match /{path=**}/students/{id} {
-      allow read: if true; // بوابة ولي الأمر تحتاج وصول عام
+      allow read: if true; 
       allow write: if isAdmin() || (isSignedIn() && request.auth.uid == path.split('/')[1]);
     }
 
@@ -32,8 +32,8 @@ service cloud.firestore {
 
     // قواعد المستخدمين (المعلمين)
     match /users/{userId} {
-      allow get: if true; // للسماح لولي الأمر برؤية اسم المدرس
-      allow list: if isAdmin(); // فقط المشرف يرى قائمة المدرسين
+      allow get: if true; 
+      allow list: if isAdmin(); 
       allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
 
       match /config/{document=**} {
@@ -43,7 +43,9 @@ service cloud.firestore {
     
     // طلبات الحذف والتقييمات
     match /deletionRequests/{userId} {
-      allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow list: if isAdmin();
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
     }
 
     match /reviewPermissions/{userId} {

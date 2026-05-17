@@ -65,13 +65,24 @@
       "type": "object",
       "description": "User-specific settings for payment tracking.",
       "properties": {
-        "startMonth": {
-          "type": "string",
-          "description": "The month (YYYY-MM) from which to start calculating arrears."
-        },
-        "endMonth": {
-          "type": "string",
-          "description": "The month (YYYY-MM) at which to stop calculating arrears."
+        "grades": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "periods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "startMonth": { "type": "string" },
+                    "endMonth": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
         },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
@@ -112,10 +123,9 @@
           "type": "string",
           "description": "Contact information for the student's parent or guardian."
         },
-        "badges": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Achievement badges assigned to the student."
+        "isArchived": {
+          "type": "boolean",
+          "description": "Whether the student is archived (not active)."
         },
         "createdAt": {
           "type": "string",

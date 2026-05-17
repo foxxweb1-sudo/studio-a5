@@ -72,17 +72,20 @@ export default function Home() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const currentMonth = format(new Date(), 'yyyy-MM');
 
+  // تصفية الطلاب النشطين فقط للإحصائيات
+  const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
+
   const stats = useMemo(() => {
-    const totalStudents = students.length;
-    const attendedToday = attendance.filter(a => a.date === today).length;
+    const totalStudents = activeStudents.length;
+    const attendedToday = attendance.filter(a => a.date === today && activeStudents.some(s => s.id === a.studentId)).length;
     
     return [
       { label: 'إجمالي الطلاب', value: totalStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
       { label: 'حضور اليوم', value: attendedToday, icon: CalendarCheck, color: 'text-emerald-600', bg: 'bg-emerald-100' },
       { label: 'غياب اليوم', value: totalStudents - attendedToday, icon: Clock, color: 'text-rose-600', bg: 'bg-rose-100' },
-      { label: 'مدفوعات الشهر', value: payments.filter(p => p.month === currentMonth).length, icon: Wallet, color: 'text-amber-600', bg: 'bg-amber-100' },
+      { label: 'مدفوعات الشهر', value: payments.filter(p => p.month === currentMonth && activeStudents.some(s => s.id === p.studentId)).length, icon: Wallet, color: 'text-amber-600', bg: 'bg-amber-100' },
     ];
-  }, [students, attendance, payments, today, currentMonth]);
+  }, [activeStudents, attendance, payments, today, currentMonth]);
 
   if (isAdmin) {
     return (

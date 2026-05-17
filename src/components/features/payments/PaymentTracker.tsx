@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,9 +52,9 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
   const { payments, addPayment, isLoading: paymentsLoading } = usePayments();
   const { toast } = useToast();
 
-  const students = gradeFilter 
-    ? allStudents.filter(s => s.grade === gradeFilter)
-    : allStudents;
+  const activeStudents = useMemo(() => 
+    allStudents.filter(s => !s.isArchived && (!gradeFilter || s.grade === gradeFilter)),
+  [allStudents, gradeFilter]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,7 +67,7 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const student = students.find((s) => s.id === values.studentId);
+    const student = activeStudents.find((s) => s.id === values.studentId);
     if (!student) return; 
 
     const paymentMonth = `${values.year}-${values.month}`;
@@ -113,14 +114,14 @@ export default function PaymentTracker({ gradeFilter }: PaymentTrackerProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>الطالب</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || students.length === 0}>
+              <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || activeStudents.length === 0}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={isLoading ? "جاري تحميل الطلاب..." : "اختر طالباً..."} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {students.map((student) => (
+                  {activeStudents.map((student) => (
                     <SelectItem key={student.id} value={student.id}>
                       {student.name}
                     </SelectItem>

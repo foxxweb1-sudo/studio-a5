@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 const GRADES = [
   'الصف الأول الابتدائي', 'الصف الثاني الابتدائي', 'الصف الثالث الابتدائي', 'الصف الرابع الابتدائي', 'الصف الخامس الابتدائي', 'الصف السادس الابتدائي',
@@ -98,7 +100,7 @@ export default function StudentManagement() {
       toast({ title: 'تم التعديل', description: `تم تعديل بيانات الطالب ${values.name}.` });
       setEditingStudent(null);
     } else {
-      addStudent(values);
+      addStudent({ ...values, isArchived: false });
       toast({
         title: 'تم تسجيل الطالب',
         description: `تم إضافة الطالب ${values.name} بنجاح.`,
@@ -116,16 +118,104 @@ export default function StudentManagement() {
     });
   }
 
-  const filteredStudents = students.filter(student => 
-    (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (!gradeFromUrl || student.grade === gradeFromUrl)
-  );
+  const handleArchive = (student: Student) => {
+    updateStudent(student.id, { isArchived: !student.isArchived });
+    toast({
+      title: student.isArchived ? "تمت الاستعادة" : "تمت الأرشفة",
+      description: student.isArchived ? `تم نقل ${student.name} للطلاب النشطين.` : `تم نقل ${student.name} للأرشيف.`
+    });
+  }
+
+  const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
+  const archivedStudents = useMemo(() => students.filter(s => s.isArchived), [students]);
+
+  const renderStudentTable = (list: Student[]) => {
+    const filtered = list.filter(student => 
+        (student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.grade.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (!gradeFromUrl || student.grade === gradeFromUrl)
+    );
+
+    return (
+        <div className="max-h-[30rem] overflow-auto">
+            <Table>
+                <TableHeader className="bg-muted/30 sticky top-0 z-10">
+                <TableRow>
+                    <TableHead className="text-right font-black">الاسم</TableHead>
+                    {!gradeFromUrl && <TableHead className="text-right font-black">الفصل</TableHead>}
+                    <TableHead className="text-center font-black">إجراءات</TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                {filtered.length > 0 ? (
+                    filtered.map((student) => (
+                    <TableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
+                        <TableCell className="font-bold py-4">
+                            <div className="flex flex-col gap-1">
+                            <Link href={`/students/${student.id}`} className="hover:underline text-primary flex items-center gap-2">
+                                <GraduationCap className="h-4 w-4 opacity-50" />
+                                {student.name}
+                            </Link>
+                            </div>
+                        </TableCell>
+                        {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
+                        <TableCell className="flex justify-center gap-1">
+                        <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl h-8 w-8" onClick={() => setSelectedStudentForQR(student)}>
+                            <QrCode className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500 h-8 w-8" onClick={() => setEditingStudent(student)}>
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title={student.isArchived ? "استعادة" : "أرشفة"} 
+                            className={`rounded-xl h-8 w-8 ${student.isArchived ? 'text-emerald-500' : 'text-amber-500'}`}
+                            onClick={() => handleArchive(student)}
+                        >
+                            {student.isArchived ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" title="حذف" className="rounded-xl text-destructive hover:bg-rose-50 h-8 w-8">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="rounded-[2rem]">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
+                                <AlertDialogDescription className="text-right">
+                                هذا الإجراء سيحذف الطالب ({student.name}) نهائياً بكافة سجلاته. لا يمكن التراجع.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="flex-row-reverse gap-2">
+                                <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
+                                حذف
+                                </AlertDialogAction>
+                                <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+                            </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                        </TableCell>
+                    </TableRow>
+                    ))
+                ) : (
+                    <TableRow>
+                    <TableCell colSpan={gradeFromUrl ? 3 : 3} className="h-24 text-center text-muted-foreground font-bold italic">
+                        {list.length === 0 ? "لا يوجد طلاب هنا حالياً." : "لا توجد نتائج بحث مطابقة."}
+                    </TableCell>
+                    </TableRow>
+                )}
+                </TableBody>
+            </Table>
+        </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1">
-        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
+        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden sticky top-20">
           <CardHeader className="bg-primary/5 border-b">
             <CardTitle className="flex items-center gap-2">
                 {editingStudent ? <Edit className="h-5 w-5 text-blue-500" /> : <UserPlus className="h-5 w-5 text-primary" />}
@@ -204,95 +294,60 @@ export default function StudentManagement() {
           </CardContent>
         </Card>
       </div>
+
       <div className="lg:col-span-2">
         <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle>قائمة الطلاب {gradeFromUrl ? `(${filteredStudents.length})` : `(${students.length})`}</CardTitle>
-            <CardDescription>{gradeFromUrl ? `عرض طلاب صف: ${gradeFromUrl}` : 'عرض وبحث في جميع الطلاب المسجلين بكافة الصفوف.'}</CardDescription>
+          <CardHeader className="bg-slate-50 border-b pb-0">
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 px-1">
+                <div>
+                    <CardTitle>كشف الطلاب</CardTitle>
+                    <CardDescription>{gradeFromUrl ? `عرض طلاب صف: ${gradeFromUrl}` : 'إدارة الطلاب بكافة الصفوف.'}</CardDescription>
+                </div>
+                <div className="relative w-full sm:w-64">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="ابحث بالاسم..."
+                        className="pr-10 h-10 rounded-xl bg-white border-slate-200"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+             </div>
+
+             <Tabs defaultValue="active" className="w-full">
+                <TabsList className="bg-slate-100/50 p-1 rounded-t-xl rounded-b-none border-b-0 w-full flex justify-start">
+                    <TabsTrigger value="active" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-primary border-transparent">
+                        الطلاب النشطين
+                        <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{activeStudents.length}</Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="archived" className="rounded-t-lg rounded-b-none font-bold px-6 py-2.5 data-[state=active]:bg-white border-b-2 data-[state=active]:border-amber-500 border-transparent">
+                        الأرشيف
+                        <Badge variant="secondary" className="mr-2 h-5 min-w-5 flex items-center justify-center p-0 text-[10px]">{archivedStudents.length}</Badge>
+                    </TabsTrigger>
+                </TabsList>
+                
+                <CardContent className="pt-6 p-0">
+                    <TabsContent value="active" className="m-0">
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : renderStudentTable(activeStudents)}
+                    </TabsContent>
+                    
+                    <TabsContent value="archived" className="m-0">
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : renderStudentTable(archivedStudents)}
+                    </TabsContent>
+                </CardContent>
+             </Tabs>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="relative mb-6">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="ابحث بالاسم أو الصف..."
-                className="pr-10 h-12 rounded-xl"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="max-h-[30rem] overflow-auto">
-               {isLoading ? (
-                  <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-               ) : (
-                <Table>
-                  <TableHeader className="bg-muted/30">
-                    <TableRow>
-                      <TableHead className="text-right font-bold">الاسم</TableHead>
-                      {!gradeFromUrl && <TableHead className="text-right font-bold">الفصل</TableHead>}
-                      <TableHead className="text-center font-bold">إجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredStudents.length > 0 ? (
-                      filteredStudents.map((student) => {
-                        return (
-                        <TableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
-                          <TableCell className="font-bold py-4">
-                             <div className="flex flex-col gap-1">
-                                <Link href={`/students/${student.id}`} className="hover:underline text-primary flex items-center gap-2">
-                                    <GraduationCap className="h-4 w-4 opacity-50" />
-                                    {student.name}
-                                </Link>
-                             </div>
-                          </TableCell>
-                           {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
-                          <TableCell className="flex justify-center gap-1">
-                            <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl" onClick={() => setSelectedStudentForQR(student)}>
-                              <QrCode className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500" onClick={() => setEditingStudent(student)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" title="حذف" className="rounded-xl text-destructive hover:bg-rose-50">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent className="rounded-[2rem]">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
-                                  <AlertDialogDescription className="text-right">
-                                    هذا الإجراء سيحذف الطالب ({student.name}) نهائياً بكافة سجلاته.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter className="flex-row-reverse gap-2">
-                                  <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
-                                    حذف
-                                  </AlertDialogAction>
-                                  <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </TableCell>
-                        </TableRow>
-                      )})
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={gradeFromUrl ? 3 : 3} className="h-24 text-center text-muted-foreground font-bold italic">
-                          {students.length === 0 ? "لم تقم بإضافة أي طلاب بعد." : "لم يتم العثور على نتائج للبحث."}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          </CardContent>
         </Card>
       </div>
+      
       {selectedStudentForQR && (
         <StudentQRCodeDialog 
           student={selectedStudentForQR} 

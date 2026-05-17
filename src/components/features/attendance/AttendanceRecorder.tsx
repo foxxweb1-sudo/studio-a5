@@ -42,13 +42,16 @@ const DAY_MAP: Record<string, string> = {
 };
 
 export default function AttendanceRecorder() {
-  const { students, isLoading: studentsLoading } = useStudents();
+  const { students: allStudents, isLoading: studentsLoading } = useStudents();
   const { attendance, addAttendance, markAbsentees, isLoading: attendanceLoading } = useAttendance();
   const { schedule, isLoading: scheduleLoading } = useSchedule();
   const { toast } = useToast();
   const [lastAttended, setLastAttended] = useState<string | null>(null);
   const [isMarkingAbsence, setIsMarkingAbsence] = useState(false);
   const [liveTime, setLiveTime] = useState<Date | null>(null);
+
+  // تصفية الطلاب المؤرشفين من عملية تسجيل الحضور
+  const activeStudents = useMemo(() => allStudents.filter(s => !s.isArchived), [allStudents]);
 
   useEffect(() => {
     setLiveTime(new Date());
@@ -86,17 +89,17 @@ export default function AttendanceRecorder() {
   }, [schedule, currentDayName, currentTimeStr]);
 
   const recordAttendance = (studentCode: string) => {
-    let student = students.find(s => s.id === studentCode);
+    let student = activeStudents.find(s => s.id === studentCode);
 
     if (!student) {
       const sequentialId = parseInt(studentCode, 10);
-      if (!isNaN(sequentialId) && sequentialId > 0 && sequentialId <= students.length) {
-        student = students[sequentialId - 1];
+      if (!isNaN(sequentialId) && sequentialId > 0 && sequentialId <= activeStudents.length) {
+        student = activeStudents[sequentialId - 1];
       }
     }
     
     if (!student) {
-      toast({ variant: 'destructive', title: 'خطأ', description: 'الطالب غير موجود.' });
+      toast({ variant: 'destructive', title: 'فشل التسجيل', description: 'الطالب غير موجود أو تم نقله للأرشيف.' });
       return;
     }
 
@@ -136,7 +139,7 @@ export default function AttendanceRecorder() {
   const handleMarkAbsentees = async (grade: string) => {
     setIsMarkingAbsence(true);
     try {
-        await markAbsentees(grade, students);
+        await markAbsentees(grade, activeStudents);
         toast({ title: "تم تسجيل الغياب", description: `تم رصد الغائبين لصف (${grade}) بنجاح.` });
     } catch (e) {
         toast({ variant: "destructive", title: "فشل رصد الغياب" });
@@ -161,12 +164,12 @@ export default function AttendanceRecorder() {
   const recordsToday = attendance.filter((a) => a.date === todayStr);
   const attendedToday = recordsToday
     .filter(a => a.status === 'present')
-    .map((a) => students.find((s) => s.id === a.studentId))
+    .map((a) => activeStudents.find((s) => s.id === a.studentId))
     .filter(Boolean);
 
   const absentToday = recordsToday
     .filter(a => a.status === 'absent')
-    .map((a) => students.find((s) => s.id === a.studentId))
+    .map((a) => activeStudents.find((s) => s.id === a.studentId))
     .filter(Boolean);
 
   const isLoading = studentsLoading || attendanceLoading || scheduleLoading;
@@ -319,7 +322,7 @@ export default function AttendanceRecorder() {
                     <div className="flex justify-between items-center">
                         <div>
                             <CardTitle className="text-xl">سجل اليوم</CardTitle>
-                            <CardDescription>قائمة الطلاب المسجلين بتاريخ {todayStr}</CardDescription>
+                            <CardDescription>قائمة الطلاب النشطين المسجلين بتاريخ {todayStr}</CardDescription>
                         </div>
                         <div className="flex gap-2">
                             <Badge variant="default" className="bg-emerald-500 h-10 px-4 rounded-xl font-black text-xs sm:text-sm">

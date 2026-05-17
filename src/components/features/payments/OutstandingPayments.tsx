@@ -17,6 +17,7 @@ import { Loader2, MessageSquare, Info, WalletCards } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ar } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { useMemo } from 'react';
 
 interface OutstandingPaymentsProps {
   gradeFilter?: string;
@@ -88,15 +89,13 @@ export default function OutstandingPayments({ gradeFilter }: OutstandingPayments
   const { settings, isLoading: settingsLoading } = usePaymentSettings();
   const { toast } = useToast();
 
-  const students = gradeFilter
-    ? allStudents.filter(s => s.grade === gradeFilter)
-    : allStudents;
+  const activeStudents = useMemo(() => 
+    allStudents.filter(s => !s.isArchived && (!gradeFilter || s.grade === gradeFilter)),
+  [allStudents, gradeFilter]);
 
-  const outstandingStudents = getOutstandingStudents(
-    students,
-    payments,
-    settings?.grades
-  );
+  const outstandingStudents = useMemo(() => 
+    getOutstandingStudents(activeStudents, payments, settings?.grades),
+  [activeStudents, payments, settings?.grades]);
 
   const handleSendReminder = (student: Student & { outstandingMonths: string[] }) => {
     if (!student.parentPhone) {

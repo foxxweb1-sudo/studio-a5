@@ -68,6 +68,7 @@ export type Student = {
   phone?: string;
   parentPhone?: string;
   createdAt: FieldValue;
+  isArchived?: boolean;
 };
 
 export type NewStudent = Omit<Student, 'id' | 'createdAt'>;

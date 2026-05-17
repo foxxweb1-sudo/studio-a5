@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, Share2 } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, Share2, GraduationCap } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -36,9 +36,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const GRADES = [
+  'الصف الأول الابتدائي', 'الصف الثاني الابتدائي', 'الصف الثالث الابتدائي', 'الصف الرابع الابتدائي', 'الصف الخامس الابتدائي', 'الصف السادس الابتدائي',
+  'الصف الأول الإعدادي', 'الصف الثاني الإعدادي', 'الصف الثالث الإعدادي',
+  'الصف الأول الثانوي', 'الصف الثاني الثانوي', 'الصف الثالث الثانوي'
+];
 
 const formSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
+  grade: z.string().min(1, 'يرجى اختيار الصف الدراسي.'),
   parentPhone: z.string().optional(),
 });
 
@@ -57,57 +65,46 @@ export default function StudentManagement() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      grade: gradeFromUrl || '',
       parentPhone: '',
     },
   });
 
   useEffect(() => {
-    if(gradeFromUrl){
-      // @ts-ignore
+    if (gradeFromUrl && !editingStudent) {
       form.setValue('grade', gradeFromUrl, { shouldValidate: true });
     }
-  }, [gradeFromUrl, form])
+  }, [gradeFromUrl, form, editingStudent]);
 
   useEffect(() => {
     if (editingStudent) {
       form.reset({
         name: editingStudent.name,
-        parentPhone: editingStudent.parentPhone,
+        grade: editingStudent.grade,
+        parentPhone: editingStudent.parentPhone || '',
       });
     } else {
       form.reset({
         name: '',
+        grade: gradeFromUrl || '',
         parentPhone: '',
       });
     }
-  }, [editingStudent, form]);
+  }, [editingStudent, form, gradeFromUrl]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if(!gradeFromUrl && !editingStudent) {
-        toast({
-            variant: "destructive",
-            title: 'خطأ',
-            description: 'لم يتم تحديد الصف الدراسي للإضافة. يرجى اختيار صف أولاً.',
-        });
-        return;
-    }
-
     if (editingStudent) {
       updateStudent(editingStudent.id, { ...editingStudent, ...values });
       toast({ title: 'تم التعديل', description: `تم تعديل بيانات الطالب ${values.name}.` });
       setEditingStudent(null);
     } else {
-      const studentData = {
-          ...values,
-          grade: gradeFromUrl,
-      }
-      addStudent(studentData);
+      addStudent(values);
       toast({
         title: 'تم تسجيل الطالب',
         description: `تم إضافة الطالب ${values.name} بنجاح.`,
       });
     }
-    form.reset({ name: '', parentPhone: '' });
+    form.reset({ name: '', grade: gradeFromUrl || '', parentPhone: '' });
   };
   
   const handleDelete = (studentId: string) => {
@@ -150,9 +147,15 @@ export default function StudentManagement() {
       <div className="lg:col-span-1">
         <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden">
           <CardHeader className="bg-primary/5 border-b">
-            <CardTitle>{editingStudent ? 'تعديل بيانات الطالب' : 'تسجيل طالب جديد'}</CardTitle>
-             {gradeFromUrl && !editingStudent && <CardDescription>الصف: {gradeFromUrl}</CardDescription>}
-             {!gradeFromUrl && !editingStudent && <CardDescription className="text-amber-600 font-bold">يرجى اختيار صف من الصفحة الرئيسية لإضافة طلاب جدد.</CardDescription>}
+            <CardTitle className="flex items-center gap-2">
+                {editingStudent ? <Edit className="h-5 w-5 text-blue-500" /> : <UserPlus className="h-5 w-5 text-primary" />}
+                {editingStudent ? 'تعديل بيانات الطالب' : 'تسجيل طالب جديد'}
+            </CardTitle>
+             {gradeFromUrl && !editingStudent ? (
+                 <CardDescription>إضافة إلى: {gradeFromUrl}</CardDescription>
+             ) : (
+                 <CardDescription>أدخل بيانات الطالب والصف الدراسي أدناه.</CardDescription>
+             )}
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...form}>
@@ -170,6 +173,33 @@ export default function StudentManagement() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold">الصف الدراسي</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={!!gradeFromUrl && !editingStudent}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12 rounded-xl bg-white font-bold">
+                            <SelectValue placeholder="اختر الصف..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl">
+                          {GRADES.map(g => (
+                            <SelectItem key={g} value={g} className="font-bold">{g}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <FormField
                   control={form.control}
@@ -183,9 +213,9 @@ export default function StudentManagement() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full h-12 rounded-xl font-bold" disabled={(!gradeFromUrl && !editingStudent) || isLoading}>
-                  {isLoading ? <Loader2 className="animate-spin" /> : <UserPlus className="ms-2 h-4 w-4" />}
-                  {editingStudent ? 'حفظ التعديلات' : 'إضافة طالب'}
+                <Button type="submit" className="w-full h-12 rounded-xl font-bold gap-2" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : editingStudent ? <Edit className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  {editingStudent ? 'حفظ التعديلات' : 'إضافة طالب للمنظومة'}
                 </Button>
                  {editingStudent && <Button variant="ghost" className="w-full rounded-xl" onClick={() => setEditingStudent(null)}>إلغاء التعديل</Button>}
               </form>
@@ -216,37 +246,38 @@ export default function StudentManagement() {
                   </div>
                ) : (
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-muted/30">
                     <TableRow>
-                      <TableHead className="text-right">الاسم</TableHead>
-                      {!gradeFromUrl && <TableHead className="text-right">الفصل</TableHead>}
-                      <TableHead className="text-center">إجراءات</TableHead>
+                      <TableHead className="text-right font-bold">الاسم</TableHead>
+                      {!gradeFromUrl && <TableHead className="text-right font-bold">الفصل</TableHead>}
+                      <TableHead className="text-center font-bold">إجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredStudents.length > 0 ? (
                       filteredStudents.map((student) => {
                         return (
-                        <TableRow key={student.id} className="group">
+                        <TableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
                           <TableCell className="font-bold py-4">
-                             <Link href={`/students/${student.id}`} className="hover:underline text-primary">
+                             <Link href={`/students/${student.id}`} className="hover:underline text-primary flex items-center gap-2">
+                              <GraduationCap className="h-4 w-4 opacity-50" />
                               {student.name}
                             </Link>
                           </TableCell>
                            {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
                           <TableCell className="flex justify-center gap-1">
-                            <Button variant="ghost" size="icon" className="rounded-xl text-emerald-600 hover:bg-emerald-50" onClick={() => handleShareParentLink(student)}>
+                            <Button variant="ghost" size="icon" title="رابط ولي الأمر" className="rounded-xl text-emerald-600 hover:bg-emerald-50" onClick={() => handleShareParentLink(student)}>
                                 <Share2 className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => setSelectedStudentForQR(student)}>
+                            <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl" onClick={() => setSelectedStudentForQR(student)}>
                               <QrCode className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="rounded-xl text-blue-500" onClick={() => setEditingStudent(student)}>
+                            <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500" onClick={() => setEditingStudent(student)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:bg-rose-50">
+                                <Button variant="ghost" size="icon" title="حذف" className="rounded-xl text-destructive hover:bg-rose-50">
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                               </AlertDialogTrigger>

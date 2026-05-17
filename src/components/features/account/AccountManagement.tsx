@@ -168,6 +168,8 @@ export default function AccountManagement() {
     toast({ title: 'تم النسخ' });
   };
 
+  const isArabic = (text: string) => /[\u0600-\u06FF]/.test(text);
+
   if (isUserLoading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -175,6 +177,9 @@ export default function AccountManagement() {
       </div>
     );
   }
+
+  const nameText = user?.displayName || 'مستخدم جديد';
+  const showBadgeOnRight = !isArabic(nameText);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto pb-20">
@@ -194,8 +199,11 @@ export default function AccountManagement() {
         </div>
         <div className="text-center space-y-1">
             <h2 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
-                {user?.displayName || 'مستخدم جديد'}
-                {userProfile?.isVerified && (
+                {userProfile?.isVerified && showBadgeOnRight && (
+                    <BadgeCheck className="h-6 w-6 fill-blue-500 text-white animate-in zoom-in duration-500" />
+                )}
+                {nameText}
+                {userProfile?.isVerified && !showBadgeOnRight && (
                     <BadgeCheck className="h-6 w-6 fill-blue-500 text-white animate-in zoom-in duration-500" />
                 )}
             </h2>

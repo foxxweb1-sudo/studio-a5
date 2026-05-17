@@ -109,7 +109,7 @@ export default function AdminPage() {
       unsubStudents();
       unsubMessages();
     };
-  }, [firestore, isAdmin, isUserLoading, router]);
+  }, [firestore, isAdmin, iisUserLoading, router]);
 
   const handleManualBlock = async (action: 'block' | 'unblock') => {
     if (!manualUid.trim() || !firestore) return;
@@ -201,6 +201,8 @@ export default function AdminPage() {
       };
     });
   }, [allStudents, users]);
+
+  const isArabic = (text: string) => /[\u0600-\u06FF]/.test(text);
 
   if (isUserLoading || !isAdmin) {
     return (
@@ -336,13 +338,16 @@ export default function AdminPage() {
                       <div className="col-span-full py-10 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : users.map((u) => {
                         const isAccountAdmin = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+                        const uDisplayName = u.displayName || 'مستخدم';
+                        const showBadgeBefore = !isArabic(uDisplayName);
+                        
                         return (
                           <Card key={u.uid} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'} ${isAccountAdmin ? 'border-2 border-primary/20' : ''}`}>
                             <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
                               <div className="relative">
                                 <Avatar className="h-16 w-16">
                                   <AvatarImage src={u.photoURL} />
-                                  <AvatarFallback>{u.displayName?.substring(0, 2) || 'U'}</AvatarFallback>
+                                  <AvatarFallback>{uDisplayName.substring(0, 2) || 'U'}</AvatarFallback>
                                 </Avatar>
                                 {isAccountAdmin ? (
                                     <div className="absolute -top-1 -right-1 bg-primary text-white p-1 rounded-full shadow-lg border-2 border-white">
@@ -356,8 +361,9 @@ export default function AdminPage() {
                               </div>
                               <div className="w-full overflow-hidden">
                                 <h4 className="font-bold text-sm truncate flex items-center justify-center gap-1">
-                                    {u.displayName || 'مستخدم'}
-                                    {u.isVerified && <BadgeCheck className="h-3.5 w-3.5 fill-blue-500 text-white" />}
+                                    {u.isVerified && showBadgeBefore && <BadgeCheck className="h-3.5 w-3.5 fill-blue-500 text-white" />}
+                                    {uDisplayName}
+                                    {u.isVerified && !showBadgeBefore && <BadgeCheck className="h-3.5 w-3.5 fill-blue-500 text-white" />}
                                 </h4>
                                 <p className="text-[10px] text-muted-foreground font-mono truncate w-full">{u.email}</p>
                                 <code className="text-[8px] opacity-40 select-all block mt-1">{u.uid}</code>

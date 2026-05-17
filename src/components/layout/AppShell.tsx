@@ -52,9 +52,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const isArabic = (text: string) => /[\u0600-\u06FF]/.test(text);
+
   if (!user) {
     return <>{children}</>;
   }
+
+  const displayName = user.displayName || 'مستخدم';
+  const showBadgeBefore = !isArabic(displayName);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background text-right" dir="rtl">
@@ -113,8 +118,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuLabel className="p-4 text-right">
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
-                      {userProfile?.isVerified && (
+                      {userProfile?.isVerified && showBadgeBefore && (
+                        <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />
+                      )}
+                      <p className="text-sm font-bold leading-none">{displayName}</p>
+                      {userProfile?.isVerified && !showBadgeBefore && (
                         <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />
                       )}
                     </div>

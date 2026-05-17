@@ -59,6 +59,7 @@ export default function AdminPage() {
 
     setLoading(true);
 
+    // جلب كافة الطلاب من كافة المسارات لحساب العدد لكل معلم
     const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
       const list = snap.docs.map(doc => {
         const pathSegments = doc.ref.path.split('/');
@@ -129,24 +130,25 @@ export default function AdminPage() {
 
        <Tabs defaultValue="users" className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto h-14 bg-muted/50 p-1 rounded-2xl">
-                <TabsTrigger value="users" className="rounded-xl font-bold">المستخدمين</TabsTrigger>
-                <TabsTrigger value="messages" className="rounded-xl font-bold">رسائل التواصل</TabsTrigger>
+                <TabsTrigger value="users" className="rounded-xl font-bold text-base">المستخدمين والمعرفات</TabsTrigger>
+                <TabsTrigger value="messages" className="rounded-xl font-bold text-base">رسائل التواصل</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users">
                 <div className="space-y-6">
                   <div className="text-right px-4">
-                    <h3 className="text-xl font-black">المستخدمين المسجلين ({users.length})</h3>
-                    <p className="text-sm text-muted-foreground">عرض كافة الحسابات التي قامت بالدخول للموقع وإمكانية حظرها.</p>
+                    <h3 className="text-xl font-black">المستخدمين والمعرفات المسجلة ({users.length})</h3>
+                    <p className="text-sm text-muted-foreground">عرض كافة الحسابات والـ UID وإمكانية حظرها أو إدارة طلابها.</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {usersLoading ? (
                        <div className="col-span-full py-20 flex flex-col items-center gap-4">
                          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                         <span className="font-bold">جاري جلب قائمة المستخدمين...</span>
+                         <span className="font-bold">جاري جلب البيانات...</span>
                        </div>
                     ) : users.length > 0 ? users.map((u) => {
+                      // حساب عدد الطلاب لهذا المعرف تحديداً
                       const studentCount = allStudents.filter(s => s.teacherUid === u.uid).length;
 
                       return (
@@ -159,7 +161,7 @@ export default function AdminPage() {
                               <Avatar className="h-20 w-20 border-4 border-primary/10">
                                 <AvatarImage src={u.photoURL} />
                                 <AvatarFallback className="text-2xl font-black bg-primary/10 text-primary">
-                                  {u.displayName?.substring(0, 2).toUpperCase()}
+                                  {u.displayName?.substring(0, 2).toUpperCase() || 'U'}
                                 </AvatarFallback>
                               </Avatar>
                               {u.isBlocked && (
@@ -170,9 +172,9 @@ export default function AdminPage() {
                             </div>
 
                             <div className="space-y-1">
-                              <h4 className="font-black text-lg">{u.displayName}</h4>
+                              <h4 className="font-black text-lg">{u.displayName || 'معلم غير مسمى'}</h4>
                               <p className="text-xs text-muted-foreground">{u.email}</p>
-                              <div className="text-[10px] font-mono opacity-40 truncate max-w-[150px] mx-auto">
+                              <div className="bg-muted/50 p-2 rounded-lg mt-2 font-mono text-[10px] break-all border border-dashed text-primary/70">
                                 UID: {u.uid}
                               </div>
                             </div>
@@ -189,11 +191,17 @@ export default function AdminPage() {
                                 )}
                             </div>
 
-                            <div className="flex w-full gap-2 mt-4 pt-4 border-t border-dashed">
+                            <div className="flex flex-col w-full gap-2 mt-4 pt-4 border-t border-dashed">
+                              <Button asChild variant="default" className="w-full rounded-xl h-11 font-bold bg-primary shadow-lg shadow-primary/20">
+                                <Link href={`/admin/teacher/${u.uid}`}>
+                                  <ExternalLink className="h-4 w-4 ms-2" />
+                                  عرض وإدارة الطلاب
+                                </Link>
+                              </Button>
                               <Button 
                                 variant={u.isBlocked ? "outline" : "destructive"} 
                                 onClick={() => toggleUserBlock(u.id, !!u.isBlocked)}
-                                className="flex-1 rounded-xl font-bold gap-2 h-11"
+                                className="w-full rounded-xl font-bold gap-2 h-11"
                               >
                                 {u.isBlocked ? (
                                   <>
@@ -203,15 +211,9 @@ export default function AdminPage() {
                                 ) : (
                                   <>
                                     <UserX className="h-4 w-4" />
-                                    حظر المستخدم
+                                    حظر هذا المعرف
                                   </>
                                 )}
-                              </Button>
-                              <Button asChild variant="secondary" className="flex-1 rounded-xl h-11 font-bold">
-                                <Link href={`/admin/teacher/${u.uid}`}>
-                                  <ExternalLink className="h-4 w-4 ms-2" />
-                                  الطلاب
-                                </Link>
                               </Button>
                             </div>
                           </CardContent>
@@ -219,7 +221,7 @@ export default function AdminPage() {
                       )
                     }) : (
                       <div className="col-span-full py-20 text-center text-muted-foreground font-bold bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
-                        لا يوجد مستخدمون مسجلون حالياً.
+                        لا يوجد مستخدمون أو معرفات مسجلة حالياً.
                       </div>
                     )}
                   </div>

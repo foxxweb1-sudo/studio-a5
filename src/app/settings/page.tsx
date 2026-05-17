@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   FileText,
   Users,
-  UserCircle
+  UserCircle,
+  ChevronLeft
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -75,29 +76,32 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* قسم الحساب - نمط فيسبوك */}
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
-          <CardHeader>
+        {/* قسم الحساب - نمط فيسبوك المطور */}
+        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden border-r-4 border-primary">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+              <div className="p-2 bg-primary/10 text-primary rounded-xl">
                 <UserCircle className="h-5 w-5" />
               </div>
               <CardTitle className="text-xl">الحساب</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-             <Button asChild variant="ghost" className="w-full justify-between h-16 rounded-2xl px-4 hover:bg-muted font-bold group">
-              <Link href="/account" className="flex items-center w-full">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
-                        <UserCircle className="h-5 w-5" />
+             <Button asChild variant="ghost" className="w-full justify-between h-auto py-5 px-4 rounded-2xl hover:bg-primary/5 font-bold group transition-all duration-300">
+              <Link href="/account" className="flex items-center w-full justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+                        <UserCircle className="h-6 w-6" />
                     </div>
-                    <div className="flex flex-col items-start">
-                        <span className="text-sm font-black">إدارة الحساب</span>
-                        <span className="text-[10px] text-muted-foreground font-medium">الاسم، الصورة، الأمان، والخصوصية</span>
+                    <div className="flex flex-col items-start text-right">
+                        <span className="text-base font-black text-slate-800 dark:text-white">إدارة الحساب</span>
+                        <span className="text-xs text-muted-foreground font-medium opacity-80">تحديث الاسم، الصورة، وكلمة المرور</span>
                     </div>
                 </div>
-                <ArrowLeft className="h-4 w-4 opacity-20 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">تعديل</span>
+                  <ChevronLeft className="h-5 w-5 text-primary/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
+                </div>
               </Link>
             </Button>
           </CardContent>
@@ -114,25 +118,25 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-2xl">
+            <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
               <Button 
                 variant={theme === 'light' ? 'default' : 'ghost'} 
                 onClick={() => setTheme('light')}
-                className="rounded-xl font-bold"
+                className={`rounded-xl font-bold transition-all ${theme === 'light' ? 'shadow-md' : ''}`}
               >
                 فاتح
               </Button>
               <Button 
                 variant={theme === 'dark' ? 'default' : 'ghost'} 
                 onClick={() => setTheme('dark')}
-                className="rounded-xl font-bold"
+                className={`rounded-xl font-bold transition-all ${theme === 'dark' ? 'shadow-md' : ''}`}
               >
                 داكن
               </Button>
               <Button 
                 variant={theme === 'system' ? 'default' : 'ghost'} 
                 onClick={() => setTheme('system')}
-                className="rounded-xl font-bold"
+                className={`rounded-xl font-bold transition-all ${theme === 'system' ? 'shadow-md' : ''}`}
               >
                 النظام
               </Button>
@@ -154,16 +158,16 @@ export default function SettingsPage() {
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
               <div className="flex items-center gap-2">
                 <AppWindow className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">اسم التطبيق</span>
+                <span className="font-medium text-sm">اسم التطبيق</span>
               </div>
               <span className="font-bold text-primary">{config.appName}</span>
             </div>
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
               <div className="flex items-center gap-2">
                 <Github className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">الإصدار</span>
+                <span className="font-medium text-sm">الإصدار</span>
               </div>
-              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold">v3.77.0</span>
+              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold">v3.77.0</span>
             </div>
             
             <div className="flex flex-col gap-3 p-4 bg-gradient-to-br from-primary/5 to-emerald-500/5 rounded-2xl border border-primary/10">
@@ -204,28 +208,28 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-2">
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
-              <Link href="/privacy">
-                <ShieldCheck className="h-5 w-5 text-primary" />
-                الخصوصية
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold group">
+              <Link href="/privacy" className="flex items-center w-full">
+                <ShieldCheck className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                <span>الخصوصية</span>
               </Link>
             </Button>
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
-              <Link href="/terms">
-                <FileText className="h-5 w-5 text-primary" />
-                اتفاقية الاستخدام
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold group">
+              <Link href="/terms" className="flex items-center w-full">
+                <FileText className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                <span>اتفاقية الاستخدام</span>
               </Link>
             </Button>
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold">
-              <Link href="/about">
-                <Users className="h-5 w-5 text-primary" />
-                من نحن
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold group">
+              <Link href="/about" className="flex items-center w-full">
+                <Users className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                <span>من نحن</span>
               </Link>
             </Button>
-            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold text-emerald-600">
-              <Link href="/contact">
-                <MessageCircle className="h-5 w-5 text-emerald-500" />
-                تواصل معنا
+            <Button asChild variant="ghost" className="justify-start h-12 rounded-xl px-4 gap-3 hover:bg-muted font-bold text-emerald-600 group">
+              <Link href="/contact" className="flex items-center w-full">
+                <MessageCircle className="h-5 w-5 text-emerald-500 group-hover:scale-110 transition-transform" />
+                <span>تواصل معنا</span>
               </Link>
             </Button>
           </CardContent>
@@ -243,25 +247,25 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5">
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5 hover-lift">
                 <a href={config.whatsappChannel} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="h-6 w-6 text-emerald-600" />
                   <span className="text-xs font-bold">واتساب</span>
                 </a>
               </Button>
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-blue-600/20 hover:bg-blue-600/5">
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-blue-600/20 hover:bg-blue-600/5 hover-lift">
                 <a href={config.facebook} target="_blank" rel="noopener noreferrer">
                   <Facebook className="h-6 w-6 text-blue-600" />
                   <span className="text-xs font-bold">فيسبوك</span>
                 </a>
               </Button>
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-slate-900/20 hover:bg-slate-900/5">
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-slate-900/20 hover:bg-slate-900/5 hover-lift">
                 <a href={config.twitter} target="_blank" rel="noopener noreferrer">
                   <Twitter className="h-6 w-6 text-slate-900 dark:text-white" />
                   <span className="text-xs font-bold">تويتر X</span>
                 </a>
               </Button>
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-sky-500/20 hover:bg-sky-500/5">
+              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-sky-500/20 hover:bg-sky-500/5 hover-lift">
                 <a href={config.telegram} target="_blank" rel="noopener noreferrer">
                   <Send className="h-6 w-6 text-sky-500" />
                   <span className="text-xs font-bold">تلجرام</span>
@@ -312,4 +316,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

@@ -71,22 +71,28 @@ function AllStudentsList() {
     const fetchAllStudents = async () => {
       setLoading(true);
       try {
-        // استخدام collectionGroup لجلب كافة الطلاب من جميع الحسابات مرة واحدة
-        const studentsQuery = query(collectionGroup(firestore, 'students'), orderBy('createdAt', 'desc'));
+        // تم إزالة orderBy لتجنب الحاجة لإنشاء Index يدوي في Firebase
+        const studentsQuery = query(collectionGroup(firestore, 'students'));
         const studentsSnapshot = await getDocs(studentsQuery);
         
         const studentsData = studentsSnapshot.docs.map(studentDoc => {
-          // محاولة استنتاج اسم المعلم من المسار (users/UID/students/ID)
           const pathSegments = studentDoc.ref.path.split('/');
           const teacherUid = pathSegments[1];
+          const data = studentDoc.data();
           
           return {
             id: studentDoc.id,
-            ...studentDoc.data(),
+            ...data,
             teacherUid,
-            // سيتم تحديث اسم المعلم لاحقاً أو استخدامه كـ UID
             owner: teacherUid === ADMIN_UID ? 'المشرف' : `معلم (${teacherUid.substring(0,5)})`,
           };
+        });
+
+        // ترتيب الطلاب برمجياً في المتصفح بدلاً من قاعدة البيانات
+        studentsData.sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+          return dateB - dateA;
         });
 
         setAllStudents(studentsData);
@@ -268,7 +274,7 @@ export default function AdminPage() {
       const fetchTotals = async () => {
           if (!firestore || !isAdmin) return;
           try {
-              // جلب إجمالي الطلاب باستخدام collectionGroup لسرعة الإحصائيات
+              // تم إزالة query و orderBy هنا أيضاً لتجنب خطأ Index
               const studentsSnapshot = await getDocs(collectionGroup(firestore, 'students'));
               setTotalStudentsCount(studentsSnapshot.size);
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -13,15 +12,14 @@ import {
   Clock, 
   Bell, 
   School,
-  BookOpen,
-  History,
   LogIn,
   UserPlus,
   ShieldCheck,
   Calendar as CalendarIcon,
   UserX,
   CheckCircle2,
-  Building2
+  Building2,
+  History
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';

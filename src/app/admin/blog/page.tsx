@@ -14,7 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Loader2, Plus, Trash2, Edit, Save, Image as ImageIcon, Video, 
   BookOpen, Star, ArrowLeft, Bold, Italic, List, AlignLeft, 
-  AlignCenter, AlignRight, Link as LinkIcon, UploadCloud, Globe 
+  AlignCenter, AlignRight, Link as LinkIcon, UploadCloud, Globe,
+  Code, PenLine, Undo2, Redo2, Underline, Strikethrough, AlignJustify,
+  ListOrdered, Quote, Eraser, Type, Palette, Highlighter
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ADMIN_EMAIL } from '@/lib/constants';
@@ -22,6 +24,7 @@ import { Article, ArticleCategory } from '@/lib/definitions';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useAppConfig } from '@/hooks/use-app-config';
+import { cn } from '@/lib/utils';
 
 export default function AdminBlogPage() {
   const router = useRouter();
@@ -34,7 +37,10 @@ export default function AdminBlogPage() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [editorMode, setEditorMode] = useState<'compose' | 'html'>('compose');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -53,6 +59,19 @@ export default function AdminBlogPage() {
 
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
+  // تحديث المحتوى المرئي عند تغيير formData.content (فقط في وضع الإنشاء)
+  useEffect(() => {
+    if (isEditing && editorMode === 'compose' && editorRef.current && editorRef.current.innerHTML !== formData.content) {
+      editorRef.current.innerHTML = formData.content;
+    }
+  }, [isEditing, editorMode, formData.content]);
+
+  const handleContentChange = () => {
+    if (editorRef.current) {
+      setFormData(prev => ({ ...prev, content: editorRef.current!.innerHTML }));
+    }
+  };
+
   const handleSave = async () => {
     if (!firestore || !formData.title || !formData.content) {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى كتابة العنوان والمحتوى على الأقل." });
@@ -61,7 +80,6 @@ export default function AdminBlogPage() {
     
     setIsSaving(true);
     try {
-      // منطق الصورة الافتراضية الذكي
       let finalCover = formData.coverImage;
       if (!finalCover) {
         const imgMatch = formData.content.match(/<img[^>]+src="([^">]+)"/);
@@ -106,36 +124,46 @@ export default function AdminBlogPage() {
   const resetForm = () => {
     setFormData({ title: '', content: '', category: 'AI', coverImage: '', isPinned: false, allowComments: true, searchDescription: '' });
     setCurrentId(null);
+    setEditorMode('compose');
   };
 
-  const insertTag = (tag: string, endTag: string = '', urlOverride?: string) => {
-    const textarea = document.getElementById('article-editor') as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-    
-    const before = text.substring(0, start);
-    const after = text.substring(end, text.length);
-
-    let newContent = '';
-    if (tag === 'img' || tag === 'iframe') {
-        const url = urlOverride || prompt(`أدخل رابط ${tag === 'img' ? 'الصورة' : 'الفيديو'}:`);
-        if (!url) return;
-        newContent = tag === 'img' 
-            ? `${before}<img src="${url}" class="rounded-2xl shadow-lg my-6 w-full" />${after}`
-            : `${before}<iframe src="${url}" class="w-full aspect-video rounded-2xl my-6" frameborder="0"></iframe>${after}`;
-    } else {
-        newContent = `${before}${tag}${selectedText}${endTag}${after}`;
+  const execCommand = (command: string, value: string = '') => {
+    if (editorMode === 'html') {
+        toast({ title: "تنبيه", description: "يرجى التبديل لوضع الإنشاء لاستخدام الأدوات." });
+        return;
     }
+    document.execCommand(command, false, value);
+    handleContentChange();
+    if (editorRef.current) editorRef.current.focus();
+  };
 
-    setFormData(prev => ({ ...prev, content: newContent }));
-    setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + (newContent.length - text.length), start + (newContent.length - text.length));
-    }, 10);
+  const insertLink = () => {
+    const url = prompt("أدخل الرابط:");
+    if (url) execCommand('createLink', url);
+  };
+
+  const insertImage = (urlOverride?: string) => {
+    const url = urlOverride || prompt("أدخل رابط الصورة:");
+    if (url) {
+        const imgHtml = `<img src="${url}" style="max-width: 100%; border-radius: 1rem; margin: 1rem 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />`;
+        if (editorMode === 'compose') {
+            execCommand('insertHTML', imgHtml);
+        } else {
+            setFormData(prev => ({ ...prev, content: prev.content + imgHtml }));
+        }
+    }
+  };
+
+  const insertVideo = () => {
+    const url = prompt("أدخل رابط الفيديو (YouTube/Embed):");
+    if (url) {
+        const videoHtml = `<div style="position: relative; padding-bottom: 56.25%; height: 0; margin: 1rem 0;"><iframe src="${url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 1rem;" frameborder="0" allowfullscreen></iframe></div>`;
+        if (editorMode === 'compose') {
+            execCommand('insertHTML', videoHtml);
+        } else {
+            setFormData(prev => ({ ...prev, content: prev.content + videoHtml }));
+        }
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,10 +182,10 @@ export default function AdminBlogPage() {
         const result = await res.json();
         if (result.success) {
             const url = result.data.url;
-            insertTag('img', '', url);
-            toast({ title: "تم رفع الصورة وإدراجها بنجاح" });
+            insertImage(url);
+            toast({ title: "تم الرفع بنجاح" });
         } else {
-            toast({ variant: "destructive", title: "فشل الرفع", description: result.error?.message });
+            toast({ variant: "destructive", title: "فشل الرفع" });
         }
     } catch (err) {
         toast({ variant: "destructive", title: "خطأ في الاتصال بخادم الرفع" });
@@ -190,62 +218,97 @@ export default function AdminBlogPage() {
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="xl:col-span-3 space-y-6">
             <Card className="border-0 shadow-2xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
-                <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-8">
-                    <div className="space-y-4">
-                        <Input 
-                            value={formData.title} 
-                            onChange={(e) => setFormData({...formData, title: e.target.value})} 
-                            placeholder="عنوان المقال المثير..." 
-                            className="text-2xl md:text-4xl font-black h-auto py-4 border-0 bg-transparent focus-visible:ring-0 px-0 placeholder:opacity-30"
-                        />
-                        <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground">
-                            <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> الرابط: {currentId ? `/art/${formData.numericId}` : '/art/[ID]'}</span>
-                        </div>
-                    </div>
+                <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6 md:p-8">
+                    <Input 
+                        value={formData.title} 
+                        onChange={(e) => setFormData({...formData, title: e.target.value})} 
+                        placeholder="عنوان المقال المثير..." 
+                        className="text-2xl md:text-4xl font-black h-auto py-4 border-0 bg-transparent focus-visible:ring-0 px-0 placeholder:opacity-30"
+                    />
                 </CardHeader>
                 <CardContent className="p-0">
-                    {/* شريط أدوات التحرير */}
-                    <div className="bg-slate-100 dark:bg-slate-800 p-2 flex flex-wrap gap-1 border-b sticky top-0 z-20">
-                        <Button variant="ghost" size="sm" onClick={() => insertTag('<b>', '</b>')} className="h-9 w-9 p-0 rounded-lg" title="عريض"><Bold className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => insertTag('<i>', '</i>')} className="h-9 w-9 p-0 rounded-lg" title="مائل"><Italic className="h-4 w-4" /></Button>
-                        <div className="w-[1px] h-6 bg-slate-300 mx-1 my-auto" />
-                        <Button variant="ghost" size="sm" onClick={() => insertTag('<div class="text-right">', '</div>')} className="h-9 w-9 p-0 rounded-lg" title="محاذاة يمين"><AlignRight className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => insertTag('<div class="text-center">', '</div>')} className="h-9 w-9 p-0 rounded-lg" title="توسيط"><AlignCenter className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => insertTag('<div class="text-left">', '</div>')} className="h-9 w-9 p-0 rounded-lg" title="محاذاة يسار"><AlignLeft className="h-4 w-4" /></Button>
-                        <div className="w-[1px] h-6 bg-slate-300 mx-1 my-auto" />
-                        <Button variant="ghost" size="sm" onClick={() => insertTag('<ul class="list-disc list-inside"><li>', '</li></ul>')} className="h-9 w-9 p-0 rounded-lg" title="قائمة"><List className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => insertTag('<a href="#" class="text-primary underline">', '</a>')} className="h-9 w-9 p-0 rounded-lg" title="رابط"><LinkIcon className="h-4 w-4" /></Button>
-                        <div className="w-[1px] h-6 bg-slate-300 mx-1 my-auto" />
+                    {/* شريط أدوات التحرير المطور */}
+                    <div className="bg-white dark:bg-slate-900 p-2 flex flex-wrap items-center gap-0.5 border-b sticky top-0 z-20 shadow-sm overflow-x-auto">
                         
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            ref={fileInputRef} 
-                            onChange={handleFileUpload} 
-                        />
-                        
-                        <Button 
-                            variant="secondary" 
-                            size="sm" 
-                            onClick={() => fileInputRef.current?.click()} 
-                            disabled={isUploading}
-                            className="h-9 px-3 rounded-lg gap-2 text-[10px] font-black bg-emerald-500 text-white hover:bg-emerald-600"
-                        >
-                            {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-                            رفع مباشر (ImgBB)
-                        </Button>
+                        <div className="flex items-center gap-1 border-l pl-2 ml-1">
+                            <Button variant="ghost" size="sm" onClick={() => setEditorMode(editorMode === 'compose' ? 'html' : 'compose')} className={cn("h-9 px-3 rounded-lg gap-2 text-xs font-bold", editorMode === 'html' ? "bg-primary text-white" : "text-slate-500")}>
+                                {editorMode === 'compose' ? <><Code className="h-4 w-4" /> HTML</> : <><PenLine className="h-4 w-4" /> إنشاء</>}
+                            </Button>
+                        </div>
 
-                        <Button variant="secondary" size="sm" onClick={() => insertTag('img')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><ImageIcon className="h-3.5 w-3.5" /> إدراج رابط صورة</Button>
-                        <Button variant="secondary" size="sm" onClick={() => insertTag('iframe')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><Video className="h-3.5 w-3.5" /> فيديو</Button>
+                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('undo')} className="h-9 w-9 text-slate-500"><Undo2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('redo')} className="h-9 w-9 text-slate-500"><Redo2 className="h-4 w-4" /></Button>
+                        </div>
+
+                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('bold')} className="h-9 w-9 text-slate-700 font-bold"><Bold className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('italic')} className="h-9 w-9 text-slate-700 italic"><Italic className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('underline')} className="h-9 w-9 text-slate-700 underline"><Underline className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('strikeThrough')} className="h-9 w-9 text-slate-700 line-through"><Strikethrough className="h-4 w-4" /></Button>
+                        </div>
+
+                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
+                            <Button variant="ghost" size="icon" onClick={() => {
+                                const color = prompt("أدخل كود اللون (مثل #ff0000):");
+                                if (color) execCommand('foreColor', color);
+                            }} className="h-9 w-9 text-rose-500"><Palette className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => {
+                                const color = prompt("أدخل لون التظليل (مثل yellow):");
+                                if (color) execCommand('hiliteColor', color);
+                            }} className="h-9 w-9 text-amber-500"><Highlighter className="h-4 w-4" /></Button>
+                        </div>
+
+                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
+                            <Button variant="ghost" size="icon" onClick={() => insertLink()} className="h-9 w-9 text-blue-500"><LinkIcon className="h-4 w-4" /></Button>
+                            
+                            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => fileInputRef.current?.click()} 
+                                disabled={isUploading}
+                                className="h-9 w-9 text-emerald-500"
+                            >
+                                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                            </Button>
+                            
+                            <Button variant="ghost" size="icon" onClick={() => insertVideo()} className="h-9 w-9 text-rose-600"><Video className="h-4 w-4" /></Button>
+                        </div>
+
+                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyRight')} className="h-9 w-9"><AlignRight className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyCenter')} className="h-9 w-9"><AlignCenter className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyLeft')} className="h-9 w-9"><AlignLeft className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyFull')} className="h-9 w-9"><AlignJustify className="h-4 w-4" /></Button>
+                        </div>
+
+                        <div className="flex items-center gap-0.5">
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('insertUnorderedList')} className="h-9 w-9"><List className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('insertOrderedList')} className="h-9 w-9"><ListOrdered className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('formatBlock', 'blockquote')} className="h-9 w-9"><Quote className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => execCommand('removeFormat')} className="h-9 w-9 text-rose-400"><Eraser className="h-4 w-4" /></Button>
+                        </div>
                     </div>
-                    <Textarea 
-                        id="article-editor"
-                        value={formData.content} 
-                        onChange={(e) => setFormData({...formData, content: e.target.value})} 
-                        placeholder="ابدأ بكتابة قصة نجاحك هنا... (يدعم HTML)" 
-                        className="min-h-[600px] border-0 rounded-none focus-visible:ring-0 p-8 text-lg leading-relaxed font-medium bg-slate-50/30" 
-                    />
+
+                    <div className="relative">
+                        {editorMode === 'compose' ? (
+                            <div 
+                                ref={editorRef}
+                                contentEditable
+                                onInput={handleContentChange}
+                                className="min-h-[600px] p-8 text-lg leading-relaxed focus:outline-none dark:text-slate-100 bg-slate-50/20"
+                                placeholder="ابدأ الكتابة هنا..."
+                            />
+                        ) : (
+                            <Textarea 
+                                value={formData.content} 
+                                onChange={(e) => setFormData({...formData, content: e.target.value})} 
+                                className="min-h-[600px] border-0 rounded-none focus-visible:ring-0 p-8 font-mono text-sm leading-relaxed bg-slate-900 text-emerald-400"
+                                placeholder="اكتب كود HTML هنا..."
+                            />
+                        )}
+                    </div>
                 </CardContent>
             </Card>
 
@@ -289,20 +352,15 @@ export default function AdminBlogPage() {
                             <Input 
                                 value={formData.coverImage} 
                                 onChange={(e) => setFormData({...formData, coverImage: e.target.value})} 
-                                placeholder="اتركها فارغة لاستخدام أول صورة بالمقال" 
+                                placeholder="اتركها فارغة لاستخدام أول صورة" 
                                 className="h-11 rounded-xl bg-slate-50 font-mono text-[10px] border-slate-100" 
                             />
-                            {formData.coverImage && (
-                                <div className="relative aspect-video rounded-2xl overflow-hidden border">
-                                    <img src={formData.coverImage} className="object-cover w-full h-full" alt="Cover Preview" />
-                                </div>
-                            )}
                         </div>
                     </div>
 
                     <div className="space-y-4 pt-4 border-t border-dashed">
                         <div className="flex items-center justify-between">
-                            <Label className="font-bold text-xs cursor-pointer" htmlFor="pin-switch">تثبيت في القسم (Pin)</Label>
+                            <Label className="font-bold text-xs cursor-pointer" htmlFor="pin-switch">تثبيت المقال (Max 5)</Label>
                             <Switch id="pin-switch" checked={formData.isPinned} onCheckedChange={(v) => setFormData({...formData, isPinned: v})} />
                         </div>
                         <div className="flex items-center justify-between">
@@ -315,7 +373,7 @@ export default function AdminBlogPage() {
                         <Button onClick={handleSave} disabled={isSaving} className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-xl shadow-primary/20">
                             {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} حفظ ونشر المقال
                         </Button>
-                        <Button variant="ghost" onClick={() => { setIsEditing(false); resetForm(); }} className="h-12 rounded-xl text-slate-400 font-bold">إلغاء المسودة</Button>
+                        <Button variant="ghost" onClick={() => { setIsEditing(false); resetForm(); }} className="h-12 rounded-xl text-slate-400 font-bold">إلغاء</Button>
                     </div>
                 </CardContent>
              </Card>
@@ -332,8 +390,8 @@ export default function AdminBlogPage() {
                         alt={art.title} 
                     />
                     <div className="absolute top-4 right-4 flex gap-2">
-                        <Badge className="bg-white/90 text-primary backdrop-blur-md border-0 rounded-lg font-black text-[9px]">{art.category}</Badge>
-                        {art.isPinned && <Badge className="bg-amber-400 text-white rounded-lg p-1 border-0"><Star className="h-3 w-3 fill-current" /></Badge>}
+                        <span className="bg-white/90 text-primary backdrop-blur-md px-2.5 py-0.5 rounded-lg font-black text-[9px]">{art.category}</span>
+                        {art.isPinned && <span className="bg-amber-400 text-white rounded-lg p-1"><Star className="h-3 w-3 fill-current" /></span>}
                     </div>
                </div>
                <CardContent className="p-6 space-y-4">
@@ -352,22 +410,8 @@ export default function AdminBlogPage() {
                </CardContent>
              </Card>
            ))}
-           {(!articles || articles.length === 0) && !isLoading && (
-               <div className="col-span-full py-32 text-center space-y-4 bg-slate-50 rounded-[3rem] border-2 border-dashed">
-                   <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
-                       <BookOpen className="h-8 w-8 text-slate-200" />
-                   </div>
-                   <p className="font-black text-slate-300">لا توجد مقالات منشورة حالياً.</p>
-               </div>
-           )}
         </div>
       )}
     </div>
   );
 }
-
-const Badge = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${className}`}>
-        {children}
-    </span>
-);

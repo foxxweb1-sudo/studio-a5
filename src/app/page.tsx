@@ -6,226 +6,186 @@ import { useUser } from '@/firebase';
 import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
-import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, Calendar, Bell, ArrowRightLeft } from 'lucide-react';
+import { GraduationCap, School, Building, CalendarCheck, ShieldCheck, Users, Wallet, Clock, Calendar, Bell, ArrowRightLeft, LogIn, UserPlus, BookOpen, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useRouter } from 'next/navigation';
 
-const stages = [
-  {
-    name: 'المرحلة الابتدائية',
-    icon: School,
-    slug: 'primary',
-    color: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    description: 'من الصف الأول حتى السادس الابتدائي'
-  },
-  {
-    name: 'المرحلة الإعدادية',
-    icon: Building,
-    slug: 'preparatory',
-    color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    description: 'من الصف الأول حتى الثالث الإعدادي'
-  },
-  {
-    name: 'المرحلة الثانوية',
-    icon: GraduationCap,
-    slug: 'secondary',
-    color: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-    description: 'من الصف الأول حتى الثالث الثانوي'
-  },
-];
+const categories = ["AI", "الرقمية", "معلومات عامة", "عن المنصة"];
 
 export default function Home() {
   const { user } = useUser();
   const { config } = useAppConfig();
-  const { students } = useStudents();
-  const { attendance } = useAttendance();
-  const { payments } = usePayments();
-
-  const [now, setNow] = useState<Date | null>(null);
-  const [hasNewUpdate, setHasNewUpdate] = useState(false);
+  const firestore = useFirestore();
+  const router = useRouter();
   
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  // جلب مقالات للمدونة في الرئيسية
+  const articlesQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'articles'), orderBy('createdAt', 'desc'), limit(20)) : null,
+  [firestore]);
+  const { data: allArticles } = useCollection(articlesQuery);
+
   useEffect(() => {
-    setNow(new Date());
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    
-    const lastSeenUrl = localStorage.getItem('last_seen_update_url');
-    if (config.updatesUrl && config.updatesUrl !== '#' && lastSeenUrl !== config.updatesUrl) {
-      setHasNewUpdate(true);
-    }
-
+    const timer = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % 5);
+    }, 1000);
     return () => clearInterval(timer);
-  }, [config.updatesUrl]);
+  }, []);
 
-  const handleUpdateClick = () => {
-    if (config.updatesUrl && config.updatesUrl !== '#') {
-      localStorage.setItem('last_seen_update_url', config.updatesUrl);
-      setHasNewUpdate(false);
-      window.open(config.updatesUrl, '_blank');
+  const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
+
+  const handleProtectedClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      setShowAuthDialog(true);
     }
   };
 
-  const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const currentMonth = format(new Date(), 'yyyy-MM');
-
-  // تصفية الطلاب النشطين فقط للإحصائيات
-  const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
-
-  const stats = useMemo(() => {
-    const totalStudents = activeStudents.length;
-    const attendedToday = attendance.filter(a => a.date === today && activeStudents.some(s => s.id === a.studentId)).length;
-    
-    return [
-      { label: 'إجمالي الطلاب', value: totalStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-      { label: 'حضور اليوم', value: attendedToday, icon: CalendarCheck, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-      { label: 'غياب اليوم', value: totalStudents - attendedToday, icon: Clock, color: 'text-rose-600', bg: 'bg-rose-100' },
-      { label: 'مدفوعات الشهر', value: payments.filter(p => p.month === currentMonth && activeStudents.some(s => s.id === p.studentId)).length, icon: Wallet, color: 'text-amber-600', bg: 'bg-amber-100' },
-    ];
-  }, [activeStudents, attendance, payments, today, currentMonth]);
+  const latestArticlesByCategory = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    categories.forEach(cat => {
+      map[cat] = allArticles?.filter(a => a.category === cat).slice(0, 5) || [];
+    });
+    return map;
+  }, [allArticles]);
 
   if (isAdmin) {
     return (
       <div className="flex flex-col gap-8 items-center justify-center text-center py-12">
         <PageHeader className="border-0">
             <PageHeaderTitle className="text-4xl md:text-5xl text-primary font-black">مرحباً أيها المشرف</PageHeaderTitle>
-            <PageHeaderTitle className="text-lg font-bold opacity-60">
-                أنت تستخدم حساب الإدارة الرئيسي ({ADMIN_EMAIL})
-            </PageHeaderTitle>
+            <PageHeaderTitle className="text-lg font-bold opacity-60">أنت تستخدم حساب الإدارة الرئيسي</PageHeaderTitle>
         </PageHeader>
-        <Link href="/admin" className="w-full max-w-md group">
-            <Card className="hover-lift overflow-hidden border-2 border-primary/20 bg-white/50 backdrop-blur-md">
-                <CardContent className="flex flex-col items-center justify-center p-12 gap-6 bg-gradient-to-br from-primary/5 to-transparent">
-                    <div className="flex items-center justify-center w-24 h-24 rounded-3xl bg-primary text-primary-foreground shadow-lg shadow-primary/30 transform group-hover:rotate-12 transition-transform">
-                        <ShieldCheck className="w-12 h-12" />
-                    </div>
-                    <div className="space-y-2">
-                      <h2 className="text-3xl font-bold">لوحة تحكم المشرف</h2>
-                      <p className="text-muted-foreground">عرض وإدارة جميع بيانات النظام.</p>
-                    </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+          <Link href="/admin" className="group">
+            <Card className="hover-lift overflow-hidden border-2 border-primary/20 bg-white">
+                <CardContent className="flex flex-col items-center p-8 gap-4">
+                    <ShieldCheck className="w-12 h-12 text-primary" />
+                    <h2 className="text-xl font-bold">لوحة تحكم النظام</h2>
                 </CardContent>
             </Card>
-        </Link>
+          </Link>
+          <Link href="/admin/blog" className="group">
+            <Card className="hover-lift overflow-hidden border-2 border-emerald-500/20 bg-white">
+                <CardContent className="flex flex-col items-center p-8 gap-4">
+                    <BookOpen className="w-12 h-12 text-emerald-500" />
+                    <h2 className="text-xl font-bold">إدارة المدونة</h2>
+                </CardContent>
+            </Card>
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-10 py-4">
-      {/* قسم الوقت والترحيب */}
-      {now && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
-          <Card className="md:col-span-2 border-0 shadow-lg bg-gradient-to-r from-primary to-blue-600 text-white rounded-[2rem] overflow-hidden relative group">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
-              <Calendar className="w-32 h-32" />
-            </div>
-            <CardContent className="p-8 flex flex-col justify-center h-full relative z-10">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-black mb-2">أهلاً بك، {user?.displayName || 'أستاذنا'} 👋</h2>
-                  <p className="text-blue-100 font-bold text-sm">نتمنى لك يوماً دراسياً موفقاً ومليئاً بالإنجازات.</p>
-                </div>
-                <div className="relative">
-                  <Button 
-                    onClick={handleUpdateClick}
-                    variant="ghost" 
-                    className="h-14 w-14 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group"
-                  >
-                    <Bell className="h-7 w-7 text-white group-hover:scale-110 transition-transform" />
-                    {hasNewUpdate && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 border-2 border-primary"></span>
-                      </span>
-                    )}
-                  </Button>
-                </div>
+      {/* هيدر ترحيبي للزوار */}
+      {!user && (
+        <section className="relative overflow-hidden rounded-[3rem] bg-slate-900 p-8 md:p-16 text-white shadow-2xl">
+           <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+              <Sparkles className="w-full h-full animate-pulse" />
+           </div>
+           <div className="relative z-10 text-center space-y-8">
+              <h1 className="text-5xl md:text-7xl font-black leading-tight">
+                أهلاً بك في منصة <span className="text-primary">{config.appName}</span>
+              </h1>
+              <p className="text-slate-400 text-xl max-w-2xl mx-auto">
+                النظام الأذكى لإدارة حضور الطلاب والمدفوعات، بالإضافة إلى أحدث المقالات في عالم التقنية والذكاء الاصطناعي.
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                 <Link href="/login">
+                   <Button size="lg" className="rounded-2xl px-10 h-16 text-lg font-black gap-2 shadow-xl shadow-primary/30">
+                     <LogIn className="h-6 w-6" /> تسجيل الدخول
+                   </Button>
+                 </Link>
+                 <Link href="/signup">
+                   <Button size="lg" variant="outline" className="rounded-2xl px-10 h-16 text-lg font-black gap-2 border-white/20 bg-white/5 hover:bg-white/10">
+                     <UserPlus className="h-6 w-6" /> إنشاء حساب جديد
+                   </Button>
+                 </Link>
               </div>
-              <div className="mt-6 flex items-center gap-3 bg-white/10 w-fit px-5 py-2 rounded-2xl backdrop-blur-md border border-white/10">
-                 <Calendar className="h-4 w-4 text-blue-200" />
-                 <span className="text-sm font-black">{format(now, 'eeee، d MMMM yyyy', { locale: ar })}</span>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden flex flex-col items-center justify-center p-6 text-center border-b-4 border-b-primary">
-            <div className="p-3 bg-primary/10 rounded-2xl mb-2">
-              <Clock className="h-6 w-6 text-primary" />
-            </div>
-            <div className="text-3xl font-black tracking-tighter text-slate-800 dark:text-white tabular-nums">
-              {format(now, 'hh:mm:ss a', { locale: ar })}
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">الوقت الآن بتوقيتك المحلي</p>
-          </Card>
-        </div>
+           </div>
+        </section>
       )}
 
-      <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 md:p-12 text-white shadow-2xl">
-        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
-          <div className="space-y-6 text-center lg:text-right">
-            <h1 className="text-4xl md:text-6xl font-black leading-tight tracking-tight">
-              إدارة ذكية <br /> <span className="text-primary">لمستقبل تعليمي</span> أفضل
-            </h1>
-            <p className="text-slate-400 text-lg max-w-xl mx-auto lg:mx-0">
-              تابع حضور طلابك ومدفوعاتهم بدقة متناهية وسهولة تامة.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-              <Link href="/attendance">
-                <button className="px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2">
-                  <CalendarCheck className="h-5 w-5" />
-                  تسجيل الحضور الآن
-                </button>
-              </Link>
-              <Link href="/students">
-                <button className="px-8 py-4 bg-white/10 text-white border border-white/20 rounded-2xl font-bold shadow-lg hover:bg-white/20 transition-all flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  عرض جميع الطلاب
-                </button>
-              </Link>
-              <Link href="/schedule">
-                <button className="px-8 py-4 bg-slate-800 text-slate-300 border border-slate-700 rounded-2xl font-bold shadow-lg hover:bg-slate-700 transition-all flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  مواعيد العمل
-                </button>
-              </Link>
-              <Link href="/accounting-period">
-                <button className="px-8 py-4 bg-amber-600 text-white rounded-2xl font-bold shadow-lg hover:bg-amber-700 transition-all flex items-center gap-2">
-                  <ArrowRightLeft className="h-5 w-5" />
-                  الفترة المحاسبية
-                </button>
-              </Link>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {stats.map((stat, idx) => (
-              <div key={idx} className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex flex-col items-center gap-2">
-                <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                <div className="text-2xl font-black">{stat.value}</div>
-                <div className="text-xs text-slate-500 font-bold">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* قسم المدونة المصغر (Ticker) */}
+      <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {categories.map((cat) => {
+          const arts = latestArticlesByCategory[cat];
+          const currentArt = arts[currentSlideIndex % (arts.length || 1)];
+          return (
+            <Card key={cat} className="border-0 shadow-sm overflow-hidden bg-white group hover:shadow-md transition-all h-24">
+              <CardContent className="p-0 h-full flex items-center">
+                <div className="bg-primary/5 p-4 h-full flex items-center justify-center border-l shrink-0">
+                  <span className="text-[10px] font-black text-primary writing-vertical rotate-180">{cat}</span>
+                </div>
+                <div className="p-3 flex-grow overflow-hidden">
+                  {currentArt ? (
+                    <Link href={`/art/${currentArt.numericId}`} className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground font-bold">آخر المقالات...</p>
+                      <h4 className="text-xs font-black truncate text-slate-800">{currentArt.title}</h4>
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-slate-300 font-bold italic">لا توجد مقالات بعد</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </section>
 
+      {/* المحتوى الرئيسي المحمي */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stages.map((stage) => (
-          <Link href={`/stage/${stage.slug}`} key={stage.slug} className="group">
-            <Card className="h-full border-0 bg-white dark:bg-slate-900 shadow-xl rounded-[2.5rem] overflow-hidden">
-              <CardContent className="flex flex-col items-center p-10 gap-6 text-center">
-                <div className={`flex items-center justify-center w-24 h-24 rounded-[2rem] ${stage.color}`}>
-                  <stage.icon className="w-12 h-12" />
-                </div>
-                <h3 className="text-2xl font-bold">{stage.name}</h3>
-                <p className="text-sm text-muted-foreground">{stage.description}</p>
-              </CardContent>
+        {[
+          { name: 'تسجيل الحضور', icon: CalendarCheck, href: '/attendance', color: 'bg-blue-500/10 text-blue-500' },
+          { name: 'إدارة الطلاب', icon: Users, href: '/students', color: 'bg-emerald-500/10 text-emerald-500' },
+          { name: 'المدفوعات والتقارير', icon: Wallet, href: '/payments', color: 'bg-amber-500/10 text-amber-500' },
+        ].map((item) => (
+          <Link href={item.href} key={item.name} onClick={handleProtectedClick}>
+            <Card className="hover-lift h-full border-0 bg-white shadow-xl rounded-[2.5rem] p-8 text-center flex flex-col items-center gap-6">
+               <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center ${item.color}`}>
+                  <item.icon className="w-10 h-10" />
+               </div>
+               <h3 className="text-2xl font-bold">{item.name}</h3>
             </Card>
           </Link>
         ))}
       </div>
+
+      {/* نافذة التحذير (الطلب المنبثق) */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="rounded-[2.5rem] border-0 shadow-2xl max-w-sm">
+          <DialogHeader className="text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+            </div>
+            <DialogTitle className="text-2xl font-black">خطوة واحدة باقية</DialogTitle>
+            <DialogDescription className="font-bold pt-2">
+              هذا القسم مخصص للمعلمين المشتركين. يرجى تسجيل الدخول للوصول إلى أدواتك التعليمية.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-4">
+             <Button onClick={() => router.push('/login')} className="h-12 rounded-xl font-bold gap-2">
+               <LogIn className="h-4 w-4" /> سجل دخولك الآن
+             </Button>
+             <Button onClick={() => router.push('/signup')} variant="outline" className="h-12 rounded-xl font-bold gap-2">
+               <UserPlus className="h-4 w-4" /> إنشاء حساب جديد
+             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

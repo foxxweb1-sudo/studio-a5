@@ -8,7 +8,35 @@ export type UserProfile = {
   displayName: string;
   photoURL?: string;
   isBlocked?: boolean;
+  isVerified?: boolean;
   lastLogin?: FieldValue;
+};
+
+export type ArticleCategory = "AI" | "الرقمية" | "معلومات عامة" | "عن المنصة";
+
+export type Article = {
+  id: string;
+  numericId: number;
+  title: string;
+  content: string;
+  category: ArticleCategory;
+  coverImage?: string;
+  views: number;
+  isPinned: boolean;
+  allowComments: boolean;
+  searchDescription?: string;
+  createdAt: FieldValue | any;
+};
+
+export type AdConfig = {
+  isCdm: boolean;
+  cdmCode1?: string;
+  cdmCode2?: string;
+  bannerCode?: string;
+  sidebarCode?: string;
+  popupCode?: string;
+  middleArticleCode?: string;
+  underTitleCode?: string;
 };
 
 export type ScheduleSession = {
@@ -27,8 +55,8 @@ export type WorkingSchedule = {
 
 export type GradePaymentPeriod = {
   id: string;
-  startMonth: string; // YYYY-MM
-  endMonth: string;   // YYYY-MM
+  startMonth: string;
+  endMonth: string;
 };
 
 export type GradePaymentConfig = {
@@ -76,7 +104,7 @@ export type NewStudent = Omit<Student, 'id' | 'createdAt'>;
 export type AttendanceRecord = {
   id: string;
   studentId: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   status: 'present' | 'absent';
   createdAt: FieldValue;
 };
@@ -87,8 +115,8 @@ export type PaymentRecord = {
   id: string;
   studentId: string;
   amount: number;
-  month: string; // YYYY-MM
-  date: string; // YYYY-MM-DD
+  month: string;
+  date: string;
   createdAt: FieldValue;
 };
 

@@ -6,395 +6,67 @@
       "description": "Represents a user of the application.",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string",
-          "description": "The unique identifier for the user, matching Firebase Auth UID."
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "The user's email address."
-        },
-        "displayName": {
-          "type": "string",
-          "description": "The user's display name."
-        },
-        "isBlocked": {
-          "type": "boolean",
-          "description": "Whether the user is blocked from accessing the site."
-        },
-        "isVerified": {
-          "type": "boolean",
-          "description": "Whether the account is verified by the administration."
-        },
-        "photoURL": {
-          "type": "string",
-          "description": "URL to the user's profile photo."
-        },
-        "lastLogin": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of the last successful login."
-        }
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "isBlocked": { "type": "boolean" },
+        "isVerified": { "type": "boolean" },
+        "photoURL": { "type": "string" },
+        "lastLogin": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email"]
     },
-    "WorkingSchedule": {
-      "title": "WorkingSchedule",
+    "Article": {
+      "title": "Article",
       "type": "object",
-      "description": "Defines the teacher's working sessions.",
       "properties": {
-        "isActive": {
-          "type": "boolean",
-          "description": "Whether to enforce schedule checks."
-        },
-        "sessions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "grade": { "type": "string" },
-              "days": { "type": "array", "items": { "type": "string" } },
-              "startTime": { "type": "string" },
-              "endTime": { "type": "string" }
-            }
-          }
-        },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "PaymentConfig": {
-      "title": "PaymentConfig",
-      "type": "object",
-      "description": "User-specific settings for payment tracking.",
-      "properties": {
-        "grades": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "periods": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "startMonth": { "type": "string" },
-                    "endMonth": { "type": "string" }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "DeletionRequest": {
-      "title": "DeletionRequest",
-      "type": "object",
-      "description": "Represents a user's request to delete their account.",
-      "properties": {
-        "uid": { "type": "string" },
-        "email": { "type": "string" },
-        "displayName": { "type": "string" },
-        "photoURL": { "type": "string" },
-        "requestedAt": { "type": "string", "format": "date-time" },
-        "reason": { "type": "string" },
-        "studentCount": { "type": "number" }
-      },
-      "required": ["uid", "requestedAt"]
-    },
-    "Student": {
-      "title": "Student",
-      "type": "object",
-      "description": "Represents a student managed by a user.",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The student's full name."
-        },
-        "grade": {
-          "type": "string",
-          "description": "The student's current grade level."
-        },
-        "phone": {
-          "type": "string",
-          "description": "The student's phone number."
-        },
-        "parentPhone": {
-          "type": "string",
-          "description": "Contact information for the student's parent or guardian."
-        },
-        "isArchived": {
-          "type": "boolean",
-          "description": "Whether the student is archived (not active)."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the student was added."
-        }
-      },
-      "required": ["name", "grade"]
-    },
-    "AttendanceRecord": {
-      "title": "AttendanceRecord",
-      "type": "object",
-      "description": "Represents a record of a student's attendance on a specific date.",
-      "properties": {
-        "studentId": {
-          "type": "string",
-          "description": "The ID of the student this record belongs to."
-        },
-        "date": {
-          "type": "string",
-          "description": "The date for which attendance is being recorded (YYYY-MM-DD).",
-          "format": "date"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["present", "absent"],
-          "description": "The attendance status."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the record was created."
-        }
-      },
-      "required": ["studentId", "date", "status"]
-    },
-    "Payment": {
-      "title": "Payment",
-      "type": "object",
-      "description": "Represents a payment made for a student.",
-      "properties": {
-        "studentId": {
-          "type": "string",
-          "description": "The ID of the student this payment is for."
-        },
-        "amount": {
-          "type": "number",
-          "description": "The amount of the payment."
-        },
-        "month": {
-          "type": "string",
-          "description": "The month for which the payment was made (YYYY-MM)."
-        },
-        "date": {
-          "type": "string",
-          "description": "The date the payment was recorded (YYYY-MM-DD).",
-          "format": "date"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the payment was recorded."
-        }
-      },
-      "required": ["studentId", "amount", "month", "date"]
-    },
-    "ContactMessage": {
-      "title": "ContactMessage",
-      "type": "object",
-      "description": "Represents a message sent through the contact form.",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The sender's name."
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "The sender's email address."
-        },
-        "whatsapp": {
-          "type": "string",
-          "description": "The sender's WhatsApp number."
-        },
-        "message": {
-          "type": "string",
-          "description": "The content of the message."
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pending", "reviewed", "replied", "rejected"],
-          "description": "The current status of the message."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the message was sent."
-        }
-      },
-      "required": ["name", "message", "createdAt"]
-    },
-    "Review": {
-      "title": "Review",
-      "type": "object",
-      "description": "Stores application reviews from users.",
-      "properties": {
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "userPhoto": { "type": "string" },
-        "rating": { "type": "number" },
-        "comment": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string", "enum": ["AI", "الرقمية", "معلومات عامة", "عن المنصة"] },
+        "coverImage": { "type": "string" },
+        "views": { "type": "number" },
+        "isPinned": { "type": "boolean" },
+        "allowComments": { "type": "boolean" },
+        "searchDescription": { "type": "string" },
+        "numericId": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "rating", "createdAt"]
-    },
-    "ReviewPermission": {
-      "title": "ReviewPermission",
-      "type": "object",
-      "description": "Indicates if a user has permission to submit a review.",
-      "properties": {
-        "canReview": { "type": "boolean" },
-        "grantedAt": { "type": "string", "format": "date-time" }
       }
     },
-    "GlobalConfig": {
-      "title": "GlobalConfig",
+    "AdConfig": {
+      "title": "AdConfig",
       "type": "object",
-      "description": "Stores global application settings.",
       "properties": {
-        "appName": { "type": "string" },
-        "appLogo": { "type": "string" },
-        "appVersion": { "type": "string" },
-        "loginBg": { "type": "string" },
-        "signupBg": { "type": "string" },
-        "contactPhone": { "type": "string" },
-        "contactEmail": { "type": "string" },
-        "supportUrl": { "type": "string", "description": "Technical support portal URL" },
-        "whatsappChannel": { "type": "string" },
-        "facebook": { "type": "string" },
-        "twitter": { "type": "string" },
-        "telegram": { "type": "string" },
-        "techStoreUrl": { "type": "string" },
-        "cookiePolicyUrl": { "type": "string" },
-        "updatesUrl": { "type": "string" },
-        "lastRulesUpdate": { "type": "string", "format": "date-time" }
+        "isCdm": { "type": "boolean" },
+        "cdmCode1": { "type": "string" },
+        "cdmCode2": { "type": "string" },
+        "bannerCode": { "type": "string" },
+        "sidebarCode": { "type": "string" },
+        "popupCode": { "type": "string" },
+        "middleArticleCode": { "type": "string" },
+        "underTitleCode": { "type": "string" }
       }
-    }
+    },
+    "WorkingSchedule": { "title": "WorkingSchedule", "type": "object", "properties": { "isActive": { "type": "boolean" } } },
+    "PaymentConfig": { "title": "PaymentConfig", "type": "object", "properties": { "grades": { "type": "object" } } },
+    "DeletionRequest": { "title": "DeletionRequest", "type": "object", "properties": { "uid": { "type": "string" } } },
+    "Student": { "title": "Student", "type": "object", "properties": { "name": { "type": "string" }, "grade": { "type": "string" } } },
+    "AttendanceRecord": { "title": "AttendanceRecord", "type": "object", "properties": { "studentId": { "type": "string" }, "status": { "type": "string" } } },
+    "Payment": { "title": "Payment", "type": "object", "properties": { "studentId": { "type": "string" }, "amount": { "type": "number" } } },
+    "ContactMessage": { "title": "ContactMessage", "type": "object", "properties": { "name": { "type": "string" }, "status": { "type": "string" } } },
+    "Review": { "title": "Review", "type": "object", "properties": { "rating": { "type": "number" } } },
+    "GlobalConfig": { "title": "GlobalConfig", "type": "object", "properties": { "appName": { "type": "string" } } }
   },
-  "auth": {
-    "providers": [
-      "password"
-    ]
-  },
+  "auth": { "providers": ["password"] },
   "firestore": {
     "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores core profile data for each user."
-        }
-      },
-      {
-        "path": "/users/{userId}/config/schedule",
-        "definition": {
-          "entityName": "WorkingSchedule",
-          "schema": {
-            "$ref": "#/backend/entities/WorkingSchedule"
-          },
-          "description": "Stores working sessions for the user."
-        }
-      },
-      {
-        "path": "/users/{userId}/config/payments",
-        "definition": {
-          "entityName": "PaymentConfig",
-          "schema": {
-            "$ref": "#/backend/entities/PaymentConfig"
-          },
-          "description": "Stores payment settings for the user."
-        }
-      },
-      {
-        "path": "/deletionRequests/{userId}",
-        "definition": {
-          "entityName": "DeletionRequest",
-          "schema": {
-            "$ref": "#/backend/entities/DeletionRequest"
-          },
-          "description": "Stores active account deletion requests."
-        }
-      },
-      {
-        "path": "/reviewPermissions/{userId}",
-        "definition": {
-          "entityName": "ReviewPermission",
-          "schema": {
-             "$ref": "#/backend/entities/ReviewPermission"
-          },
-          "description": "Permissions for users to write reviews."
-        }
-      },
-      {
-        "path": "/reviews/{reviewId}",
-        "definition": {
-          "entityName": "Review",
-          "schema": {
-             "$ref": "#/backend/entities/Review"
-          },
-          "description": "Public application reviews."
-        }
-      },
-      {
-        "path": "/users/{userId}/students/{studentId}",
-        "definition": {
-          "entityName": "Student",
-          "schema": {
-            "$ref": "#/backend/entities/Student"
-          },
-          "description": "Stores student profiles for a specific user."
-        }
-      },
-      {
-        "path": "/users/{userId}/attendance/{attendanceId}",
-        "definition": {
-          "entityName": "AttendanceRecord",
-          "schema": {
-            "$ref": "#/backend/entities/AttendanceRecord"
-          },
-          "description": "Stores attendance records for all students of a specific user."
-        }
-      },
-      {
-        "path": "/users/{userId}/payments/{paymentId}",
-        "definition": {
-          "entityName": "Payment",
-          "schema": {
-            "$ref": "#/backend/entities/Payment"
-          },
-          "description": "Stores payment records for all students of a specific user."
-        }
-      },
-      {
-        "path": "/contactMessages/{messageId}",
-        "definition": {
-          "entityName": "ContactMessage",
-          "schema": {
-            "$ref": "#/backend/entities/ContactMessage"
-          },
-          "description": "Stores messages sent via the contact form."
-        }
-      },
-      {
-        "path": "/appConfig/{configId}",
-        "definition": {
-          "entityName": "GlobalConfig",
-          "schema": {
-            "$ref": "#/backend/entities/GlobalConfig"
-          },
-          "description": "Stores global application configuration like logo and backgrounds."
-        }
-      }
+      { "path": "/users/{userId}", "definition": { "entityName": "User" } },
+      { "path": "/articles/{articleId}", "definition": { "entityName": "Article" } },
+      { "path": "/adConfig/global", "definition": { "entityName": "AdConfig" } },
+      { "path": "/users/{userId}/students/{studentId}", "definition": { "entityName": "Student" } },
+      { "path": "/users/{userId}/attendance/{attendanceId}", "definition": { "entityName": "AttendanceRecord" } },
+      { "path": "/users/{userId}/payments/{paymentId}", "definition": { "entityName": "Payment" } },
+      { "path": "/contactMessages/{messageId}", "definition": { "entityName": "ContactMessage" } },
+      { "path": "/appConfig/{configId}", "definition": { "entityName": "GlobalConfig" } }
     ]
   }
 }

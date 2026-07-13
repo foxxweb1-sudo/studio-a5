@@ -1,8 +1,9 @@
+
 'use client';
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Settings, Home, Clock, Archive, BadgeCheck } from 'lucide-react';
+import { ShieldCheck, Settings, Home, Clock, Archive, BadgeCheck, BookOpen, LogIn } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import Link from 'next/link';
@@ -35,7 +36,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
-  // جلب بيانات ملف المستخدم للتحقق من التوثيق في الهيدر
   const userDocRef = useMemoFirebase(() => 
     user ? doc(firestore, 'users', user.uid) : null,
   [user, firestore]);
@@ -46,38 +46,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
     const names = name.split(' ');
-    if (names.length > 1) {
-      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-    }
+    if (names.length > 1) return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     return name.substring(0, 2).toUpperCase();
   };
 
   const isArabic = (text: string) => /[\u0600-\u06FF]/.test(text);
 
-  if (!user) {
-    return <>{children}</>;
-  }
-
-  const displayName = user.displayName || 'مستخدم';
-  const showBadgeBefore = isArabic(displayName); // Logic: Arabic -> Before (Right)
-
   return (
     <div className="flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-background text-right" dir="rtl">
-      {/* نافذة التقييم المنبثقة */}
       <ReviewPopup />
 
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between max-w-screen-2xl px-4 sm:px-6 lg:px-8">
           
-          <div className="flex items-center gap-4 md:gap-6">
-            <Link href="/" className="flex items-center gap-2 sm:gap-3">
-              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white shrink-0">
-                <Image 
-                  src={config.appLogo}
-                  alt="Logo"
-                  fill
-                  className="object-contain"
-                />
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 bg-white">
+                <Image src={config.appLogo} alt="Logo" fill className="object-contain" />
               </div>
               <h1 className="font-black text-base sm:text-xl tracking-tight text-slate-800 dark:text-white">
                 {config.appName}
@@ -85,89 +70,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          <div className="hidden lg:flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 px-4 py-1.5 rounded-full border border-slate-100 dark:border-slate-800">
-             <Clock className="h-3.5 w-3.5 text-primary" />
-             <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 tabular-nums">
-                {time ? format(time, 'hh:mm:ss a', { locale: ar }) : '--:--:--'}
-             </span>
-             <span className="text-[10px] font-bold text-slate-400 px-2 border-r border-slate-200 dark:border-slate-700">
-                {time ? format(time, 'eeee', { locale: ar }) : ''}
-             </span>
+          <div className="hidden md:flex items-center gap-8">
+             <Link href="/" className="text-sm font-black text-slate-600 hover:text-primary">الرئيسية</Link>
+             <Link href="/blog" className="text-sm font-black text-slate-600 hover:text-primary">المدونة</Link>
+             <Link href="/about" className="text-sm font-black text-slate-600 hover:text-primary">من نحن</Link>
           </div>
 
           <div className="flex items-center gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="relative group cursor-pointer">
-                  <Button variant="ghost" className="relative h-11 w-11 rounded-2xl bg-muted p-0 border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-all">
-                    <Avatar className="h-full w-full rounded-none">
-                      <AvatarImage src={user.photoURL || ''} className="object-cover" />
-                      <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-bold">
-                        {getInitials(user.displayName)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                  {userProfile?.isVerified && (
-                    <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0 shadow-md z-10 animate-in zoom-in duration-300">
-                      <BadgeCheck className="h-4.5 w-4.5 fill-blue-500 text-white" />
-                    </div>
-                  )}
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 rounded-2xl p-2 shadow-2xl" align="start">
-                <DropdownMenuLabel className="p-4 text-right">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      {userProfile?.isVerified && showBadgeBefore && (
-                        <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />
-                      )}
-                      <p className="text-sm font-bold leading-none">{displayName}</p>
-                      {userProfile?.isVerified && !showBadgeBefore && (
-                        <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />
-                      )}
-                    </div>
-                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="relative group cursor-pointer">
+                    <Button variant="ghost" className="relative h-11 w-11 rounded-2xl bg-muted p-0 border-2 border-white overflow-hidden shadow-sm">
+                      <Avatar className="h-full w-full rounded-none">
+                        <AvatarImage src={user.photoURL || ''} className="object-cover" />
+                        <AvatarFallback className="rounded-none bg-primary text-primary-foreground font-bold">
+                          {getInitials(user.displayName)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                    {userProfile?.isVerified && (
+                      <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0 shadow-md z-10">
+                        <BadgeCheck className="h-4.5 w-4.5 fill-blue-500 text-white" />
+                      </div>
+                    )}
                   </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="p-1 space-y-1">
-                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end">
-                    <Link href="/">
-                      <span className="font-bold">الرئيسية</span>
-                      <Home className="mr-2 h-4 w-4 text-primary" />
-                    </Link>
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-amber-50">
-                    <Link href="/archive">
-                      <span className="font-bold text-amber-700">أرشيف الطلاب العام</span>
-                      <Archive className="mr-2 h-4 w-4 text-amber-600" />
-                    </Link>
-                  </DropdownMenuItem>
-
-                  {isAdmin && (
-                    <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
-                      <Link href="/admin">
-                        <span className="font-bold">لوحة تحكم المشرف</span>
-                        <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end focus:bg-primary/10">
-                     <Link href="/settings">
-                      <span className="font-bold">الإعدادات</span>
-                      <Settings className="mr-2 h-4 w-4 text-primary" />
-                    </Link>
-                  </DropdownMenuItem>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 rounded-2xl p-2 shadow-2xl" align="start">
+                  <DropdownMenuLabel className="p-4 text-right">
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        {userProfile?.isVerified && isArabic(user.displayName || '') && <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />}
+                        <p className="text-sm font-bold leading-none">{user.displayName || 'مستخدم'}</p>
+                        {userProfile?.isVerified && !isArabic(user.displayName || '') && <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />}
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end"><Link href="/"><Home className="mr-2 h-4 w-4" />الرئيسية</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild className="rounded-xl p-3 justify-end"><Link href="/settings"><Settings className="mr-2 h-4 w-4" />الإعدادات</Link></DropdownMenuItem>
+                  {isAdmin && <DropdownMenuItem asChild className="rounded-xl p-3 justify-end bg-primary/5"><Link href="/admin"><ShieldCheck className="mr-2 h-4 w-4" />المسؤول</Link></DropdownMenuItem>}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2">
+                 <Link href="/login"><Button variant="ghost" className="rounded-xl font-bold hidden sm:flex">دخول</Button></Link>
+                 <Link href="/signup"><Button className="rounded-xl font-bold px-6 h-10 shadow-lg shadow-primary/20">ابدأ مجاناً</Button></Link>
+              </div>
+            )}
           </div>
         </div>
       </header>
-      <main className="container flex-grow py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-        {children}
-      </main>
+      <main className="container flex-grow py-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</main>
       <Footer />
     </div>
   );

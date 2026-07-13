@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDocs, limit } from 'firebase/firestore';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,8 +107,11 @@ export default function AdminBlogPage() {
         toast({ title: "تم التعديل بنجاح" });
       } else {
         // توليد رقم تعريفي تسلسلي للمقال (Numeric ID) للروابط القصيرة
-        const snap = await getDocs(collection(firestore, 'articles'));
-        const nextId = snap.size + 1000; // نبدأ من 1000 ليكون شكل الرابط احترافياً
+        const snap = await getDocs(query(collection(firestore, 'articles'), orderBy('numericId', 'desc'), limit(1)));
+        let nextId = 1000;
+        if (!snap.empty) {
+            nextId = (snap.docs[0].data().numericId || 1000) + 1;
+        }
         
         await addDoc(collection(firestore, 'articles'), {
           ...submissionData,
@@ -154,7 +156,15 @@ export default function AdminBlogPage() {
 
   const insertLink = () => {
     const url = prompt("أدخل الرابط:");
-    if (url) execCommand('createLink', url);
+    if (url) {
+        // إذا لم يكن هناك نص محدد، نستخدم الرابط كعنوان للنص
+        const selection = window.getSelection();
+        if (selection && selection.toString().length === 0) {
+            execCommand('insertHTML', `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+        } else {
+            execCommand('createLink', url);
+        }
+    }
   };
 
   const insertImage = (urlOverride?: string) => {
@@ -170,9 +180,16 @@ export default function AdminBlogPage() {
   };
 
   const insertVideo = () => {
-    const url = prompt("أدخل رابط الفيديو (YouTube/Embed):");
+    let url = prompt("أدخل رابط الفيديو (YouTube مثلاً):");
     if (url) {
-        const videoHtml = `<div style="position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5rem 0; border-radius: 1.5rem; overflow: hidden;"><iframe src="${url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allowfullscreen></iframe></div><p><br></p>`;
+        // تحويل روابط يوتيوب العادية إلى Embed
+        if (url.includes('youtube.com/watch?v=')) {
+            url = url.replace('watch?v=', 'embed/');
+        } else if (url.includes('youtu.be/')) {
+            url = url.replace('youtu.be/', 'youtube.com/embed/');
+        }
+        
+        const videoHtml = `<div style="position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5rem 0; border-radius: 1.5rem; overflow: hidden; shadow: 0 10px 15px -3px rgba(0,0,0,0.1);"><iframe src="${url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allowfullscreen></iframe></div><p><br></p>`;
         if (editorMode === 'compose') {
             execCommand('insertHTML', videoHtml);
         } else {
@@ -322,7 +339,7 @@ export default function AdminBlogPage() {
                         <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isUploading} title="رفع صورة" className="text-emerald-500">
                             {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={insertVideo} title="فيديو" className="text-rose-600"><Video className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={insertVideo} title="إدراج فيديو" className="text-rose-600"><Video className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => execCommand('removeFormat')} title="مسح التنسيق" className="text-slate-400"><Eraser className="h-4 w-4" /></Button>
                     </div>
 
@@ -399,7 +416,7 @@ export default function AdminBlogPage() {
              <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-2 text-primary">
                     <Eye className="h-5 w-5" />
-                    <span className="font-black text-sm uppercase tracking-widest">المعاينة الحية</span>
+                    <span className="font-black text-sm uppercase tracking-widest">المعاينه الحية</span>
                 </div>
                 <Badge variant="outline" className="rounded-full bg-white font-bold text-[9px] uppercase border-primary/20">Distinctive Layout</Badge>
              </div>

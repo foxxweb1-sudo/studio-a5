@@ -1,41 +1,91 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/firebase';
-import { PageHeader, PageHeaderTitle } from '@/components/layout/PageHeader';
+import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
 import { Card, CardContent } from '@/components/ui/card';
-import { GraduationCap, CalendarCheck, ShieldCheck, Users, Wallet, LogIn, UserPlus, BookOpen, Layout, ArrowRight } from 'lucide-react';
+import { 
+  GraduationCap, 
+  CalendarCheck, 
+  Users, 
+  Wallet, 
+  Clock, 
+  Bell, 
+  ArrowRight,
+  School,
+  BookOpen,
+  History,
+  LogIn,
+  UserPlus,
+  ShieldCheck,
+  Calendar as CalendarIcon,
+  UserX,
+  CheckCircle2
+} from 'lucide-react';
 import Link from 'next/link';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 export default function Home() {
   const { user } = useUser();
   const { config } = useAppConfig();
   const router = useRouter();
   
+  const { students, isLoading: studentsLoading } = useStudents();
+  const { attendance, isLoading: attendanceLoading } = useAttendance();
+  const { payments, isLoading: paymentsLoading } = usePayments();
+
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  const handleProtectedClick = (e: React.MouseEvent) => {
+  // حساب الإحصائيات
+  const stats = useMemo(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const currentMonthStr = format(new Date(), 'yyyy-MM');
+    
+    const activeStudents = students.filter(s => !s.isArchived);
+    const attendedToday = attendance.filter(a => a.date === todayStr && a.status === 'present').length;
+    const absentToday = attendance.filter(a => a.date === todayStr && a.status === 'absent').length;
+    const monthlyPayments = payments.filter(p => p.month === currentMonthStr).length;
+
+    return {
+      total: activeStudents.length,
+      attended: attendedToday,
+      absent: absentToday,
+      paid: monthlyPayments
+    };
+  }, [students, attendance, payments]);
+
+  const handleProtectedClick = (e: React.MouseEvent, href: string) => {
     if (!user) {
       e.preventDefault();
       setShowAuthDialog(true);
+    } else {
+      router.push(href);
     }
   };
 
   if (isAdmin) {
     return (
       <div className="flex flex-col gap-8 items-center justify-center text-center py-12 animate-in fade-in duration-700">
-        <PageHeader className="border-0">
-            <PageHeaderTitle className="text-4xl md:text-5xl text-primary font-black">مرحباً أيها المشرف</PageHeaderTitle>
-            <PageHeaderTitle className="text-lg font-bold opacity-60">أنت تستخدم حساب الإدارة الرئيسي للنظام</PageHeaderTitle>
-        </PageHeader>
+        <div className="space-y-4">
+            <h1 className="text-4xl md:text-5xl text-primary font-black">مرحباً أيها المشرف</h1>
+            <p className="text-lg font-bold opacity-60">أنت تستخدم حساب الإدارة الرئيسي للنظام</p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
           <Link href="/admin" className="group">
             <Card className="hover-lift overflow-hidden border-2 border-primary/20 bg-white dark:bg-slate-900 rounded-[2.5rem]">
@@ -59,99 +109,144 @@ export default function Home() {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="flex flex-col gap-20 py-4 px-2 sm:px-6">
-      {/* هيدر ترحيبي متطور */}
-      <section className="relative overflow-hidden rounded-[4rem] bg-slate-950 p-8 md:p-24 text-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/5">
-         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-primary via-transparent to-transparent animate-pulse" />
-         <div className="relative z-10 text-center space-y-10 max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-6 py-2 rounded-full backdrop-blur-md mb-4">
-               <span className="text-xs font-black uppercase tracking-widest text-primary/80">الجيل القادم من أنظمة التعليم</span>
+    <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-20">
+      
+      {/* الصف العلوي: الترحيب والوقت */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2 border-0 shadow-sm rounded-[2.5rem] bg-gradient-to-l from-primary to-blue-500 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            <CardContent className="p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                <div className="text-right space-y-2">
+                    <h2 className="text-2xl font-black flex items-center gap-2">
+                        <span>أهلاً بك،</span>
+                        <span className="text-white/90">{user?.displayName || 'ضيفنا العزيز'} 👋</span>
+                    </h2>
+                    <p className="text-sm font-bold text-white/70">نتمنى لك يوماً دراسياً موفقاً ومليئاً بالإنجازات.</p>
+                    <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-xl text-xs font-bold mt-2">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        <span>{currentTime ? format(currentTime, 'EEEE، d MMMM yyyy', { locale: ar }) : '...'}</span>
+                    </div>
+                </div>
+                <Button variant="ghost" className="rounded-2xl h-14 w-14 bg-white/10 hover:bg-white/20 text-white border-0 shadow-none">
+                    <Bell className="h-6 w-6" />
+                </Button>
+            </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm rounded-[2.5rem] bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+            <div className="absolute top-2 right-2 p-2 bg-primary/5 rounded-xl text-primary">
+                <Clock className="h-5 w-5" />
             </div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[1] tracking-tighter">
-              بوابتك <span className="text-primary italic">الذكية</span> للتعليم الرقمي
-            </h1>
-            <p className="text-slate-400 text-lg md:text-2xl font-bold max-w-2xl mx-auto leading-relaxed">
-              إدارة متكاملة للحضور والمدفوعات لطلابك، مع واجهة مستخدم عصرية وأدوات ذكية توفر وقتك وجهدك.
-            </p>
-            
-            <div className="flex flex-wrap gap-4 justify-center pt-6">
-               {!user ? (
-                 <>
-                    <Link href="/login">
-                      <Button size="lg" className="rounded-[1.5rem] px-12 h-16 text-xl font-black gap-3 shadow-2xl shadow-primary/40 hover:scale-105 transition-all">
-                        <LogIn className="h-6 w-6" /> دخول المعلمين
-                      </Button>
-                    </Link>
-                    <Link href="/signup">
-                      <Button size="lg" variant="outline" className="rounded-[1.5rem] px-12 h-16 text-xl font-black gap-3 border-white/20 bg-white/5 hover:bg-white/10 backdrop-blur-sm">
-                        <UserPlus className="h-6 w-6" /> ابدأ مجاناً
-                      </Button>
-                    </Link>
-                 </>
-               ) : (
-                 <Link href="/blog">
-                    <Button size="lg" className="rounded-[1.5rem] px-12 h-16 text-xl font-black gap-3 shadow-2xl shadow-primary/40">
-                      <BookOpen className="h-6 w-6" /> تصفح مقالات المدونة
-                    </Button>
-                 </Link>
-               )}
+            <div className="text-4xl font-black tracking-tighter text-slate-800 dark:text-white tabular-nums">
+                {currentTime ? format(currentTime, 'hh:mm:ss', { locale: ar }) : '--:--:--'}
+                <span className="text-lg mr-2">{currentTime ? format(currentTime, 'a', { locale: ar }) : ''}</span>
             </div>
-         </div>
-      </section>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">الوقت الآن بتوقيتك المحلي</p>
+        </Card>
+      </div>
 
-      {/* الأدوات الأساسية */}
-      <section className="space-y-12 pb-20">
-         <div className="flex items-center justify-center text-center gap-3 flex-col">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-800 dark:text-white">أدوات المعلم الذكية</h2>
-            <p className="text-slate-400 font-bold max-w-lg">كل ما تحتاجه لإدارة طلابك في مكان واحد، متاح فقط للمعلمين المسجلين.</p>
-         </div>
+      {/* المنصة السوداء المركزية */}
+      <Card className="border-0 shadow-2xl rounded-[3.5rem] bg-slate-950 text-white overflow-hidden relative group">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.1),transparent)]" />
+        <CardContent className="p-8 md:p-14 relative z-10">
+            <div className="flex flex-col lg:flex-row gap-12 items-center">
+                
+                {/* الإحصائيات الأربعة */}
+                <div className="grid grid-cols-2 gap-4 w-full lg:w-auto shrink-0">
+                    <div className="bg-white/5 border border-white/5 p-6 rounded-[2rem] text-center space-y-1 hover:bg-white/10 transition-colors">
+                        <div className="flex justify-center mb-2 text-primary"><Users className="h-6 w-6" /></div>
+                        <div className="text-2xl font-black">{stats.total}</div>
+                        <p className="text-[10px] font-bold text-slate-400">إجمالي الطلاب</p>
+                    </div>
+                    <div className="bg-white/5 border border-white/5 p-6 rounded-[2rem] text-center space-y-1 hover:bg-white/10 transition-colors">
+                        <div className="flex justify-center mb-2 text-emerald-500"><CheckCircle2 className="h-6 w-6" /></div>
+                        <div className="text-2xl font-black">{stats.attended}</div>
+                        <p className="text-[10px] font-bold text-slate-400">حضور اليوم</p>
+                    </div>
+                    <div className="bg-white/5 border border-white/5 p-6 rounded-[2rem] text-center space-y-1 hover:bg-white/10 transition-colors">
+                        <div className="flex justify-center mb-2 text-rose-500"><UserX className="h-6 w-6" /></div>
+                        <div className="text-2xl font-black">{stats.absent}</div>
+                        <p className="text-[10px] font-bold text-slate-400">غياب اليوم</p>
+                    </div>
+                    <div className="bg-white/5 border border-white/5 p-6 rounded-[2rem] text-center space-y-1 hover:bg-white/10 transition-colors">
+                        <div className="flex justify-center mb-2 text-amber-500"><Wallet className="h-6 w-6" /></div>
+                        <div className="text-2xl font-black">{stats.paid}</div>
+                        <p className="text-[10px] font-bold text-slate-400">مدفوعات الشهر</p>
+                    </div>
+                </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-            { name: 'تسجيل الحضور اليومي', icon: CalendarCheck, href: '/attendance', color: 'bg-blue-600', desc: 'نظام مسح الكود QR وتسجيل الغياب التلقائي.' },
-            { name: 'إدارة شؤون الطلاب', icon: Users, href: '/students', color: 'bg-emerald-600', desc: 'قواعد بيانات شاملة وأكواد تعريفية رقمية لكل طالب.' },
-            { name: 'المدفوعات والتقارير', icon: Wallet, href: '/payments', color: 'bg-amber-600', desc: 'تتبع المستحقات المالية وتحليل نسب الالتزام الشهرية.' },
-            ].map((item) => (
-            <Link href={item.href} key={item.name} onClick={handleProtectedClick} className="group">
-               <Card className="border-0 bg-white dark:bg-slate-900 shadow-2xl rounded-[3rem] p-10 text-center flex flex-col items-center gap-6 group-hover:-translate-y-2 transition-all duration-500 relative overflow-hidden h-full">
-                  <div className={`absolute top-0 right-0 w-32 h-32 ${item.color} opacity-5 rounded-full -translate-y-1/2 translate-x-1/2`} />
-                  <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center ${item.color} text-white shadow-2xl group-hover:rotate-6 transition-transform`}>
-                     <item.icon className="w-12 h-12" />
-                  </div>
-                  <div className="space-y-2">
-                     <h3 className="text-2xl font-black text-slate-800 dark:text-white">{item.name}</h3>
-                     <p className="text-sm text-slate-400 font-bold leading-relaxed">{item.desc}</p>
-                  </div>
-                  <div className="mt-auto pt-4 flex items-center gap-2 text-primary font-black text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                     فتح الأداة الآن <ArrowRight className="h-4 w-4 rotate-180" />
-                  </div>
-               </Card>
-            </Link>
-            ))}
-         </div>
-      </section>
+                {/* النص التحفيزي والأزرار */}
+                <div className="flex-grow text-center lg:text-right space-y-8">
+                    <div className="space-y-4">
+                        <h1 className="text-4xl md:text-6xl font-black leading-tight tracking-tighter">
+                            إدارة ذكية <br/> <span className="text-primary italic">لمستقبل تعليمي</span> أفضل
+                        </h1>
+                        <p className="text-slate-400 text-sm md:text-lg font-bold">تابع حضور طلابك ومدفوعاتهم بدقة متناهية وسهولة تامة.</p>
+                    </div>
 
-      {/* قسم دعائي للمدونة */}
-      <section className="bg-primary/5 rounded-[3rem] p-10 md:p-20 text-center space-y-8 border-2 border-primary/10 mb-20 relative overflow-hidden">
-          <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px]" />
-          <h2 className="text-3xl md:text-5xl font-black text-slate-800 dark:text-white relative z-10">هل تبحث عن المعرفة التقنية؟</h2>
-          <p className="text-slate-500 font-bold text-lg max-w-2xl mx-auto relative z-10">تابع مدونتنا للحصول على شروحات حصرية في الذكاء الاصطناعي والحياة الرقمية، متاحة للجميع مجاناً وبدون تسجيل دخول.</p>
-          <Link href="/blog" className="relative z-10 inline-block">
-            <Button size="lg" variant="default" className="rounded-2xl px-10 h-14 text-lg font-black gap-2">
-              <BookOpen className="h-5 w-5" /> زيارة قسم المدونة
-            </Button>
+                    <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                        <Button 
+                            onClick={(e) => handleProtectedClick(e, '/attendance')}
+                            className="rounded-2xl h-14 px-8 font-black gap-2 shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90"
+                        >
+                            <CalendarCheck className="h-5 w-5" /> تسجيل الحضور الآن
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            onClick={(e) => handleProtectedClick(e, '/students')}
+                            className="rounded-2xl h-14 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                        >
+                            <Users className="h-5 w-5" /> عرض جميع الطلاب
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            onClick={(e) => handleProtectedClick(e, '/schedule')}
+                            className="rounded-2xl h-14 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                        >
+                            <Clock className="h-5 w-5" /> مواعيد العمل
+                        </Button>
+                        <Button 
+                            onClick={(e) => handleProtectedClick(e, '/accounting-period')}
+                            className="rounded-2xl h-14 px-8 font-black gap-2 bg-amber-600 hover:bg-amber-700 shadow-xl shadow-amber-600/20"
+                        >
+                            <History className="h-5 w-5" /> الفترة المحاسبية
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </CardContent>
+      </Card>
+
+      {/* بطاقات المراحل */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[
+          { name: 'المرحلة الابتدائية', desc: 'من الصف الأول حتى السادس الابتدائي', icon: School, href: '/stage/primary', color: 'text-blue-500', bg: 'bg-blue-500/5' },
+          { name: 'المرحلة الإعدادية', desc: 'من الصف الأول حتى الثالث الإعدادي', icon: BookOpen, href: '/stage/preparatory', color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
+          { name: 'المرحلة الثانوية', desc: 'من الصف الأول حتى الثالث الثانوي', icon: GraduationCap, href: '/stage/secondary', color: 'text-purple-500', bg: 'bg-purple-500/5' },
+        ].map((stage) => (
+          <Link href={stage.href} key={stage.name} onClick={(e) => handleProtectedClick(e, stage.href)} className="group">
+            <Card className="border-0 bg-white dark:bg-slate-900 shadow-lg rounded-[2.5rem] p-10 text-center flex flex-col items-center gap-6 group-hover:-translate-y-2 transition-all duration-500 h-full">
+                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center ${stage.bg} ${stage.color} group-hover:rotate-6 transition-transform`}>
+                    <stage.icon className="w-10 h-10" />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-800 dark:text-white">{stage.name}</h3>
+                    <p className="text-xs text-slate-400 font-bold">{stage.desc}</p>
+                </div>
+            </Card>
           </Link>
-      </section>
+        ))}
+      </div>
 
-      {/* نافذة التحذير الذكية */}
+      {/* نافذة التحذير (لغير المسجلين) */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="rounded-[3rem] border-0 shadow-2xl max-w-sm overflow-hidden p-0">
           <div className="bg-primary h-2 w-full" />
-          <div className="p-10 space-y-8">
+          <div className="p-10 space-y-8 text-right">
               <DialogHeader className="text-center">
                 <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
                   <ShieldCheck className="h-10 w-10 text-primary" />
@@ -172,6 +267,7 @@ export default function Home() {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

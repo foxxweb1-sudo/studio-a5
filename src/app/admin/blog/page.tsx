@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -11,18 +11,24 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Trash2, Edit, Save, Image as ImageIcon, Video, BookOpen, Star, MessageCircle, ArrowLeft } from 'lucide-react';
+import { 
+  Loader2, Plus, Trash2, Edit, Save, Image as ImageIcon, Video, 
+  BookOpen, Star, ArrowLeft, Bold, Italic, List, AlignLeft, 
+  AlignCenter, AlignRight, Link as LinkIcon, UploadCloud, Globe 
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { Article, ArticleCategory } from '@/lib/definitions';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useAppConfig } from '@/hooks/use-app-config';
 
 export default function AdminBlogPage() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { config } = useAppConfig();
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -46,19 +52,34 @@ export default function AdminBlogPage() {
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
   const handleSave = async () => {
-    if (!firestore || !formData.title || !formData.content) return;
+    if (!firestore || !formData.title || !formData.content) {
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى كتابة العنوان والمحتوى على الأقل." });
+      return;
+    }
+    
     setIsSaving(true);
     try {
+      // منطق الصورة الافتراضية الذكي
+      let finalCover = formData.coverImage;
+      if (!finalCover) {
+        const imgMatch = formData.content.match(/<img[^>]+src="([^">]+)"/);
+        finalCover = imgMatch ? imgMatch[1] : ''; 
+      }
+
+      const submissionData = {
+        ...formData,
+        coverImage: finalCover,
+      };
+
       if (currentId) {
-        await updateDoc(doc(firestore, 'articles', currentId), formData);
-        toast({ title: "تم التعديل" });
+        await updateDoc(doc(firestore, 'articles', currentId), submissionData);
+        toast({ title: "تم التعديل بنجاح" });
       } else {
-        // حساب الرقم التعريفي التسلسلي
         const snap = await getDocs(collection(firestore, 'articles'));
         const nextId = snap.size + 1;
         
         await addDoc(collection(firestore, 'articles'), {
-          ...formData,
+          ...submissionData,
           numericId: nextId,
           views: 0,
           createdAt: serverTimestamp(),
@@ -75,7 +96,7 @@ export default function AdminBlogPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!firestore || !confirm('هل أنت متأكد من حذف هذا المقال؟')) return;
+    if (!firestore || !confirm('هل أنت متأكد من حذف هذا المقال نهائياً؟')) return;
     await deleteDoc(doc(firestore, 'articles', id));
     toast({ title: "تم الحذف" });
   };
@@ -85,129 +106,211 @@ export default function AdminBlogPage() {
     setCurrentId(null);
   };
 
-  const insertMedia = (type: 'image' | 'video') => {
-    const url = prompt(`أدخل رابط الـ ${type === 'image' ? 'صورة' : 'فيديو'}:`);
-    if (!url) return;
-    if (type === 'image') {
-      setFormData({ ...formData, content: formData.content + `\n<img src="${url}" class="rounded-2xl shadow-lg my-6 w-full" />\n` });
+  const insertTag = (tag: string, endTag: string = '') => {
+    const textarea = document.getElementById('article-editor') as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+
+    let newContent = '';
+    if (tag === 'img' || tag === 'iframe') {
+        const url = prompt(`أدخل رابط ${tag === 'img' ? 'الصورة' : 'الفيديو'}:`);
+        if (!url) return;
+        newContent = tag === 'img' 
+            ? `${before}<img src="${url}" class="rounded-2xl shadow-lg my-6 w-full" />${after}`
+            : `${before}<iframe src="${url}" class="w-full aspect-video rounded-2xl my-6" frameborder="0"></iframe>${after}`;
     } else {
-      setFormData({ ...formData, content: formData.content + `\n<iframe src="${url}" class="w-full aspect-video rounded-2xl my-6" frameborder="0"></iframe>\n` });
+        newContent = `${before}${tag}${selectedText}${endTag}${after}`;
     }
+
+    setFormData({ ...formData, content: newContent });
+    textarea.focus();
   };
 
   if (!isAdmin) return null;
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-20">
-      <div className="flex justify-between items-center">
-        <PageHeader className="border-0">
-          <PageHeaderTitle className="text-3xl font-black">إدارة المدونة</PageHeaderTitle>
-          <PageHeaderDescription>أضف وحرر المقالات التقنية للمنصة</PageHeaderDescription>
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-20 px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <PageHeader className="border-0 pb-0">
+          <PageHeaderTitle className="text-3xl font-black">إدارة المحتوى</PageHeaderTitle>
+          <PageHeaderDescription>أنشئ مقالاتك ونسقها بأسلوب احترافي.</PageHeaderDescription>
         </PageHeader>
         <div className="flex gap-2">
            {!isEditing && (
-             <Button onClick={() => setIsEditing(true)} className="rounded-xl font-bold gap-2">
-               <Plus className="h-4 w-4" /> مقال جديد
+             <Button onClick={() => setIsEditing(true)} className="rounded-xl font-black gap-2 h-12 px-6 bg-primary shadow-lg shadow-primary/20">
+               <Plus className="h-5 w-5" /> مقال جديد
              </Button>
            )}
-           <Button variant="outline" onClick={() => router.push('/')} className="rounded-xl"><ArrowLeft className="h-4 w-4" /></Button>
+           <Button variant="outline" onClick={() => router.push('/')} className="rounded-xl h-12 w-12 p-0"><ArrowLeft className="h-5 w-5" /></Button>
         </div>
       </div>
 
       {isEditing ? (
-        <Card className="border-0 shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle>{currentId ? 'تعديل المقال' : 'كتابة مقال جديد'}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div className="space-y-2">
-                  <Label className="font-bold">عنوان المقال</Label>
-                  <Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="اكتب العنوان هنا..." className="h-12 rounded-xl" />
-               </div>
-               <div className="space-y-2">
-                  <Label className="font-bold">القسم</Label>
-                  <Select value={formData.category} onValueChange={(v: any) => setFormData({...formData, category: v})}>
-                    <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AI">الذكاء الاصطناعي AI</SelectItem>
-                      <SelectItem value="الرقمية">الحياة الرقمية</SelectItem>
-                      <SelectItem value="معلومات عامة">معلومات عامة</SelectItem>
-                      <SelectItem value="عن المنصة">عن المنصة</SelectItem>
-                    </SelectContent>
-                  </Select>
-               </div>
-            </div>
-
-            <div className="space-y-2">
-               <Label className="font-bold">صورة الغلاف (رابط)</Label>
-               <Input value={formData.coverImage} onChange={(e) => setFormData({...formData, coverImage: e.target.value})} placeholder="https://..." className="h-12 rounded-xl font-mono text-xs" />
-            </div>
-
-            <div className="space-y-2">
-               <div className="flex items-center justify-between">
-                  <Label className="font-bold">محتوى المقال (يدعم HTML)</Label>
-                  <div className="flex gap-2">
-                     <Button size="sm" variant="outline" onClick={() => insertMedia('image')}><ImageIcon className="h-4 w-4 ms-1" /> صورة</Button>
-                     <Button size="sm" variant="outline" onClick={() => insertMedia('video')}><Video className="h-4 w-4 ms-1" /> فيديو</Button>
-                  </div>
-               </div>
-               <Textarea value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} placeholder="اكتب نص المقال..." className="min-h-[400px] rounded-2xl bg-slate-50 font-medium" />
-            </div>
-
-            <div className="space-y-2">
-               <Label className="font-bold">وصف محركات البحث (SEO)</Label>
-               <Textarea value={formData.searchDescription} onChange={(e) => setFormData({...formData, searchDescription: e.target.value})} placeholder="وصف قصير للمقال..." className="rounded-xl h-20" />
-            </div>
-
-            <div className="flex flex-wrap gap-8 p-6 bg-slate-50 rounded-3xl">
-               <div className="flex items-center gap-3">
-                  <Switch checked={formData.isPinned} onCheckedChange={(v) => setFormData({...formData, isPinned: v})} />
-                  <Label className="font-bold">تثبيت المقال (Pin)</Label>
-               </div>
-               <div className="flex items-center gap-3">
-                  <Switch checked={formData.allowComments} onCheckedChange={(v) => setFormData({...formData, allowComments: v})} />
-                  <Label className="font-bold">السماح بالتعليقات</Label>
-               </div>
-            </div>
-
-            <div className="flex gap-4">
-               <Button onClick={handleSave} disabled={isSaving} className="flex-1 h-14 rounded-2xl font-black text-lg gap-2">
-                 {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} حفظ ونشر
-               </Button>
-               <Button variant="ghost" onClick={() => { setIsEditing(false); resetForm(); }} className="h-14 rounded-2xl px-10">إلغاء</Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-           {articles?.map((art) => (
-             <Card key={art.id} className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white hover:shadow-md transition-all">
-               <CardContent className="p-6 flex items-center justify-between gap-6">
-                  <div className="flex items-center gap-6">
-                     <div className="w-16 h-16 bg-slate-100 rounded-2xl overflow-hidden relative">
-                        {art.coverImage ? <img src={art.coverImage} className="object-cover w-full h-full" /> : <BookOpen className="w-8 h-8 m-4 text-slate-300" />}
-                     </div>
-                     <div>
-                        <h4 className="font-black text-lg">{art.title}</h4>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground font-bold mt-1">
-                           <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md">{art.category}</span>
-                           <span>ID: {art.numericId}</span>
-                           <span className="flex items-center gap-1"><Star className={`h-3 w-3 ${art.isPinned ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} /> {art.isPinned ? 'مثبت' : 'عادي'}</span>
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="xl:col-span-3 space-y-6">
+            <Card className="border-0 shadow-2xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
+                <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-8">
+                    <div className="space-y-4">
+                        <Input 
+                            value={formData.title} 
+                            onChange={(e) => setFormData({...formData, title: e.target.value})} 
+                            placeholder="عنوان المقال المثير..." 
+                            className="text-2xl md:text-4xl font-black h-auto py-4 border-0 bg-transparent focus-visible:ring-0 px-0 placeholder:opacity-30"
+                        />
+                        <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground">
+                            <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> الرابط: {currentId ? `/art/${formData.numericId}` : '/art/[ID]'}</span>
                         </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {/* شريط أدوات التحرير */}
+                    <div className="bg-slate-100 dark:bg-slate-800 p-2 flex flex-wrap gap-1 border-b sticky top-0 z-20">
+                        <Button variant="ghost" size="sm" onClick={() => insertTag('<b>', '</b>')} className="h-9 w-9 p-0 rounded-lg" title="عريض"><Bold className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => insertTag('<i>', '</i>')} className="h-9 w-9 p-0 rounded-lg" title="مائل"><Italic className="h-4 w-4" /></Button>
+                        <div className="w-[1px] h-6 bg-slate-300 mx-1 my-auto" />
+                        <Button variant="ghost" size="sm" onClick={() => insertTag('<div class="text-right">', '</div>')} className="h-9 w-9 p-0 rounded-lg" title="محاذاة يمين"><AlignRight className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => insertTag('<div class="text-center">', '</div>')} className="h-9 w-9 p-0 rounded-lg" title="توسيط"><AlignCenter className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => insertTag('<div class="text-left">', '</div>')} className="h-9 w-9 p-0 rounded-lg" title="محاذاة يسار"><AlignLeft className="h-4 w-4" /></Button>
+                        <div className="w-[1px] h-6 bg-slate-300 mx-1 my-auto" />
+                        <Button variant="ghost" size="sm" onClick={() => insertTag('<ul class="list-disc list-inside"><li>', '</li></ul>')} className="h-9 w-9 p-0 rounded-lg" title="قائمة"><List className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => insertTag('<a href="#" class="text-primary underline">', '</a>')} className="h-9 w-9 p-0 rounded-lg" title="رابط"><LinkIcon className="h-4 w-4" /></Button>
+                        <div className="w-[1px] h-6 bg-slate-300 mx-1 my-auto" />
+                        <Button variant="secondary" size="sm" onClick={() => insertTag('img')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><ImageIcon className="h-3.5 w-3.5" /> إدراج صورة</Button>
+                        <Button variant="secondary" size="sm" onClick={() => insertTag('iframe')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><Video className="h-3.5 w-3.5" /> فيديو</Button>
+                        <Button variant="outline" asChild size="sm" className="h-9 px-3 rounded-lg gap-2 text-[10px] font-black border-primary/20 text-primary hover:bg-primary/10">
+                            <a href="https://top4top.io/" target="_blank" rel="noopener noreferrer">
+                                <UploadCloud className="h-3.5 w-3.5" /> رفع صور (Top4Top)
+                            </a>
+                        </Button>
+                    </div>
+                    <Textarea 
+                        id="article-editor"
+                        value={formData.content} 
+                        onChange={(e) => setFormData({...formData, content: e.target.value})} 
+                        placeholder="ابدأ بكتابة قصة نجاحك هنا... (يدعم HTML)" 
+                        className="min-h-[600px] border-0 rounded-none focus-visible:ring-0 p-8 text-lg leading-relaxed font-medium bg-slate-50/30" 
+                    />
+                </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg rounded-[2.5rem] bg-white dark:bg-slate-900">
+                <CardHeader>
+                    <CardTitle className="text-lg">إعدادات محركات البحث (SEO)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Textarea 
+                        value={formData.searchDescription} 
+                        onChange={(e) => setFormData({...formData, searchDescription: e.target.value})} 
+                        placeholder="اكتب وصفاً مختصراً يظهر في جوجل..." 
+                        className="rounded-2xl h-24 bg-slate-50 border-slate-100" 
+                    />
+                </CardContent>
+            </Card>
+          </div>
+
+          <aside className="xl:col-span-1 space-y-6">
+             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden">
+                <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6">
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400">نشر المقال</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                    <div className="space-y-2">
+                        <Label className="font-bold text-xs">القسم</Label>
+                        <Select value={formData.category} onValueChange={(v: any) => setFormData({...formData, category: v})}>
+                            <SelectTrigger className="h-11 rounded-xl bg-slate-50 font-bold border-slate-100"><SelectValue /></SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="AI" className="font-bold">الذكاء الاصطناعي AI</SelectItem>
+                                <SelectItem value="الرقمية" className="font-bold">الحياة الرقمية</SelectItem>
+                                <SelectItem value="معلومات عامة" className="font-bold">معلومات عامة</SelectItem>
+                                <SelectItem value="عن المنصة" className="font-bold">عن المنصة</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="font-bold text-xs">رابط صورة الغلاف</Label>
+                        <div className="flex flex-col gap-2">
+                            <Input 
+                                value={formData.coverImage} 
+                                onChange={(e) => setFormData({...formData, coverImage: e.target.value})} 
+                                placeholder="اتركها فارغة لاستخدام أول صورة بالمقال" 
+                                className="h-11 rounded-xl bg-slate-50 font-mono text-[10px] border-slate-100" 
+                            />
+                            {formData.coverImage && (
+                                <div className="relative aspect-video rounded-2xl overflow-hidden border">
+                                    <img src={formData.coverImage} className="object-cover w-full h-full" alt="Cover Preview" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-dashed">
+                        <div className="flex items-center justify-between">
+                            <Label className="font-bold text-xs cursor-pointer" htmlFor="pin-switch">تثبيت في القسم (Pin)</Label>
+                            <Switch id="pin-switch" checked={formData.isPinned} onCheckedChange={(v) => setFormData({...formData, isPinned: v})} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <Label className="font-bold text-xs cursor-pointer" htmlFor="comments-switch">السماح بالتعليقات</Label>
+                            <Switch id="comments-switch" checked={formData.allowComments} onCheckedChange={(v) => setFormData({...formData, allowComments: v})} />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-4">
+                        <Button onClick={handleSave} disabled={isSaving} className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-xl shadow-primary/20">
+                            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} حفظ ونشر المقال
+                        </Button>
+                        <Button variant="ghost" onClick={() => { setIsEditing(false); resetForm(); }} className="h-12 rounded-xl text-slate-400 font-bold">إلغاء المسودة</Button>
+                    </div>
+                </CardContent>
+             </Card>
+          </aside>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
+           {articles?.map((art) => (
+             <Card key={art.id} className="border-0 shadow-sm rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 group hover:shadow-xl transition-all border-t-4 border-t-primary/10">
+               <div className="aspect-video relative overflow-hidden bg-slate-100">
+                    <img 
+                        src={art.coverImage || config.appLogo} 
+                        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700" 
+                        alt={art.title} 
+                    />
+                    <div className="absolute top-4 right-4 flex gap-2">
+                        <Badge className="bg-white/90 text-primary backdrop-blur-md border-0 rounded-lg font-black text-[9px]">{art.category}</Badge>
+                        {art.isPinned && <Badge className="bg-amber-400 text-white rounded-lg p-1 border-0"><Star className="h-3 w-3 fill-current" /></Badge>}
+                    </div>
+               </div>
+               <CardContent className="p-6 space-y-4">
+                  <h4 className="font-black text-lg leading-tight line-clamp-2 min-h-[3.5rem]">{art.title}</h4>
+                  <div className="flex items-center justify-between pt-4 border-t border-dashed">
+                     <div className="flex gap-1.5">
+                        <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl text-blue-500 border-blue-50 hover:bg-blue-50" onClick={() => { setCurrentId(art.id); setFormData(art); setIsEditing(true); }}>
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl text-rose-500 border-rose-50 hover:bg-rose-50" onClick={() => handleDelete(art.id)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                      </div>
-                  </div>
-                  <div className="flex gap-2">
-                     <Button variant="ghost" size="icon" className="rounded-xl text-blue-500" onClick={() => { setCurrentId(art.id); setFormData(art); setIsEditing(true); }}>
-                        <Edit className="h-5 w-5" />
-                     </Button>
-                     <Button variant="ghost" size="icon" className="rounded-xl text-rose-500" onClick={() => handleDelete(art.id)}>
-                        <Trash2 className="h-5 w-5" />
-                     </Button>
+                     <span className="text-[10px] font-bold text-slate-400">ID: {art.numericId}</span>
                   </div>
                </CardContent>
              </Card>
            ))}
+           {(!articles || articles.length === 0) && !isLoading && (
+               <div className="col-span-full py-32 text-center space-y-4 bg-slate-50 rounded-[3rem] border-2 border-dashed">
+                   <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm">
+                       <BookOpen className="h-8 w-8 text-slate-200" />
+                   </div>
+                   <p className="font-black text-slate-300">لا توجد مقالات منشورة حالياً.</p>
+               </div>
+           )}
         </div>
       )}
     </div>

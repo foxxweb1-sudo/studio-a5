@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -33,6 +33,8 @@ export default function AdminBlogPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -106,7 +108,7 @@ export default function AdminBlogPage() {
     setCurrentId(null);
   };
 
-  const insertTag = (tag: string, endTag: string = '') => {
+  const insertTag = (tag: string, endTag: string = '', urlOverride?: string) => {
     const textarea = document.getElementById('article-editor') as HTMLTextAreaElement;
     if (!textarea) return;
 
@@ -120,7 +122,7 @@ export default function AdminBlogPage() {
 
     let newContent = '';
     if (tag === 'img' || tag === 'iframe') {
-        const url = prompt(`أدخل رابط ${tag === 'img' ? 'الصورة' : 'الفيديو'}:`);
+        const url = urlOverride || prompt(`أدخل رابط ${tag === 'img' ? 'الصورة' : 'الفيديو'}:`);
         if (!url) return;
         newContent = tag === 'img' 
             ? `${before}<img src="${url}" class="rounded-2xl shadow-lg my-6 w-full" />${after}`
@@ -129,8 +131,40 @@ export default function AdminBlogPage() {
         newContent = `${before}${tag}${selectedText}${endTag}${after}`;
     }
 
-    setFormData({ ...formData, content: newContent });
-    textarea.focus();
+    setFormData(prev => ({ ...prev, content: newContent }));
+    setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + (newContent.length - text.length), start + (newContent.length - text.length));
+    }, 10);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const body = new FormData();
+    body.append('image', file);
+
+    try {
+        const res = await fetch('https://api.imgbb.com/1/upload?key=d015dd34e005b5dd56d68d2fe147c267', {
+            method: 'POST',
+            body
+        });
+        const result = await res.json();
+        if (result.success) {
+            const url = result.data.url;
+            insertTag('img', '', url);
+            toast({ title: "تم رفع الصورة وإدراجها بنجاح" });
+        } else {
+            toast({ variant: "destructive", title: "فشل الرفع", description: result.error?.message });
+        }
+    } catch (err) {
+        toast({ variant: "destructive", title: "خطأ في الاتصال بخادم الرفع" });
+    } finally {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   if (!isAdmin) return null;
@@ -182,13 +216,28 @@ export default function AdminBlogPage() {
                         <Button variant="ghost" size="sm" onClick={() => insertTag('<ul class="list-disc list-inside"><li>', '</li></ul>')} className="h-9 w-9 p-0 rounded-lg" title="قائمة"><List className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="sm" onClick={() => insertTag('<a href="#" class="text-primary underline">', '</a>')} className="h-9 w-9 p-0 rounded-lg" title="رابط"><LinkIcon className="h-4 w-4" /></Button>
                         <div className="w-[1px] h-6 bg-slate-300 mx-1 my-auto" />
-                        <Button variant="secondary" size="sm" onClick={() => insertTag('img')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><ImageIcon className="h-3.5 w-3.5" /> إدراج صورة</Button>
-                        <Button variant="secondary" size="sm" onClick={() => insertTag('iframe')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><Video className="h-3.5 w-3.5" /> فيديو</Button>
-                        <Button variant="outline" asChild size="sm" className="h-9 px-3 rounded-lg gap-2 text-[10px] font-black border-primary/20 text-primary hover:bg-primary/10">
-                            <a href="https://top4top.io/" target="_blank" rel="noopener noreferrer">
-                                <UploadCloud className="h-3.5 w-3.5" /> رفع صور (Top4Top)
-                            </a>
+                        
+                        <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            ref={fileInputRef} 
+                            onChange={handleFileUpload} 
+                        />
+                        
+                        <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => fileInputRef.current?.click()} 
+                            disabled={isUploading}
+                            className="h-9 px-3 rounded-lg gap-2 text-[10px] font-black bg-emerald-500 text-white hover:bg-emerald-600"
+                        >
+                            {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                            رفع مباشر (ImgBB)
                         </Button>
+
+                        <Button variant="secondary" size="sm" onClick={() => insertTag('img')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><ImageIcon className="h-3.5 w-3.5" /> إدراج رابط صورة</Button>
+                        <Button variant="secondary" size="sm" onClick={() => insertTag('iframe')} className="h-9 px-3 rounded-lg gap-2 text-[10px] font-bold"><Video className="h-3.5 w-3.5" /> فيديو</Button>
                     </div>
                     <Textarea 
                         id="article-editor"
@@ -316,3 +365,9 @@ export default function AdminBlogPage() {
     </div>
   );
 }
+
+const Badge = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${className}`}>
+        {children}
+    </span>
+);

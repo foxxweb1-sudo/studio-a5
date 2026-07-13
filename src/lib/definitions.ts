@@ -16,7 +16,7 @@ export type ArticleCategory = "AI" | "الرقمية" | "معلومات عامة
 
 export type Article = {
   id: string;
-  numericId: number;
+  numericId: number; // الرقم التعريفي المستخدم في الروابط (e.g., 1001)
   title: string;
   content: string;
   category: ArticleCategory;
@@ -24,7 +24,7 @@ export type Article = {
   views: number;
   isPinned: boolean;
   allowComments: boolean;
-  searchDescription?: string;
+  searchDescription?: string; // وصف الـ SEO المختصر
   createdAt: FieldValue | any;
 };
 

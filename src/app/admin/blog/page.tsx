@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -16,7 +17,7 @@ import {
   AlignCenter, AlignRight, Link as LinkIcon, UploadCloud, Globe,
   Code, PenLine, Undo2, Redo2, Underline, Strikethrough, AlignJustify,
   ListOrdered, Quote, Eraser, Type, Palette, Highlighter, Eye, Layout, Calendar, Share2,
-  ChevronDown, Type as TypeIcon
+  ChevronDown, Type as TypeIcon, Search
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ADMIN_EMAIL } from '@/lib/constants';
@@ -42,6 +43,7 @@ export default function AdminBlogPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [editorMode, setEditorMode] = useState<'compose' | 'html'>('compose');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -105,8 +107,9 @@ export default function AdminBlogPage() {
         await updateDoc(doc(firestore, 'articles', currentId), submissionData);
         toast({ title: "تم التعديل بنجاح" });
       } else {
+        // توليد رقم تعريفي تسلسلي للمقال (Numeric ID) للروابط القصيرة
         const snap = await getDocs(collection(firestore, 'articles'));
-        const nextId = snap.size + 1;
+        const nextId = snap.size + 1000; // نبدأ من 1000 ليكون شكل الرابط احترافياً
         
         await addDoc(collection(firestore, 'articles'), {
           ...submissionData,
@@ -207,6 +210,11 @@ export default function AdminBlogPage() {
     }
   };
 
+  const filteredArticles = useMemo(() => {
+    if (!articles) return [];
+    return articles.filter(a => a.title.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [articles, searchTerm]);
+
   if (!isAdmin) return null;
 
   return (
@@ -214,7 +222,7 @@ export default function AdminBlogPage() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">إدارة المحتوى</PageHeaderTitle>
-          <PageHeaderDescription>أنشئ مقالاتك ونسقها بأسلوب احترافي مع معاينة حية.</PageHeaderDescription>
+          <PageHeaderDescription>أنشئ مقالاتك ونسقها بأسلوب احترافي مع روابط رقمية قصيرة.</PageHeaderDescription>
         </PageHeader>
         <div className="flex gap-2">
            {!isEditing && (
@@ -357,8 +365,8 @@ export default function AdminBlogPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="font-bold text-[10px]">رابط الغلاف (اختياري)</Label>
-                            <Input value={formData.coverImage} onChange={(e) => setFormData({...formData, coverImage: e.target.value})} placeholder="رابط خارجي للغلاف..." className="h-10 rounded-xl bg-slate-50 border-0 text-xs font-mono" />
+                            <Label className="font-bold text-[10px]">وصف البحث (SEO)</Label>
+                            <Textarea value={formData.searchDescription} onChange={(e) => setFormData({...formData, searchDescription: e.target.value})} placeholder="وصف مختصر يظهر في محركات البحث..." className="h-20 rounded-xl bg-slate-50 border-0 text-xs font-bold" />
                         </div>
                     </div>
                 </Card>
@@ -373,6 +381,10 @@ export default function AdminBlogPage() {
                         <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
                             <Label htmlFor="comments-switch" className="font-bold text-xs cursor-pointer">السماح بالتعليقات</Label>
                             <Switch id="comments-switch" checked={formData.allowComments} onCheckedChange={(v) => setFormData({...formData, allowComments: v})} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-bold text-[10px]">رابط الغلاف (اختياري)</Label>
+                            <Input value={formData.coverImage} onChange={(e) => setFormData({...formData, coverImage: e.target.value})} placeholder="رابط خارجي للغلاف..." className="h-10 rounded-xl bg-slate-50 border-0 text-xs font-mono" />
                         </div>
                     </div>
                 </Card>
@@ -389,7 +401,7 @@ export default function AdminBlogPage() {
                     <Eye className="h-5 w-5" />
                     <span className="font-black text-sm uppercase tracking-widest">المعاينة الحية</span>
                 </div>
-                <Badge variant="outline" className="rounded-full bg-white font-bold text-[9px] uppercase border-primary/20">Static Preview</Badge>
+                <Badge variant="outline" className="rounded-full bg-white font-bold text-[9px] uppercase border-primary/20">Distinctive Layout</Badge>
              </div>
              
              <div className="h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
@@ -398,11 +410,12 @@ export default function AdminBlogPage() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <span className="bg-primary text-white px-3 py-1 rounded-full text-[9px] font-black">{formData.category}</span>
-                                <span className="flex items-center gap-1 text-[9px] text-muted-foreground font-bold"><Calendar className="h-3 w-3" /> {format(new Date(), 'd MMMM yyyy', { locale: ar })}</span>
+                                <span className="flex items-center gap-1 text-[9px] text-muted-foreground font-bold"><Calendar className="h-3.5 w-3.5" /> {format(new Date(), 'd MMMM yyyy', { locale: ar })}</span>
                             </div>
                             <h1 className="text-3xl md:text-4xl font-black leading-tight text-slate-800 dark:text-white text-right">
                                 {formData.title || 'عنوان المقال المثير سيظهر هنا...'}
                             </h1>
+                            {formData.searchDescription && <p className="text-sm font-bold text-slate-400 italic pr-4 border-r-4 border-slate-200">{formData.searchDescription}</p>}
                         </div>
 
                         <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-lg border-4 border-slate-50 dark:border-slate-800">
@@ -419,12 +432,6 @@ export default function AdminBlogPage() {
                                 dangerouslySetInnerHTML={{ __html: formData.content || '<p style="color: #94a3b8; font-style: italic; text-align: center;">ابدأ بالكتابة في المحرر لرؤية المحتوى هنا...</p>' }} 
                             />
                         </div>
-
-                        <div className="pt-6 border-t border-dashed">
-                             <div className="flex flex-wrap gap-2 justify-center opacity-50 grayscale pointer-events-none">
-                                <div className="h-8 px-4 rounded-xl bg-slate-100 flex items-center gap-2 text-[10px] font-bold">Share <Share2 className="h-3 w-3" /></div>
-                             </div>
-                        </div>
                     </div>
                 </Card>
              </div>
@@ -432,36 +439,62 @@ export default function AdminBlogPage() {
 
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
-           {articles?.map((art) => (
-             <Card key={art.id} className="border-0 shadow-sm rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 group hover:shadow-xl transition-all border-t-4 border-t-primary/10">
-               <div className="aspect-video relative overflow-hidden bg-slate-100">
-                    <img 
-                        src={art.coverImage || config.appLogo} 
-                        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700" 
-                        alt={art.title} 
-                    />
-                    <div className="absolute top-4 right-4 flex gap-2">
-                        <span className="bg-white/90 text-primary backdrop-blur-md px-2.5 py-0.5 rounded-lg font-black text-[9px]">{art.category}</span>
-                        {art.isPinned && <span className="bg-amber-400 text-white rounded-lg p-1"><Star className="h-3 w-3 fill-current" /></span>}
-                    </div>
-               </div>
-               <CardContent className="p-6 space-y-4">
-                  <h4 className="font-black text-lg leading-tight line-clamp-2 min-h-[3.5rem] text-right">{art.title}</h4>
-                  <div className="flex items-center justify-between pt-4 border-t border-dashed">
-                     <div className="flex gap-1.5">
-                        <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl text-blue-500 border-blue-50 hover:bg-blue-50" onClick={() => { setCurrentId(art.id); setFormData(art); setIsEditing(true); }}>
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl text-rose-500 border-rose-50 hover:bg-rose-50" onClick={() => handleDelete(art.id)}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                     </div>
-                     <span className="text-[10px] font-bold text-slate-400">ID: {art.numericId}</span>
+        <div className="space-y-6">
+           <div className="relative w-full max-w-md mx-auto sm:mx-0">
+               <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+               <Input 
+                placeholder="ابحث عن مقال..." 
+                className="pr-10 rounded-2xl h-12 bg-white dark:bg-slate-900 shadow-sm border-slate-100"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+               />
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
+              {filteredArticles?.map((art) => (
+                <Card key={art.id} className="border-0 shadow-sm rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 group hover:shadow-xl transition-all border-t-4 border-t-primary/10">
+                  <div className="aspect-video relative overflow-hidden bg-slate-100">
+                        <img 
+                            src={art.coverImage || config.appLogo} 
+                            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700" 
+                            alt={art.title} 
+                        />
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <span className="bg-white/90 text-primary backdrop-blur-md px-2.5 py-0.5 rounded-lg font-black text-[9px]">{art.category}</span>
+                            {art.isPinned && <span className="bg-amber-400 text-white rounded-lg p-1 shadow-lg"><Star className="h-3 w-3 fill-current" /></span>}
+                        </div>
                   </div>
-               </CardContent>
-             </Card>
-           ))}
+                  <CardContent className="p-6 space-y-4">
+                      <div className="space-y-2">
+                        <h4 className="font-black text-lg leading-tight line-clamp-1 text-right">{art.title}</h4>
+                        <p className="text-[10px] text-slate-400 font-bold line-clamp-2 min-h-[1.5rem] leading-relaxed">{art.searchDescription || 'لا يوجد وصف تعريفي للمقال.'}</p>
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t border-dashed">
+                        <div className="flex gap-1.5">
+                            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl text-blue-500 border-blue-50 hover:bg-blue-50" onClick={() => { setCurrentId(art.id); setFormData(art); setIsEditing(true); }}>
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl text-rose-500 border-rose-50 hover:bg-rose-50" onClick={() => handleDelete(art.id)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-primary" onClick={() => window.open(`/art/${art.numericId}`, '_blank')}>
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-black text-primary"># {art.numericId}</span>
+                            <span className="text-[8px] text-slate-300 font-bold uppercase">{art.views} views</span>
+                        </div>
+                      </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {filteredArticles.length === 0 && !isLoading && (
+                <div className="col-span-full py-20 text-center text-slate-400 font-black bg-slate-50 dark:bg-slate-900 rounded-[3rem] border-2 border-dashed">
+                    لا توجد مقالات تطابق بحثك.
+                </div>
+              )}
+           </div>
         </div>
       )}
       

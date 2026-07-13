@@ -16,7 +16,8 @@ import {
   BookOpen, Star, ArrowLeft, Bold, Italic, List, AlignLeft, 
   AlignCenter, AlignRight, Link as LinkIcon, UploadCloud, Globe,
   Code, PenLine, Undo2, Redo2, Underline, Strikethrough, AlignJustify,
-  ListOrdered, Quote, Eraser, Type, Palette, Highlighter, Eye, Layout, Calendar, Share2
+  ListOrdered, Quote, Eraser, Type, Palette, Highlighter, Eye, Layout, Calendar, Share2,
+  ChevronDown, Type as TypeIcon
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ADMIN_EMAIL } from '@/lib/constants';
@@ -27,6 +28,8 @@ import { useAppConfig } from '@/hooks/use-app-config';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function AdminBlogPage() {
   const router = useRouter();
@@ -61,7 +64,6 @@ export default function AdminBlogPage() {
 
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
-  // استخراج صورة الغلاف للاستخدام في المعاينة إذا كانت فارغة
   const previewCover = useMemo(() => {
     if (formData.coverImage) return formData.coverImage;
     const imgMatch = formData.content.match(/<img[^>]+src="([^">]+)"/);
@@ -76,7 +78,8 @@ export default function AdminBlogPage() {
 
   const handleContentChange = () => {
     if (editorRef.current) {
-      setFormData(prev => ({ ...prev, content: editorRef.current!.innerHTML }));
+      const html = editorRef.current.innerHTML;
+      setFormData(prev => ({ ...prev, content: html }));
     }
   };
 
@@ -140,9 +143,11 @@ export default function AdminBlogPage() {
         toast({ title: "تنبيه", description: "يرجى التبديل لوضع الإنشاء لاستخدام الأدوات." });
         return;
     }
-    document.execCommand(command, false, value);
-    handleContentChange();
-    if (editorRef.current) editorRef.current.focus();
+    if (editorRef.current) {
+        editorRef.current.focus();
+        document.execCommand(command, false, value);
+        handleContentChange();
+    }
   };
 
   const insertLink = () => {
@@ -153,7 +158,7 @@ export default function AdminBlogPage() {
   const insertImage = (urlOverride?: string) => {
     const url = urlOverride || prompt("أدخل رابط الصورة:");
     if (url) {
-        const imgHtml = `<img src="${url}" style="max-width: 100%; border-radius: 1rem; margin: 1rem 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />`;
+        const imgHtml = `<div style="text-align: center; margin: 1.5rem 0;"><img src="${url}" style="max-width: 100%; height: auto; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 4px solid white;" alt="Article Image" /></div><p><br></p>`;
         if (editorMode === 'compose') {
             execCommand('insertHTML', imgHtml);
         } else {
@@ -165,7 +170,7 @@ export default function AdminBlogPage() {
   const insertVideo = () => {
     const url = prompt("أدخل رابط الفيديو (YouTube/Embed):");
     if (url) {
-        const videoHtml = `<div style="position: relative; padding-bottom: 56.25%; height: 0; margin: 1rem 0;"><iframe src="${url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 1rem;" frameborder="0" allowfullscreen></iframe></div>`;
+        const videoHtml = `<div style="position: relative; padding-bottom: 56.25%; height: 0; margin: 1.5rem 0; border-radius: 1.5rem; overflow: hidden;"><iframe src="${url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allowfullscreen></iframe></div><p><br></p>`;
         if (editorMode === 'compose') {
             execCommand('insertHTML', videoHtml);
         } else {
@@ -193,7 +198,7 @@ export default function AdminBlogPage() {
             insertImage(url);
             toast({ title: "تم الرفع بنجاح" });
         } else {
-            toast({ variant: "destructive", title: "فشل الرفع" });
+            toast({ variant: "destructive", title: "فشل الرفع", description: result.error?.message || "خطأ غير معروف" });
         }
     } catch (err) {
         toast({ variant: "destructive", title: "خطأ في الاتصال بخادم الرفع" });
@@ -239,28 +244,80 @@ export default function AdminBlogPage() {
                     />
                 </CardHeader>
                 <CardContent className="p-0">
-                    <div className="bg-white dark:bg-slate-900 p-2 flex flex-wrap items-center gap-0.5 border-b sticky top-0 z-20 shadow-sm overflow-x-auto">
+                    <div className="bg-white dark:bg-slate-900 p-2 flex flex-wrap items-center gap-0.5 border-b sticky top-0 z-20 shadow-sm overflow-x-auto custom-scrollbar">
                         <Button variant="ghost" size="sm" onClick={() => setEditorMode(editorMode === 'compose' ? 'html' : 'compose')} className={cn("h-9 px-3 rounded-lg gap-2 text-xs font-bold", editorMode === 'html' ? "bg-primary text-white" : "text-slate-500")}>
                             {editorMode === 'compose' ? <><Code className="h-4 w-4" /> HTML</> : <><PenLine className="h-4 w-4" /> إنشاء</>}
                         </Button>
                         <div className="h-6 w-px bg-slate-200 mx-1" />
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('undo')} className="h-9 w-9 text-slate-500"><Undo2 className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('redo')} className="h-9 w-9 text-slate-500"><Redo2 className="h-4 w-4" /></Button>
+                        
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('undo')} title="تراجع" className="h-9 w-9 text-slate-500"><Undo2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('redo')} title="إعادة" className="h-9 w-9 text-slate-500"><Redo2 className="h-4 w-4" /></Button>
+                        
                         <div className="h-6 w-px bg-slate-200 mx-1" />
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('bold')} className="h-9 w-9 font-bold"><Bold className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('italic')} className="h-9 w-9 italic"><Italic className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('underline')} className="h-9 w-9 underline"><Underline className="h-4 w-4" /></Button>
+                        
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9"><TypeIcon className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="rounded-xl p-1">
+                                <DropdownMenuItem onClick={() => execCommand('formatBlock', 'H1')} className="font-black text-xl">عنوان رئيسي 1</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => execCommand('formatBlock', 'H2')} className="font-black text-lg">عنوان فرعي 2</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => execCommand('formatBlock', 'H3')} className="font-bold">عنوان 3</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => execCommand('formatBlock', 'P')} className="font-medium">نص عادي</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('bold')} title="عريض" className="h-9 w-9 font-bold"><Bold className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('italic')} title="مائل" className="h-9 w-9 italic"><Italic className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('underline')} title="تسطير" className="h-9 w-9 underline"><Underline className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('strikeThrough')} title="شطب" className="h-9 w-9 line-through"><Strikethrough className="h-4 w-4" /></Button>
+                        
                         <div className="h-6 w-px bg-slate-200 mx-1" />
-                        <Button variant="ghost" size="icon" onClick={() => insertLink()} className="h-9 w-9 text-blue-500"><LinkIcon className="h-4 w-4" /></Button>
+                        
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 text-rose-500"><Palette className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="grid grid-cols-5 gap-1 p-2 w-48">
+                                {['#000000', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef'].map(color => (
+                                    <button key={color} onClick={() => execCommand('foreColor', color)} className="h-6 w-6 rounded-md" style={{ backgroundColor: color }} />
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 text-amber-500"><Highlighter className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="grid grid-cols-5 gap-1 p-2 w-48">
+                                {['#ffffff', '#fef9c3', '#fef3c7', '#dcfce7', '#d1fae5', '#ecfeff', '#e0f2fe', '#eef2ff', '#f5f3ff', '#fdf2f8'].map(color => (
+                                    <button key={color} onClick={() => execCommand('hiliteColor', color)} className="h-6 w-6 rounded-md border" style={{ backgroundColor: color }} />
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <div className="h-6 w-px bg-slate-200 mx-1" />
+
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyRight')} title="يمين"><AlignRight className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyCenter')} title="وسط"><AlignCenter className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyLeft')} title="يسار"><AlignLeft className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyFull')} title="ضبط"><AlignJustify className="h-4 w-4" /></Button>
+
+                        <div className="h-6 w-px bg-slate-200 mx-1" />
+
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('insertUnorderedList')} title="قائمة نقطية"><List className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('insertOrderedList')} title="قائمة رقمية"><ListOrdered className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('formatBlock', 'BLOCKQUOTE')} title="اقتباس"><Quote className="h-4 w-4" /></Button>
+                        
+                        <div className="h-6 w-px bg-slate-200 mx-1" />
+
+                        <Button variant="ghost" size="icon" onClick={insertLink} title="رابط" className="text-blue-500"><LinkIcon className="h-4 w-4" /></Button>
                         <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
-                        <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="h-9 w-9 text-emerald-500">
+                        <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isUploading} title="رفع صورة" className="text-emerald-500">
                             {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => insertVideo()} className="h-9 w-9 text-rose-600"><Video className="h-4 w-4" /></Button>
-                        <div className="h-6 w-px bg-slate-200 mx-1" />
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyRight')} className="h-9 w-9"><AlignRight className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyCenter')} className="h-9 w-9"><AlignCenter className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyLeft')} className="h-9 w-9"><AlignLeft className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={insertVideo} title="فيديو" className="text-rose-600"><Video className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('removeFormat')} title="مسح التنسيق" className="text-slate-400"><Eraser className="h-4 w-4" /></Button>
                     </div>
 
                     <div className="relative">
@@ -269,14 +326,15 @@ export default function AdminBlogPage() {
                                 ref={editorRef}
                                 contentEditable
                                 onInput={handleContentChange}
-                                className="min-h-[500px] p-8 text-lg leading-relaxed focus:outline-none dark:text-slate-100 bg-slate-50/20"
+                                onBlur={handleContentChange}
+                                className="min-h-[600px] p-8 text-lg leading-relaxed focus:outline-none dark:text-slate-100 bg-slate-50/20 prose prose-slate dark:prose-invert max-w-none"
                                 placeholder="ابدأ الكتابة هنا..."
                             />
                         ) : (
                             <Textarea 
                                 value={formData.content} 
                                 onChange={(e) => setFormData({...formData, content: e.target.value})} 
-                                className="min-h-[500px] border-0 rounded-none focus-visible:ring-0 p-8 font-mono text-sm leading-relaxed bg-slate-900 text-emerald-400"
+                                className="min-h-[600px] border-0 rounded-none focus-visible:ring-0 p-8 font-mono text-sm leading-relaxed bg-slate-900 text-emerald-400"
                                 placeholder="كود HTML..."
                             />
                         )}
@@ -340,7 +398,6 @@ export default function AdminBlogPage() {
              <div className="h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
                 <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-slate-900 border-t-8 border-t-primary">
                     <div className="p-6 md:p-10 space-y-6">
-                        {/* هيدر المقال في المعاينة */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <span className="bg-primary text-white px-3 py-1 rounded-full text-[9px] font-black">{formData.category}</span>
@@ -351,7 +408,6 @@ export default function AdminBlogPage() {
                             </h1>
                         </div>
 
-                        {/* الغلاف في المعاينة */}
                         <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-lg border-4 border-slate-50 dark:border-slate-800">
                             <img 
                                 src={previewCover} 
@@ -360,15 +416,13 @@ export default function AdminBlogPage() {
                             />
                         </div>
 
-                        {/* المحتوى في المعاينة */}
                         <div className="bg-slate-50/50 dark:bg-slate-800/20 rounded-[2rem] p-6 md:p-8 min-h-[300px]">
                             <div 
-                                className="prose prose-slate dark:prose-invert max-w-none prose-img:rounded-2xl prose-p:font-bold prose-p:text-slate-600 dark:prose-p:text-slate-400 text-right" 
+                                className="prose prose-slate dark:prose-invert max-w-none text-right" 
                                 dangerouslySetInnerHTML={{ __html: formData.content || '<p style="color: #94a3b8; font-style: italic; text-align: center;">ابدأ بالكتابة في المحرر لرؤية المحتوى هنا...</p>' }} 
                             />
                         </div>
 
-                        {/* أزرار المشاركة الوهمية */}
                         <div className="pt-6 border-t border-dashed">
                              <div className="flex flex-wrap gap-2 justify-center opacity-50 grayscale pointer-events-none">
                                 <div className="h-8 px-4 rounded-xl bg-slate-100 flex items-center gap-2 text-[10px] font-bold">Share <Share2 className="h-3 w-3" /></div>
@@ -416,6 +470,7 @@ export default function AdminBlogPage() {
       
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
+          height: 4px;
           width: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -424,6 +479,18 @@ export default function AdminBlogPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #e2e8f0;
           border-radius: 10px;
+        }
+        [contenteditable]:empty:before {
+            content: attr(placeholder);
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .prose img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 1.5rem;
+            margin: 1.5rem auto;
+            display: block;
         }
       `}</style>
     </div>

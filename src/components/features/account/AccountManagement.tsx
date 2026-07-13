@@ -21,10 +21,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck, ShieldCheck, CheckCircle2, UploadCloud } from 'lucide-react';
 import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { doc, setDoc, serverTimestamp, collection, getDocs } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -63,14 +63,15 @@ export default function AccountManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>(DELETION_REASONS[0]);
   const [copied, setCopied] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // مراقبة وثيقة طلب الحذف
   const deletionRequestRef = useMemoFirebase(() => user ? doc(firestore, 'deletionRequests', user.uid) : null, [user, firestore]);
   const { data: deletionRequest } = useDoc<any>(deletionRequestRef);
 
-  // مراقبة ملف المستخدم لجلب حالة التوثيق
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<any>(userRef);
 
@@ -106,6 +107,34 @@ export default function AccountManagement() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const body = new FormData();
+    body.append('image', file);
+
+    try {
+        const res = await fetch('https://api.imgbb.com/1/upload?key=d015dd34e005b5dd56d68d2fe147c267', {
+            method: 'POST',
+            body
+        });
+        const result = await res.json();
+        if (result.success) {
+            form.setValue('photoURL', result.data.url, { shouldValidate: true });
+            toast({ title: "تم رفع الصورة بنجاح" });
+        } else {
+            toast({ variant: "destructive", title: "فشل الرفع" });
+        }
+    } catch (err) {
+        toast({ variant: "destructive", title: "خطأ في الاتصال بالخادم" });
+    } finally {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handlePasswordReset = async () => {
     if (!user?.email) return;
     setIsSendingEmail(true);
@@ -132,7 +161,6 @@ export default function AccountManagement() {
     if (!user || !firestore) return;
     setIsRequestingDeletion(true);
     try {
-      // جلب عدد الطلاب قبل الحذف
       const studentsSnap = await getDocs(collection(firestore, `users/${user.uid}/students`));
       const studentCount = studentsSnap.size;
 
@@ -152,7 +180,6 @@ export default function AccountManagement() {
         description: 'سيتم الحذف نهائياً بعد 7 أيام. جاري تسجيل خروجك الآن.',
       });
       
-      // ننتظر قليلاً ثم نسجل الخروج لإعطاء Firestore وقت للتحديث
       setTimeout(() => signOut(auth), 1500);
     } catch (error: any) {
       toast({
@@ -183,7 +210,7 @@ export default function AccountManagement() {
   }
 
   const nameText = user?.displayName || 'مستخدم جديد';
-  const showBadgeBefore = isArabic(nameText); // Logic: Arabic -> Before (Right)
+  const showBadgeBefore = isArabic(nameText);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto pb-20">
@@ -220,10 +247,8 @@ export default function AccountManagement() {
                 )}
             </div>
             
-            {/* واجهة الـ UID المطورة كبطاقة هوية رقمية */}
             <div className="mt-8 w-full max-w-[280px] animate-in slide-in-from-bottom-4 duration-700">
                 <div className="relative overflow-hidden rounded-[2rem] bg-slate-900 text-white shadow-2xl group/card transition-all hover:scale-[1.02]">
-                    {/* تأثيرات خلفية */}
                     <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover/card:bg-primary/30 transition-colors" />
                     <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl" />
                     
@@ -304,12 +329,14 @@ export default function AccountManagement() {
                   name="photoURL"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-sm">رابط الصورة الشخصية</FormLabel>
+                      <FormLabel className="font-bold text-sm">الصورة الشخصية</FormLabel>
                       <FormControl>
                         <div className="flex gap-2">
-                          <Input placeholder="https://..." className="h-12 rounded-xl bg-muted/50 border-0 flex-grow" {...field} />
-                          <Button asChild variant="outline" className="h-12 rounded-xl border-dashed">
-                            <a href="https://top4top.io/" target="_blank" rel="noopener noreferrer">رفع</a>
+                          <Input placeholder="رابط الصورة..." className="h-12 rounded-xl bg-muted/50 border-0 flex-grow text-xs font-mono" {...field} />
+                          <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+                          <Button type="button" variant="outline" className="h-12 rounded-xl border-dashed gap-2" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                            رفع صورة
                           </Button>
                         </div>
                       </FormControl>

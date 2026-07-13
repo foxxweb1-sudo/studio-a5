@@ -1,10 +1,9 @@
-
 'use client';
 
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +30,8 @@ import {
   LifeBuoy,
   Tag,
   ShieldCheck,
-  Bell
+  Bell,
+  UploadCloud
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -64,6 +64,10 @@ export default function AdminAppSettingsPage() {
   
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingRules, setIsUpdatingRules] = useState(false);
+  const [isUploading, setIsUploading] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentUploadField = useRef<string | null>(null);
 
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
@@ -115,6 +119,41 @@ export default function AdminAppSettingsPage() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const field = currentUploadField.current;
+    if (!file || !field) return;
+
+    setIsUploading(field);
+    const body = new FormData();
+    body.append('image', file);
+
+    try {
+        const res = await fetch('https://api.imgbb.com/1/upload?key=d015dd34e005b5dd56d68d2fe147c267', {
+            method: 'POST',
+            body
+        });
+        const result = await res.json();
+        if (result.success) {
+            setFormData(prev => ({ ...prev, [field]: result.data.url }));
+            toast({ title: "تم رفع الصورة بنجاح" });
+        } else {
+            toast({ variant: "destructive", title: "فشل الرفع" });
+        }
+    } catch (err) {
+        toast({ variant: "destructive", title: "خطأ في الاتصال بالخادم" });
+    } finally {
+        setIsUploading(null);
+        currentUploadField.current = null;
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerUpload = (field: string) => {
+    currentUploadField.current = field;
+    fileInputRef.current?.click();
+  };
+
   const handleUpdateRules = async () => {
     setIsUpdatingRules(true);
     try {
@@ -146,6 +185,8 @@ export default function AdminAppSettingsPage() {
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-40 px-4 relative">
+      <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+      
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">إعدادات النظام</PageHeaderTitle>
@@ -205,21 +246,18 @@ export default function AdminAppSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-bold">رابط اللوجو</Label>
-                  <div className="flex gap-4 items-center">
+                  <Label className="font-bold">لوجو الموقع</Label>
+                  <div className="flex gap-2">
                     <Input 
                       value={formData.appLogo}
                       onChange={(e) => setFormData({...formData, appLogo: e.target.value})}
-                      placeholder="رابط الصورة..."
-                      className="rounded-xl h-11 font-mono text-xs"
+                      placeholder="رابط اللوجو..."
+                      className="rounded-xl h-11 font-mono text-xs flex-grow"
                     />
-                    <div className="relative w-12 h-12 rounded-xl border bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
-                       {formData.appLogo ? (
-                         <Image src={formData.appLogo} alt="Preview" fill className="object-contain p-2" />
-                       ) : (
-                         <ImageIcon className="h-5 w-5 text-slate-300" />
-                       )}
-                    </div>
+                    <Button variant="outline" size="sm" className="rounded-xl h-11 border-dashed gap-2" onClick={() => triggerUpload('appLogo')} disabled={!!isUploading}>
+                        {isUploading === 'appLogo' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                        رفع
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -235,21 +273,33 @@ export default function AdminAppSettingsPage() {
               <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
                   <Label className="font-bold">خلفية تسجيل الدخول</Label>
-                  <Input 
-                    value={formData.loginBg}
-                    onChange={(e) => setFormData({...formData, loginBg: e.target.value})}
-                    placeholder="رابط الخلفية..."
-                    className="rounded-xl h-11 font-mono text-xs"
-                  />
+                  <div className="flex gap-2">
+                    <Input 
+                      value={formData.loginBg}
+                      onChange={(e) => setFormData({...formData, loginBg: e.target.value})}
+                      placeholder="رابط الخلفية..."
+                      className="rounded-xl h-11 font-mono text-xs flex-grow"
+                    />
+                    <Button variant="outline" size="sm" className="rounded-xl h-11 border-dashed gap-2" onClick={() => triggerUpload('loginBg')} disabled={!!isUploading}>
+                        {isUploading === 'loginBg' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                        رفع
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="font-bold">خلفية إنشاء الحساب</Label>
-                  <Input 
-                    value={formData.signupBg}
-                    onChange={(e) => setFormData({...formData, signupBg: e.target.value})}
-                    placeholder="رابط الخلفية..."
-                    className="rounded-xl h-11 font-mono text-xs"
-                  />
+                  <div className="flex gap-2">
+                    <Input 
+                      value={formData.signupBg}
+                      onChange={(e) => setFormData({...formData, signupBg: e.target.value})}
+                      placeholder="رابط الخلفية..."
+                      className="rounded-xl h-11 font-mono text-xs flex-grow"
+                    />
+                    <Button variant="outline" size="sm" className="rounded-xl h-11 border-dashed gap-2" onClick={() => triggerUpload('signupBg')} disabled={!!isUploading}>
+                        {isUploading === 'signupBg' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                        رفع
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -407,12 +457,12 @@ export default function AdminAppSettingsPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4 mb-10">
+      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4 mb-10 text-right">
         <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <h4 className="font-bold text-amber-900 text-sm">ملاحظة هامة</h4>
           <p className="text-xs text-amber-700/80">
-            يرجى التأكد من صحة روابط التواصل (بدءاً بـ https://) لضمان عمل أزرار المشاركة والتواصل لدى المستخدمين بشكل سليم.
+            يمكنك الآن رفع الصور مباشرة من جهازك بالضغط على زر "رفع" بجانب كل حقل. سيتم حفظ الصور بشكل آمن على خوادمنا وتحديث الروابط تلقائياً.
           </p>
         </div>
       </div>

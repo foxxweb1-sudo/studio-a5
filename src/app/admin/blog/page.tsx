@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -198,7 +197,7 @@ export default function AdminBlogPage() {
             insertImage(url);
             toast({ title: "تم الرفع بنجاح" });
         } else {
-            toast({ variant: "destructive", title: "فشل الرفع", description: result.error?.message || "خطأ غير معروف" });
+            toast({ variant: "destructive", title: "فشل الرفع" });
         }
     } catch (err) {
         toast({ variant: "destructive", title: "خطأ في الاتصال بخادم الرفع" });
@@ -232,7 +231,6 @@ export default function AdminBlogPage() {
       {isEditing ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           
-          {/* العمود الأيمن: المحرر */}
           <div className="space-y-6">
             <Card className="border-0 shadow-2xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6 md:p-8">
@@ -327,14 +325,14 @@ export default function AdminBlogPage() {
                                 contentEditable
                                 onInput={handleContentChange}
                                 onBlur={handleContentChange}
-                                className="min-h-[600px] p-8 text-lg leading-relaxed focus:outline-none dark:text-slate-100 bg-slate-50/20 prose prose-slate dark:prose-invert max-w-none"
+                                className="min-h-[600px] p-8 text-lg leading-relaxed focus:outline-none dark:text-slate-100 bg-slate-50/20 prose prose-slate dark:prose-invert max-w-none text-right"
                                 placeholder="ابدأ الكتابة هنا..."
                             />
                         ) : (
                             <Textarea 
                                 value={formData.content} 
                                 onChange={(e) => setFormData({...formData, content: e.target.value})} 
-                                className="min-h-[600px] border-0 rounded-none focus-visible:ring-0 p-8 font-mono text-sm leading-relaxed bg-slate-900 text-emerald-400"
+                                className="min-h-[600px] border-0 rounded-none focus-visible:ring-0 p-8 font-mono text-sm leading-relaxed bg-slate-900 text-emerald-400 text-left ltr"
                                 placeholder="كود HTML..."
                             />
                         )}
@@ -385,7 +383,6 @@ export default function AdminBlogPage() {
             </Button>
           </div>
 
-          {/* العمود الأيسر: المعاينة الحية (ثابتة) */}
           <div className="lg:sticky lg:top-24 space-y-4 h-full overflow-hidden">
              <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-2 text-primary">
@@ -403,7 +400,7 @@ export default function AdminBlogPage() {
                                 <span className="bg-primary text-white px-3 py-1 rounded-full text-[9px] font-black">{formData.category}</span>
                                 <span className="flex items-center gap-1 text-[9px] text-muted-foreground font-bold"><Calendar className="h-3 w-3" /> {format(new Date(), 'd MMMM yyyy', { locale: ar })}</span>
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-black leading-tight text-slate-800 dark:text-white">
+                            <h1 className="text-3xl md:text-4xl font-black leading-tight text-slate-800 dark:text-white text-right">
                                 {formData.title || 'عنوان المقال المثير سيظهر هنا...'}
                             </h1>
                         </div>
@@ -450,7 +447,7 @@ export default function AdminBlogPage() {
                     </div>
                </div>
                <CardContent className="p-6 space-y-4">
-                  <h4 className="font-black text-lg leading-tight line-clamp-2 min-h-[3.5rem]">{art.title}</h4>
+                  <h4 className="font-black text-lg leading-tight line-clamp-2 min-h-[3.5rem] text-right">{art.title}</h4>
                   <div className="flex items-center justify-between pt-4 border-t border-dashed">
                      <div className="flex gap-1.5">
                         <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl text-blue-500 border-blue-50 hover:bg-blue-50" onClick={() => { setCurrentId(art.id); setFormData(art); setIsEditing(true); }}>
@@ -492,6 +489,7 @@ export default function AdminBlogPage() {
             margin: 1.5rem auto;
             display: block;
         }
+        .ltr { direction: ltr; }
       `}</style>
     </div>
   );

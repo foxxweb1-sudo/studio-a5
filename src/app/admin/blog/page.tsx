@@ -16,7 +16,7 @@ import {
   BookOpen, Star, ArrowLeft, Bold, Italic, List, AlignLeft, 
   AlignCenter, AlignRight, Link as LinkIcon, UploadCloud, Globe,
   Code, PenLine, Undo2, Redo2, Underline, Strikethrough, AlignJustify,
-  ListOrdered, Quote, Eraser, Type, Palette, Highlighter
+  ListOrdered, Quote, Eraser, Type, Palette, Highlighter, Eye, Layout, Calendar, Share2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ADMIN_EMAIL } from '@/lib/constants';
@@ -25,6 +25,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 export default function AdminBlogPage() {
   const router = useRouter();
@@ -59,12 +61,18 @@ export default function AdminBlogPage() {
 
   const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
 
-  // تحديث المحتوى المرئي عند تغيير formData.content (فقط في وضع الإنشاء)
+  // استخراج صورة الغلاف للاستخدام في المعاينة إذا كانت فارغة
+  const previewCover = useMemo(() => {
+    if (formData.coverImage) return formData.coverImage;
+    const imgMatch = formData.content.match(/<img[^>]+src="([^">]+)"/);
+    return imgMatch ? imgMatch[1] : config.appLogo;
+  }, [formData.coverImage, formData.content, config.appLogo]);
+
   useEffect(() => {
     if (isEditing && editorMode === 'compose' && editorRef.current && editorRef.current.innerHTML !== formData.content) {
       editorRef.current.innerHTML = formData.content;
     }
-  }, [isEditing, editorMode, formData.content]);
+  }, [isEditing, editorMode]);
 
   const handleContentChange = () => {
     if (editorRef.current) {
@@ -198,11 +206,11 @@ export default function AdminBlogPage() {
   if (!isAdmin) return null;
 
   return (
-    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-20 px-4">
+    <div className="flex flex-col gap-8 max-w-[1600px] mx-auto pb-20 px-4">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">إدارة المحتوى</PageHeaderTitle>
-          <PageHeaderDescription>أنشئ مقالاتك ونسقها بأسلوب احترافي.</PageHeaderDescription>
+          <PageHeaderDescription>أنشئ مقالاتك ونسقها بأسلوب احترافي مع معاينة حية.</PageHeaderDescription>
         </PageHeader>
         <div className="flex gap-2">
            {!isEditing && (
@@ -210,85 +218,49 @@ export default function AdminBlogPage() {
                <Plus className="h-5 w-5" /> مقال جديد
              </Button>
            )}
-           <Button variant="outline" onClick={() => router.push('/')} className="rounded-xl h-12 w-12 p-0"><ArrowLeft className="h-5 w-5" /></Button>
+           <Button variant="outline" onClick={() => isEditing ? setIsEditing(false) : router.push('/')} className="rounded-xl h-12 font-bold px-4">
+              <ArrowLeft className="h-5 w-5 ms-2" /> {isEditing ? 'الرجوع للقائمة' : 'الرئيسية'}
+           </Button>
         </div>
       </div>
 
       {isEditing ? (
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="xl:col-span-3 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          
+          {/* العمود الأيمن: المحرر */}
+          <div className="space-y-6">
             <Card className="border-0 shadow-2xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
                 <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6 md:p-8">
                     <Input 
                         value={formData.title} 
                         onChange={(e) => setFormData({...formData, title: e.target.value})} 
-                        placeholder="عنوان المقال المثير..." 
-                        className="text-2xl md:text-4xl font-black h-auto py-4 border-0 bg-transparent focus-visible:ring-0 px-0 placeholder:opacity-30"
+                        placeholder="عنوان المقال هنا..." 
+                        className="text-2xl font-black h-auto py-2 border-0 bg-transparent focus-visible:ring-0 px-0 placeholder:opacity-30"
                     />
                 </CardHeader>
                 <CardContent className="p-0">
-                    {/* شريط أدوات التحرير المطور */}
                     <div className="bg-white dark:bg-slate-900 p-2 flex flex-wrap items-center gap-0.5 border-b sticky top-0 z-20 shadow-sm overflow-x-auto">
-                        
-                        <div className="flex items-center gap-1 border-l pl-2 ml-1">
-                            <Button variant="ghost" size="sm" onClick={() => setEditorMode(editorMode === 'compose' ? 'html' : 'compose')} className={cn("h-9 px-3 rounded-lg gap-2 text-xs font-bold", editorMode === 'html' ? "bg-primary text-white" : "text-slate-500")}>
-                                {editorMode === 'compose' ? <><Code className="h-4 w-4" /> HTML</> : <><PenLine className="h-4 w-4" /> إنشاء</>}
-                            </Button>
-                        </div>
-
-                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('undo')} className="h-9 w-9 text-slate-500"><Undo2 className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('redo')} className="h-9 w-9 text-slate-500"><Redo2 className="h-4 w-4" /></Button>
-                        </div>
-
-                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('bold')} className="h-9 w-9 text-slate-700 font-bold"><Bold className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('italic')} className="h-9 w-9 text-slate-700 italic"><Italic className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('underline')} className="h-9 w-9 text-slate-700 underline"><Underline className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('strikeThrough')} className="h-9 w-9 text-slate-700 line-through"><Strikethrough className="h-4 w-4" /></Button>
-                        </div>
-
-                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
-                            <Button variant="ghost" size="icon" onClick={() => {
-                                const color = prompt("أدخل كود اللون (مثل #ff0000):");
-                                if (color) execCommand('foreColor', color);
-                            }} className="h-9 w-9 text-rose-500"><Palette className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => {
-                                const color = prompt("أدخل لون التظليل (مثل yellow):");
-                                if (color) execCommand('hiliteColor', color);
-                            }} className="h-9 w-9 text-amber-500"><Highlighter className="h-4 w-4" /></Button>
-                        </div>
-
-                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
-                            <Button variant="ghost" size="icon" onClick={() => insertLink()} className="h-9 w-9 text-blue-500"><LinkIcon className="h-4 w-4" /></Button>
-                            
-                            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => fileInputRef.current?.click()} 
-                                disabled={isUploading}
-                                className="h-9 w-9 text-emerald-500"
-                            >
-                                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-                            </Button>
-                            
-                            <Button variant="ghost" size="icon" onClick={() => insertVideo()} className="h-9 w-9 text-rose-600"><Video className="h-4 w-4" /></Button>
-                        </div>
-
-                        <div className="flex items-center gap-0.5 border-l pl-2 ml-1">
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyRight')} className="h-9 w-9"><AlignRight className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyCenter')} className="h-9 w-9"><AlignCenter className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyLeft')} className="h-9 w-9"><AlignLeft className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('justifyFull')} className="h-9 w-9"><AlignJustify className="h-4 w-4" /></Button>
-                        </div>
-
-                        <div className="flex items-center gap-0.5">
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('insertUnorderedList')} className="h-9 w-9"><List className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('insertOrderedList')} className="h-9 w-9"><ListOrdered className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('formatBlock', 'blockquote')} className="h-9 w-9"><Quote className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => execCommand('removeFormat')} className="h-9 w-9 text-rose-400"><Eraser className="h-4 w-4" /></Button>
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setEditorMode(editorMode === 'compose' ? 'html' : 'compose')} className={cn("h-9 px-3 rounded-lg gap-2 text-xs font-bold", editorMode === 'html' ? "bg-primary text-white" : "text-slate-500")}>
+                            {editorMode === 'compose' ? <><Code className="h-4 w-4" /> HTML</> : <><PenLine className="h-4 w-4" /> إنشاء</>}
+                        </Button>
+                        <div className="h-6 w-px bg-slate-200 mx-1" />
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('undo')} className="h-9 w-9 text-slate-500"><Undo2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('redo')} className="h-9 w-9 text-slate-500"><Redo2 className="h-4 w-4" /></Button>
+                        <div className="h-6 w-px bg-slate-200 mx-1" />
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('bold')} className="h-9 w-9 font-bold"><Bold className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('italic')} className="h-9 w-9 italic"><Italic className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('underline')} className="h-9 w-9 underline"><Underline className="h-4 w-4" /></Button>
+                        <div className="h-6 w-px bg-slate-200 mx-1" />
+                        <Button variant="ghost" size="icon" onClick={() => insertLink()} className="h-9 w-9 text-blue-500"><LinkIcon className="h-4 w-4" /></Button>
+                        <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+                        <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="h-9 w-9 text-emerald-500">
+                            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => insertVideo()} className="h-9 w-9 text-rose-600"><Video className="h-4 w-4" /></Button>
+                        <div className="h-6 w-px bg-slate-200 mx-1" />
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyRight')} className="h-9 w-9"><AlignRight className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyCenter')} className="h-9 w-9"><AlignCenter className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => execCommand('justifyLeft')} className="h-9 w-9"><AlignLeft className="h-4 w-4" /></Button>
                     </div>
 
                     <div className="relative">
@@ -297,87 +269,116 @@ export default function AdminBlogPage() {
                                 ref={editorRef}
                                 contentEditable
                                 onInput={handleContentChange}
-                                className="min-h-[600px] p-8 text-lg leading-relaxed focus:outline-none dark:text-slate-100 bg-slate-50/20"
+                                className="min-h-[500px] p-8 text-lg leading-relaxed focus:outline-none dark:text-slate-100 bg-slate-50/20"
                                 placeholder="ابدأ الكتابة هنا..."
                             />
                         ) : (
                             <Textarea 
                                 value={formData.content} 
                                 onChange={(e) => setFormData({...formData, content: e.target.value})} 
-                                className="min-h-[600px] border-0 rounded-none focus-visible:ring-0 p-8 font-mono text-sm leading-relaxed bg-slate-900 text-emerald-400"
-                                placeholder="اكتب كود HTML هنا..."
+                                className="min-h-[500px] border-0 rounded-none focus-visible:ring-0 p-8 font-mono text-sm leading-relaxed bg-slate-900 text-emerald-400"
+                                placeholder="كود HTML..."
                             />
                         )}
                     </div>
                 </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg rounded-[2.5rem] bg-white dark:bg-slate-900">
-                <CardHeader>
-                    <CardTitle className="text-lg">إعدادات محركات البحث (SEO)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Textarea 
-                        value={formData.searchDescription} 
-                        onChange={(e) => setFormData({...formData, searchDescription: e.target.value})} 
-                        placeholder="اكتب وصفاً مختصراً يظهر في جوجل..." 
-                        className="rounded-2xl h-24 bg-slate-50 border-slate-100" 
-                    />
-                </CardContent>
-            </Card>
-          </div>
-
-          <aside className="xl:col-span-1 space-y-6">
-             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 overflow-hidden">
-                <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-6">
-                    <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400">نشر المقال</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                    <div className="space-y-2">
-                        <Label className="font-bold text-xs">القسم</Label>
-                        <Select value={formData.category} onValueChange={(v: any) => setFormData({...formData, category: v})}>
-                            <SelectTrigger className="h-11 rounded-xl bg-slate-50 font-bold border-slate-100"><SelectValue /></SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                                <SelectItem value="AI" className="font-bold">الذكاء الاصطناعي AI</SelectItem>
-                                <SelectItem value="الرقمية" className="font-bold">الحياة الرقمية</SelectItem>
-                                <SelectItem value="معلومات عامة" className="font-bold">معلومات عامة</SelectItem>
-                                <SelectItem value="عن المنصة" className="font-bold">عن المنصة</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label className="font-bold text-xs">رابط صورة الغلاف</Label>
-                        <div className="flex flex-col gap-2">
-                            <Input 
-                                value={formData.coverImage} 
-                                onChange={(e) => setFormData({...formData, coverImage: e.target.value})} 
-                                placeholder="اتركها فارغة لاستخدام أول صورة" 
-                                className="h-11 rounded-xl bg-slate-50 font-mono text-[10px] border-slate-100" 
-                            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border-0 shadow-lg rounded-[2rem] p-6 space-y-4">
+                    <Label className="font-bold text-xs uppercase tracking-widest text-slate-400">الإعدادات الأساسية</Label>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label className="font-bold text-[10px]">القسم</Label>
+                            <Select value={formData.category} onValueChange={(v: any) => setFormData({...formData, category: v})}>
+                                <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-0 font-bold"><SelectValue /></SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="AI" className="font-bold">الذكاء الاصطناعي AI</SelectItem>
+                                    <SelectItem value="الرقمية" className="font-bold">الحياة الرقمية</SelectItem>
+                                    <SelectItem value="معلومات عامة" className="font-bold">معلومات عامة</SelectItem>
+                                    <SelectItem value="عن المنصة" className="font-bold">عن المنصة</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-bold text-[10px]">رابط الغلاف (اختياري)</Label>
+                            <Input value={formData.coverImage} onChange={(e) => setFormData({...formData, coverImage: e.target.value})} placeholder="رابط خارجي للغلاف..." className="h-10 rounded-xl bg-slate-50 border-0 text-xs font-mono" />
                         </div>
                     </div>
+                </Card>
 
-                    <div className="space-y-4 pt-4 border-t border-dashed">
-                        <div className="flex items-center justify-between">
-                            <Label className="font-bold text-xs cursor-pointer" htmlFor="pin-switch">تثبيت المقال (Max 5)</Label>
+                <Card className="border-0 shadow-lg rounded-[2rem] p-6 space-y-4">
+                    <Label className="font-bold text-xs uppercase tracking-widest text-slate-400">خيارات النشر</Label>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+                            <Label htmlFor="pin-switch" className="font-bold text-xs cursor-pointer">تثبيت المقال</Label>
                             <Switch id="pin-switch" checked={formData.isPinned} onCheckedChange={(v) => setFormData({...formData, isPinned: v})} />
                         </div>
-                        <div className="flex items-center justify-between">
-                            <Label className="font-bold text-xs cursor-pointer" htmlFor="comments-switch">السماح بالتعليقات</Label>
+                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+                            <Label htmlFor="comments-switch" className="font-bold text-xs cursor-pointer">السماح بالتعليقات</Label>
                             <Switch id="comments-switch" checked={formData.allowComments} onCheckedChange={(v) => setFormData({...formData, allowComments: v})} />
                         </div>
                     </div>
+                </Card>
+            </div>
 
-                    <div className="flex flex-col gap-2 pt-4">
-                        <Button onClick={handleSave} disabled={isSaving} className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-xl shadow-primary/20">
-                            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} حفظ ونشر المقال
-                        </Button>
-                        <Button variant="ghost" onClick={() => { setIsEditing(false); resetForm(); }} className="h-12 rounded-xl text-slate-400 font-bold">إلغاء</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="w-full h-16 rounded-[2rem] font-black text-xl gap-2 shadow-2xl shadow-primary/30">
+                {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />} حفظ ونشر المقال الآن
+            </Button>
+          </div>
+
+          {/* العمود الأيسر: المعاينة الحية (ثابتة) */}
+          <div className="lg:sticky lg:top-24 space-y-4 h-full overflow-hidden">
+             <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-2 text-primary">
+                    <Eye className="h-5 w-5" />
+                    <span className="font-black text-sm uppercase tracking-widest">المعاينة الحية</span>
+                </div>
+                <Badge variant="outline" className="rounded-full bg-white font-bold text-[9px] uppercase border-primary/20">Static Preview</Badge>
+             </div>
+             
+             <div className="h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
+                <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-slate-900 border-t-8 border-t-primary">
+                    <div className="p-6 md:p-10 space-y-6">
+                        {/* هيدر المقال في المعاينة */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <span className="bg-primary text-white px-3 py-1 rounded-full text-[9px] font-black">{formData.category}</span>
+                                <span className="flex items-center gap-1 text-[9px] text-muted-foreground font-bold"><Calendar className="h-3 w-3" /> {format(new Date(), 'd MMMM yyyy', { locale: ar })}</span>
+                            </div>
+                            <h1 className="text-3xl md:text-4xl font-black leading-tight text-slate-800 dark:text-white">
+                                {formData.title || 'عنوان المقال المثير سيظهر هنا...'}
+                            </h1>
+                        </div>
+
+                        {/* الغلاف في المعاينة */}
+                        <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-lg border-4 border-slate-50 dark:border-slate-800">
+                            <img 
+                                src={previewCover} 
+                                alt="Preview" 
+                                className="object-cover w-full h-full" 
+                            />
+                        </div>
+
+                        {/* المحتوى في المعاينة */}
+                        <div className="bg-slate-50/50 dark:bg-slate-800/20 rounded-[2rem] p-6 md:p-8 min-h-[300px]">
+                            <div 
+                                className="prose prose-slate dark:prose-invert max-w-none prose-img:rounded-2xl prose-p:font-bold prose-p:text-slate-600 dark:prose-p:text-slate-400 text-right" 
+                                dangerouslySetInnerHTML={{ __html: formData.content || '<p style="color: #94a3b8; font-style: italic; text-align: center;">ابدأ بالكتابة في المحرر لرؤية المحتوى هنا...</p>' }} 
+                            />
+                        </div>
+
+                        {/* أزرار المشاركة الوهمية */}
+                        <div className="pt-6 border-t border-dashed">
+                             <div className="flex flex-wrap gap-2 justify-center opacity-50 grayscale pointer-events-none">
+                                <div className="h-8 px-4 rounded-xl bg-slate-100 flex items-center gap-2 text-[10px] font-bold">Share <Share2 className="h-3 w-3" /></div>
+                             </div>
+                        </div>
                     </div>
-                </CardContent>
-             </Card>
-          </aside>
+                </Card>
+             </div>
+          </div>
+
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
@@ -412,6 +413,19 @@ export default function AdminBlogPage() {
            ))}
         </div>
       )}
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 }

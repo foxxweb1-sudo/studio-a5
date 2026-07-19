@@ -1,76 +1,84 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // الدوال الأساسية للتحقق
     function isSignedIn() {
       return request.auth != null;
     }
     
     function isAdmin() {
-      return request.auth != null && 
+      return isSignedIn() && 
              request.auth.token.email.lower() == 'tech.support.app@gmail.com';
     }
 
-    match /users/{userId}/students/{studentId} {
-      allow read: if true; 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    match /users/{userId}/attendance/{id} {
-      allow read: if true; 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    // قواعد بيانات المستخدمين والمجموعات الفرعية التابعة لهم
+    match /users/{userId} {
+      allow get: if true;
+      allow list: if isAdmin(); 
+      allow write: if isOwner(userId) || isAdmin();
+
+      // الطلاب والسجلات (متاحة للقراءة للجميع من أجل بوابة الأهل)
+      match /students/{id} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
+      }
+      match /attendance/{id} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
+      }
+      match /payments/{id} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
+      }
+      match /exams/{id} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
+      }
+      
+      // الإعدادات الخاصة بالمعلم
+      match /config/{id} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
     }
 
-    match /users/{userId}/payments/{id} {
-      allow read: if true; 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-    }
-
-    match /users/{userId}/exams/{id} {
-      allow read: if true; 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-    }
-
+    // قواعد المجموعات المشتركة (Collection Group) لعمليات البحث العام والتقارير
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
     match /{path=**}/payments/{id} { allow read: if true; }
     match /{path=**}/exams/{id} { allow read: if true; }
 
-    match /users/{userId} {
-      allow get: if true;
-      allow list: if isAdmin(); 
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-      match /config/{document=**} {
-        allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-      }
-    }
-    
-    match /deletionRequests/{userId} {
-      allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-      allow list: if isAdmin();
-    }
-
-    match /reviewPermissions/{userId} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-      allow write: if isSignedIn() || isAdmin();
-    }
-
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow delete: if isAdmin();
-    }
-
+    // رسائل التواصل (الإدارة فقط)
     match /contactMessages/{messageId} {
       allow read, write, delete: if isAdmin();
       allow create: if true; 
     }
 
+    // إعدادات النظام العامة
     match /appConfig/{configId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // طلبات حذف الحساب
+    match /deletionRequests/{uid} {
+      allow read, write: if isOwner(uid) || isAdmin();
+    }
+
+    // التقييمات
+    match /reviewPermissions/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isSignedIn() || isAdmin();
+    }
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow delete: if isAdmin();
     }
   }
 }

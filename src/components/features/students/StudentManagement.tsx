@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -12,15 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, RotateCcw, Filter, MoreVertical } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/table"; // Fixed relative path in next steps
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical } from 'lucide-react';
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
 import { useSearchParams } from 'next/navigation';
@@ -34,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -44,15 +35,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Fixing import error from prev turn
 import {
-  Table as UITable,
-  TableBody as UITableBody,
-  TableCell as UITableCell,
-  TableHead as UITableHead,
-  TableHeader as UITableHeader,
-  TableRow as UITableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 const GRADES = [
@@ -71,7 +60,6 @@ export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
   
-  const { user } = useUser();
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
   const { toast } = useToast();
   
@@ -128,7 +116,7 @@ export default function StudentManagement() {
   const handleDelete = (studentId: string) => {
     deleteStudent(studentId);
     toast({ variant: "destructive", title: "تم الحذف", description: "تم مسح بيانات الطالب." });
-  }
+  };
 
   const handleArchive = (student: Student) => {
     updateStudent(student.id, { isArchived: !student.isArchived });
@@ -136,7 +124,7 @@ export default function StudentManagement() {
       title: student.isArchived ? "تمت الاستعادة" : "تمت الأرشفة",
       description: student.isArchived ? `تم نقل ${student.name} للطلاب النشطين.` : `تم نقل ${student.name} للأرشيف.`
     });
-  }
+  };
 
   const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
 
@@ -149,28 +137,28 @@ export default function StudentManagement() {
 
     return (
         <div className="max-h-[40rem] overflow-auto">
-            <UITable>
-                <UITableHeader className="bg-muted/30 sticky top-0 z-10">
-                <UITableRow>
-                    <UITableHead className="text-right font-black px-6">الاسم</UITableHead>
-                    {!gradeFromUrl && <UITableHead className="text-right font-black">الفصل</UITableHead>}
-                    <UITableHead className="text-center font-black">إجراءات</UITableHead>
-                </UITableRow>
-                </UITableHeader>
-                <UITableBody>
+            <Table>
+                <TableHeader className="bg-muted/30 sticky top-0 z-10">
+                <TableRow>
+                    <TableHead className="text-right font-black px-6">الاسم</TableHead>
+                    {!gradeFromUrl && <TableHead className="text-right font-black">الفصل</TableHead>}
+                    <TableHead className="text-center font-black">إجراءات</TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
                 {filtered.length > 0 ? (
                     filtered.map((student) => (
-                    <UITableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
-                        <UITableCell className="font-bold py-4 px-6">
+                    <TableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
+                        <TableCell className="font-bold py-4 px-6">
                             <div className="flex flex-col gap-1">
                             <Link href={`/students/${student.id}`} className="hover:underline text-primary flex items-center gap-2">
                                 <GraduationCap className="h-4 w-4 opacity-50" />
                                 {student.name}
                             </Link>
                             </div>
-                        </UITableCell>
-                        {!gradeFromUrl && <UITableCell className="text-[10px] font-bold text-slate-500">{student.grade}</UITableCell>}
-                        <UITableCell className="flex justify-center gap-1">
+                        </TableCell>
+                        {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
+                        <TableCell className="flex justify-center gap-1">
                         <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl h-8 w-8" onClick={() => setSelectedStudentForQR(student)}>
                             <QrCode className="h-4 w-4" />
                         </Button>
@@ -195,13 +183,10 @@ export default function StudentManagement() {
                                 
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem 
-                                            onSelect={(e) => e.preventDefault()}
-                                            className="rounded-lg gap-2 font-bold text-destructive focus:bg-rose-50"
-                                        >
+                                        <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 font-bold text-destructive hover:bg-rose-50">
                                             <Trash2 className="h-4 w-4" />
                                             حذف نهائي
-                                        </DropdownMenuItem>
+                                        </div>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent className="rounded-[2rem]">
                                         <AlertDialogHeader>
@@ -220,21 +205,21 @@ export default function StudentManagement() {
                                 </AlertDialog>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        </UITableCell>
-                    </UITableRow>
+                        </TableCell>
+                    </TableRow>
                     ))
                 ) : (
-                    <UITableRow>
-                    <UITableCell colSpan={3} className="h-24 text-center text-muted-foreground font-bold italic">
+                    <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground font-bold italic">
                         {list.length === 0 ? emptyMessage : "لا توجد نتائج بحث مطابقة."}
-                    </UITableCell>
-                    </UITableRow>
+                    </TableCell>
+                    </TableRow>
                 )}
-                </UITableBody>
-            </UITable>
+                </TableBody>
+            </Table>
         </div>
     );
-  }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

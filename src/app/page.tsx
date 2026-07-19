@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -40,6 +39,7 @@ import { ar } from 'date-fns/locale';
 import Link from 'next/link';
 import placeholderImages from '@/app/lib/placeholder-images.json';
 import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const { user } = useUser();

@@ -4,9 +4,8 @@
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import SplashScreen from "./SplashScreen";
 import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { Ban, LogOut, ShieldAlert } from "lucide-react";
+import { Ban, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
 import { useAuth } from "@/firebase";
@@ -22,7 +21,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
-  const [showSplash, setShowSplash] = useState(true);
   const [isFinalizingDeletion, setIsFinalizingDeletion] = useState(false);
   const hasCheckedDeletion = useRef(false);
 
@@ -35,15 +33,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     user ? doc(firestore, 'deletionRequests', user.uid) : null,
   [user, firestore]);
   const { data: deletionRequest, isLoading: isDeletionLoading } = useDoc<any>(deletionDocRef);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isUserLoading) {
-        setShowSplash(false);
-      }
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, [isUserLoading]);
 
   useEffect(() => {
     if (user && deletionRequest && !isDeletionLoading && !hasCheckedDeletion.current) {
@@ -95,11 +84,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, firestore, deletionRequest, userProfile?.isBlocked]);
 
-  // التحقق من المسارات العامة
-  const isPublic = publicRoutes.includes(pathname) || pathname.startsWith('/p/') || pathname.startsWith('/art/') || pathname.startsWith('/blog');
-
-  if (isUserLoading || showSplash || (user && isProfileLoading) || isFinalizingDeletion) {
-    return <SplashScreen />;
+  if (isUserLoading || (user && isProfileLoading) || isFinalizingDeletion) {
+    return null; // يمكن عرض لودر بسيط هنا إذا لزم الأمر، لكن تم إلغاء شاشة الأكواد تماماً
   }
 
   const isSuperAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();

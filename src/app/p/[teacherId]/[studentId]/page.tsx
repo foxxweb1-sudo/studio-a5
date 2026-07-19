@@ -22,7 +22,8 @@ import {
   Clock,
   Sparkles,
   Trophy,
-  Activity
+  Activity,
+  Info
 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -119,6 +120,14 @@ export default function ParentPortalPage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 px-4 sm:px-6 font-body" dir="rtl">
       <div className="max-w-5xl mx-auto pt-8 space-y-8">
         
+        {/* Beta Notice Banner */}
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
+            <Info className="h-5 w-5 text-amber-600 shrink-0" />
+            <p className="text-xs font-bold text-amber-800">
+                هذا النظام حالياً في وضع التجريب (Beta)، سيتم توفير كامل المميزات والتقارير التفصيلية قريباً جداً.
+            </p>
+        </div>
+
         {/* Header Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
             <div className="flex items-center gap-4">

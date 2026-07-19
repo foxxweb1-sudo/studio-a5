@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical, Share2 } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical, Share2, Info } from 'lucide-react';
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
 import { useSearchParams } from 'next/navigation';
@@ -129,6 +129,13 @@ export default function StudentManagement() {
   };
 
   const handleShareLink = (studentId: string, studentName: string) => {
+    // إظهار رسالة الـ Beta
+    toast({
+      variant: "default",
+      title: "النظام في وضع Beta",
+      description: "ميزة روابط المتابعة للأهل قيد التطوير حالياً، سيتم توفيرها بكافة إمكانياتها قريباً.",
+    });
+
     if (!user) return;
     const shareUrl = `${window.location.origin}/p/${user.uid}/${studentId}`;
     

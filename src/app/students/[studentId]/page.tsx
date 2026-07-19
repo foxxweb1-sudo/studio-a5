@@ -32,6 +32,13 @@ export default function StudentProfilePage() {
   const studentExams = exams.filter((e) => e.studentId === studentId);
 
   const handleShareLink = () => {
+    // إظهار رسالة الـ Beta
+    toast({
+        variant: "default",
+        title: "النظام في وضع Beta",
+        description: "ميزة روابط المتابعة للأهل قيد التطوير حالياً، سيتم توفيرها بكافة إمكانياتها قريباً.",
+    });
+
     if (!user || !student) return;
     const shareUrl = `${window.location.origin}/p/${user.uid}/${student.id}`;
     

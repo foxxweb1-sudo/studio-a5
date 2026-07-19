@@ -4,49 +4,49 @@
 
 @layer base {
   :root {
-    /* لوحة ألوان احترافية هادئة */
-    --background: 210 40% 99%;
-    --foreground: 222 47% 11%;
+    /* ثيم أرجواني ملكي فاخر */
+    --background: 240 20% 98%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 60%; /* أزرق تقني عصري */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 142 71% 45%;
-    --accent-foreground: 210 40% 98%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 243 75% 59%; /* Indigo 600 */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 262 83% 58%; /* Violet */
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
-    --radius: 1.25rem;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 243 75% 59%;
+    --radius: 1.5rem;
   }
 
   .dark {
-    --background: 222 47% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 6%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 142 71% 45%;
-    --accent-foreground: 210 40% 98%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 243 75% 59%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 243 75% 59%;
   }
 }
 
@@ -59,58 +59,37 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     line-height: 1.6;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight font-black;
-  }
 }
 
-/* تنسيقات المحرر وعرض المقالات (Fix Lists and Links) */
-.prose ul, .prose ol {
-  padding-right: 1.5rem;
-  margin-bottom: 1rem;
-}
-.prose ul {
-  list-style-type: disc !important;
-}
-.prose ol {
-  list-style-type: decimal !important;
-}
-.prose li {
-  margin-bottom: 0.5rem;
-}
-.prose a {
-  @apply text-primary underline font-bold;
-}
-.prose blockquote {
-  @apply border-r-4 border-primary/20 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl italic;
+/* Glassmorphism Styles */
+.glass-effect {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
 }
 
-.glass-card {
-  @apply bg-card/60 backdrop-blur-md border-white/10 shadow-sm;
+.dark .glass-effect {
+  @apply bg-slate-900/70 backdrop-blur-xl border border-slate-800/50 shadow-2xl;
 }
 
-.hover-lift {
-  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5;
+.hover-glow {
+  @apply transition-all duration-500 hover:shadow-[0_0_30px_-5px_rgba(79,70,229,0.3)];
 }
 
-/* تحسين شكل السكرول بار */
-::-webkit-scrollbar {
-  width: 6px;
+/* تحسين شكل القوائم في المقالات */
+.prose ul { list-style-type: disc !important; padding-right: 1.5rem; }
+.prose ol { list-style-type: decimal !important; padding-right: 1.5rem; }
+.prose img { @apply rounded-[2rem] shadow-2xl my-8 mx-auto; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { @apply bg-transparent; }
+::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-colors; }
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/10 rounded-full hover:bg-muted-foreground/20 transition-colors;
-}
-
-@keyframes spin-border {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin-border {
-  animation: spin-border 4s linear infinite;
+.animate-float {
+  animation: float 4s ease-in-out infinite;
 }

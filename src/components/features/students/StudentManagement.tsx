@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical, Share2 } from 'lucide-react';
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
 import { useSearchParams } from 'next/navigation';
@@ -59,6 +60,7 @@ const formSchema = z.object({
 export default function StudentManagement() {
   const searchParams = useSearchParams();
   const gradeFromUrl = searchParams.get('grade') || '';
+  const { user } = useUser();
   
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
   const { toast } = useToast();
@@ -126,6 +128,22 @@ export default function StudentManagement() {
     });
   };
 
+  const handleShareLink = (studentId: string, studentName: string) => {
+    if (!user) return;
+    const shareUrl = `${window.location.origin}/p/${user.uid}/${studentId}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: `رابط متابعة الطالب: ${studentName}`,
+            text: `يمكنكم متابعة حالة الطالب ${studentName} عبر هذا الرابط:`,
+            url: shareUrl
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(shareUrl);
+        toast({ title: "تم نسخ رابط المتابعة", description: "يمكنك الآن إرساله لولي الأمر." });
+    }
+  };
+
   const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
 
   const renderStudentTable = (list: Student[], emptyMessage: string = "لا يوجد طلاب هنا حالياً.") => {
@@ -161,6 +179,9 @@ export default function StudentManagement() {
                         <TableCell className="flex justify-center gap-1">
                         <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl h-8 w-8" onClick={() => setSelectedStudentForQR(student)}>
                             <QrCode className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" title="مشاركة الرابط للأهل" className="rounded-xl h-8 w-8 text-emerald-600" onClick={() => handleShareLink(student.id, student.name)}>
+                            <Share2 className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500 h-8 w-8" onClick={() => setEditingStudent(student)}>
                             <Edit className="h-4 w-4" />
@@ -328,7 +349,7 @@ export default function StudentManagement() {
             <CardHeader className="bg-slate-50/50 border-b flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-xl">الطلاب النشطين</CardTitle>
-                    <CardDescription>هذه القائمة تعرض الطلاب الذين يتم تسجيل حضورهم ومدفوعاتهم حالياً.</CardDescription>
+                    <CardDescription>اضغط على <Share2 className="inline h-3 w-3" /> لمشاركة رابط المتابعة مع الأهل.</CardDescription>
                 </div>
                 <Badge className="bg-primary hover:bg-primary rounded-xl h-10 px-4 font-black">
                     {activeStudents.filter(s => !gradeFromUrl || s.grade === gradeFromUrl).length} طالب

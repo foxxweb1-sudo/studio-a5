@@ -2,32 +2,55 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
-import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
+import { useStudents, useAttendance, usePayments, useExams } from '@/hooks/use-app-data';
 import { useUser } from '@/firebase';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, User, GraduationCap, Phone, ArrowLeft } from 'lucide-react';
+import { Loader2, User, GraduationCap, Phone, ArrowLeft, Share2, Award, CheckCircle2, XCircle, Trophy } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StudentProfilePage() {
   const params = useParams();
   const router = useRouter();
   const studentId = params.studentId as string;
   const { user } = useUser();
+  const { toast } = useToast();
 
   const { students, isLoading: studentsLoading } = useStudents();
   const { attendance, isLoading: attendanceLoading } = useAttendance();
   const { payments, isLoading: paymentsLoading } = usePayments();
+  const { exams, isLoading: examsLoading } = useExams();
 
   const student = students.find((s) => s.id === studentId);
   const studentAttendance = attendance.filter((a) => a.studentId === studentId);
   const studentPayments = payments.filter((p) => p.studentId === studentId);
+  const studentExams = exams.filter((e) => e.studentId === studentId);
 
-  const isLoading = studentsLoading || attendanceLoading || paymentsLoading;
+  const handleShareLink = () => {
+    if (!user || !student) return;
+    const shareUrl = `${window.location.origin}/p/${user.uid}/${student.id}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: `رابط متابعة الطالب: ${student.name}`,
+            text: `يمكنكم الآن متابعة حضور ومدفوعات ودرجات الطالب ${student.name} عبر هذا الرابط:`,
+            url: shareUrl
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(shareUrl);
+        toast({
+            title: "تم نسخ الرابط",
+            description: "يمكنك الآن إرسال الرابط لولي الأمر عبر الواتساب."
+        });
+    }
+  };
+
+  const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading;
 
   if (isLoading) {
     return (
@@ -53,68 +76,132 @@ export default function StudentProfilePage() {
   }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-20">
+       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
          <PageHeader className="border-0 pb-0">
-            <PageHeaderTitle>ملف الطالب: {student.name}</PageHeaderTitle>
-            <PageHeaderDescription>عرض جميع تفاصيل وسجلات الطالب.</PageHeaderDescription>
+            <PageHeaderTitle className="text-3xl font-black">ملف الطالب: {student.name}</PageHeaderTitle>
+            <PageHeaderDescription>عرض كافة السجلات الأكاديمية والمالية.</PageHeaderDescription>
          </PageHeader>
          <div className="flex gap-2 w-full md:w-auto">
+            <Button onClick={handleShareLink} className="rounded-xl font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 flex-1 md:flex-none">
+                <Share2 className="h-4 w-4" />
+                رابط المتابعة للأهل
+            </Button>
             <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-primary/20 hover:bg-primary/5 flex-1 md:flex-none">
                 <ArrowLeft className="ms-2 h-4 w-4" />
-                العودة
+                رجوع
             </Button>
          </div>
        </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <Card className="rounded-[2rem] border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg">معلومات الطالب</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white dark:bg-slate-900">
+            <CardHeader className="bg-primary/5 border-b">
+              <CardTitle className="text-lg">بطاقة الهوية</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl">
-                <User className="h-5 w-5 text-primary" />
-                <span className="font-bold text-slate-800">{student.name}</span>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="p-2 bg-primary text-white rounded-xl">
+                    <User className="h-5 w-5" />
+                </div>
+                <span className="font-black text-slate-800">{student.name}</span>
               </div>
-              <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl">
-                <GraduationCap className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="p-2 bg-indigo-500 text-white rounded-xl">
+                    <GraduationCap className="h-5 w-5" />
+                </div>
                 <span className="font-bold text-slate-600">{student.grade}</span>
               </div>
               {student.parentPhone && (
                 <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                  <Phone className="h-5 w-5 text-emerald-600" />
+                  <div className="p-2 bg-emerald-500 text-white rounded-xl">
+                    <Phone className="h-5 w-5" />
+                  </div>
                   <span className="font-mono font-bold text-emerald-700">{student.parentPhone}</span>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-[2rem] border border-indigo-100 flex flex-col items-center text-center gap-4">
+                <div className="p-4 bg-white rounded-2xl shadow-sm">
+                    <Trophy className="h-8 w-8 text-indigo-600" />
+                </div>
+                <div>
+                    <h4 className="font-black text-indigo-900">تقرير الأداء</h4>
+                    <p className="text-xs text-indigo-700/70 font-bold">إجمالي الامتحانات المسجلة: {studentExams.length}</p>
+                </div>
+          </div>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="rounded-[2rem] border-0 shadow-lg overflow-hidden">
-            <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-lg">سجل الحضور ({studentAttendance.length})</CardTitle>
+        <div className="lg:col-span-2 space-y-8">
+          {/* Exams History for Teacher */}
+          <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white">
+            <CardHeader className="bg-indigo-50 border-b flex flex-row items-center justify-between p-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600 text-white rounded-xl">
+                        <Award className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-lg font-black">سجل الامتحانات</CardTitle>
+                </div>
+                <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 rounded-lg">{studentExams.length} امتحان</Badge>
+            </CardHeader>
+            <CardContent className="p-0">
+                {studentExams.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="text-right px-6 font-black">التاريخ</TableHead>
+                                <TableHead className="text-center font-black">الدرجة</TableHead>
+                                <TableHead className="text-center px-6 font-black">النسبة</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {studentExams.map(exam => {
+                                const perc = Math.round((exam.score / exam.totalScore) * 100);
+                                return (
+                                    <TableRow key={exam.id} className="hover:bg-slate-50 transition-colors">
+                                        <TableCell className="px-6 font-bold text-slate-600">{format(new Date(exam.date), 'd MMMM yyyy', { locale: ar })}</TableCell>
+                                        <TableCell className="text-center font-black text-indigo-600">{exam.score} / {exam.totalScore}</TableCell>
+                                        <TableCell className="text-center px-6">
+                                            <Badge variant="outline" className={`rounded-xl ${perc >= 50 ? 'border-emerald-200 text-emerald-600' : 'border-rose-200 text-rose-600'}`}>
+                                                {perc}%
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <div className="py-12 text-center text-slate-300 font-bold italic">لا توجد درجات مسجلة.</div>
+                )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white">
+            <CardHeader className="bg-slate-50 border-b flex flex-row items-center justify-between p-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500 text-white rounded-xl">
+                        <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-lg">سجل الحضور</CardTitle>
+                </div>
             </CardHeader>
             <CardContent className="p-0">
               {studentAttendance.length > 0 ? (
                  <div className="max-h-80 overflow-auto">
                     <Table>
-                        <TableHeader>
-                        <TableRow>
-                            <TableHead className="text-right px-6">التاريخ</TableHead>
-                            <TableHead className="text-center px-6">الحالة</TableHead>
-                        </TableRow>
-                        </TableHeader>
                         <TableBody>
                         {studentAttendance.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => (
-                            <TableRow key={record.id}>
-                            <TableCell className="text-right px-6 font-medium text-xs">
+                            <TableRow key={record.id} className="hover:bg-slate-50 border-b">
+                            <TableCell className="text-right px-8 py-4 font-bold text-slate-700">
                                 {format(new Date(record.date), 'eeee, d MMMM yyyy', { locale: ar })}
                             </TableCell>
-                            <TableCell className="text-center px-6">
-                                <Badge className={`rounded-lg ${record.status === 'present' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                            <TableCell className="text-center px-8">
+                                <Badge className={`rounded-xl px-4 py-1 gap-1.5 ${record.status === 'present' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                                    {record.status === 'present' ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
                                     {record.status === 'present' ? 'حاضر' : 'غائب'}
                                 </Badge>
                             </TableCell>
@@ -129,32 +216,25 @@ export default function StudentProfilePage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border-0 shadow-lg overflow-hidden">
-            <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-lg">سجل المدفوعات ({studentPayments.length})</CardTitle>
+          <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white">
+            <CardHeader className="bg-amber-50 border-b p-6">
+                <div className="flex items-center gap-3 text-amber-700">
+                    <Wallet className="h-5 w-5" />
+                    <CardTitle className="text-lg">سجل المدفوعات</CardTitle>
+                </div>
             </CardHeader>
             <CardContent className="p-0">
               {studentPayments.length > 0 ? (
                 <div className="max-h-80 overflow-auto">
                     <Table>
-                        <TableHeader>
-                        <TableRow>
-                            <TableHead className="text-right px-6">الشهر المدفوع</TableHead>
-                            <TableHead className="text-center px-6">المبلغ</TableHead>
-                            <TableHead className="text-right px-6">تاريخ الدفع</TableHead>
-                        </TableRow>
-                        </TableHeader>
                         <TableBody>
                         {studentPayments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((payment) => (
-                            <TableRow key={payment.id}>
-                            <TableCell className="text-right px-6 font-black text-slate-700">
+                            <TableRow key={payment.id} className="hover:bg-amber-50/30 transition-colors border-b">
+                            <TableCell className="text-right px-8 py-5 font-black text-slate-700">
                                 {format(parse(payment.month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}
                             </TableCell>
-                            <TableCell className="text-center px-6">
-                                <span className="font-black text-emerald-600">{payment.amount} ج.م</span>
-                            </TableCell>
-                            <TableCell className="text-right px-6 text-[10px] text-muted-foreground font-bold">
-                                {format(new Date(payment.date), 'd MMMM yyyy', { locale: ar })}
+                            <TableCell className="text-center px-8">
+                                <span className="bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-2xl font-black border border-emerald-100">{payment.amount} ج.م</span>
                             </TableCell>
                             </TableRow>
                         ))}
@@ -162,7 +242,7 @@ export default function StudentProfilePage() {
                     </Table>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-12 font-bold italic">لا يوجد سجل مدفوعات لهذا الطالب.</p>
+                <p className="text-muted-foreground text-center py-12 font-bold italic">لا يوجد سجل مدفوعات.</p>
               )}
             </CardContent>
           </Card>

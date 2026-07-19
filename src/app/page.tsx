@@ -79,32 +79,17 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-10 max-w-7xl mx-auto pb-24">
       
-      {/* Upper Row: Time & Welcome Floating Cards */}
+      {/* Upper Row: Welcome & Time Floating Cards (Swapped Positions) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
-        {/* Left: Digital Clock Neo-Style */}
-        <Card className="border-0 shadow-2xl rounded-[3rem] bg-white dark:bg-slate-900 p-8 flex flex-col items-center justify-center relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors" />
-            <div className="relative z-10 flex flex-col items-center">
-                <div className="p-3 bg-primary/10 text-primary rounded-2xl mb-4 animate-pulse">
-                    <Clock className="h-6 w-6" />
-                </div>
-                <div className="text-5xl font-black tracking-tighter text-slate-800 dark:text-white tabular-nums flex items-baseline gap-2">
-                    {currentTime ? format(currentTime, 'hh:mm:ss', { locale: ar }) : '--:--:--'}
-                    <span className="text-xl text-primary">{currentTime ? format(currentTime, 'a', { locale: ar }) : ''}</span>
-                </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-3">Local Sync Time</p>
-            </div>
-        </Card>
-
-        {/* Right: Premium Welcome Card */}
+        {/* Right: Premium Welcome Card (Now First in RTL Grid) */}
         <Card className="lg:col-span-2 border-0 shadow-2xl rounded-[3rem] bg-gradient-to-br from-indigo-600 via-indigo-500 to-primary text-white overflow-hidden relative group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
             <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-float" />
             
             <CardContent className="h-full p-10 flex flex-col justify-between relative z-10">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-right">
                         <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-2">
                             <Sparkles className="h-3 w-3" />
                             Premium Dashboard
@@ -126,6 +111,21 @@ export default function Home() {
                     </div>
                 </div>
             </CardContent>
+        </Card>
+
+        {/* Left: Digital Clock Neo-Style (Now Second in RTL Grid) */}
+        <Card className="border-0 shadow-2xl rounded-[3rem] bg-white dark:bg-slate-900 p-8 flex flex-col items-center justify-center relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors" />
+            <div className="relative z-10 flex flex-col items-center">
+                <div className="p-3 bg-primary/10 text-primary rounded-2xl mb-4 animate-pulse">
+                    <Clock className="h-6 w-6" />
+                </div>
+                <div className="text-5xl font-black tracking-tighter text-slate-800 dark:text-white tabular-nums flex items-baseline gap-2">
+                    {currentTime ? format(currentTime, 'hh:mm:ss', { locale: ar }) : '--:--:--'}
+                    <span className="text-xl text-primary">{currentTime ? format(currentTime, 'a', { locale: ar }) : ''}</span>
+                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-3">Local Sync Time</p>
+            </div>
         </Card>
       </div>
 

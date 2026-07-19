@@ -74,11 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-white group-hover:rotate-6 transition-transform">
                     <Image src={config.appLogo || ''} alt="Logo" fill className="object-contain p-1.5" />
                   </div>
-                  {userProfile?.isVerified && (
-                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-lg border border-slate-50">
-                      <BadgeCheck className="h-5 w-5 fill-blue-500 text-white" />
-                    </div>
-                  )}
+                  {/* تمت إزالة شارة التوثيق من هنا بناءً على طلب المستخدم */}
                 </div>
                 <span className="font-black text-2xl text-slate-900 dark:text-white tracking-tighter hidden sm:block">
                   {config.appName}

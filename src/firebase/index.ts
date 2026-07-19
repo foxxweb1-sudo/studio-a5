@@ -3,7 +3,13 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, getFirestore, Firestore } from 'firebase/firestore'
+import { 
+  initializeFirestore, 
+  getFirestore, 
+  Firestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager 
+} from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -36,11 +42,14 @@ export function getSdks(firebaseApp: FirebaseApp) {
   let firestore: Firestore;
   
   try {
-    // We use initializeFirestore to force long-polling and disable fetch streams. 
-    // This is the most robust way to handle connectivity issues in restricted network environments (like Cloud IDEs).
+    // تفعيل التخزين المحلي المستمر (Persistence)
+    // يسمح للتطبيق بالعمل بدون إنترنت وحفظ البيانات محلياً ثم مزامنتها
     firestore = initializeFirestore(firebaseApp, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      }),
+      // نترك هذه الخيارات لضمان استقرار الاتصال في بيئات العمل المختلفة
       experimentalForceLongPolling: true,
-      useFetchStreams: false,
     });
   } catch (e) {
     // If already initialized, fallback to getFirestore

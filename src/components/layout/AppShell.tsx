@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut as firebaseSignOut } from 'firebase/auth';
+import SyncIndicator from './SyncIndicator';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
@@ -99,8 +100,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
             </div>
 
-            <div className="hidden md:flex items-center gap-4 bg-primary/5 border border-primary/10 px-6 py-2 rounded-full shadow-inner">
-               <div className="flex items-center gap-3 text-[12px] font-black text-primary">
+            <div className="hidden md:flex items-center gap-6">
+               <SyncIndicator />
+               <div className="flex items-center gap-3 text-[12px] font-black text-primary bg-primary/5 border border-primary/10 px-6 py-2 rounded-full shadow-inner">
                   <span className="tabular-nums tracking-wider">{time ? format(time, 'hh:mm:ss a', { locale: ar }) : '--:--:--'}</span>
                   <span className="opacity-30">|</span>
                   <span>{time ? format(time, 'EEEE، d MMMM', { locale: ar }) : ''}</span>

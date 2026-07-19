@@ -17,13 +17,15 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // قواعد بيانات المستخدمين والمجموعات الفرعية التابعة لهم
+    // قواعد بيانات المستخدمين والمجموعات الفرعية
     match /users/{userId} {
+      // السماح بقراءة البروفايل لأي مستخدم مسجل، وللأدمن
       allow get: if true;
-      allow list: if isAdmin(); 
+      allow list: if isAdmin() || isSignedIn(); 
       allow write: if isOwner(userId) || isAdmin();
 
-      // الطلاب والسجلات (متاحة للقراءة للجميع من أجل بوابة الأهل)
+      // السماح بالوصول الكامل للمالك والأدمن لكافة المجموعات الفرعية
+      // والسماح بالقراءة العامة (لأغراض بوابة الأهل)
       match /students/{id} {
         allow read: if true;
         allow write: if isOwner(userId) || isAdmin();
@@ -47,7 +49,7 @@ service cloud.firestore {
       }
     }
 
-    // قواعد المجموعات المشتركة (Collection Group) لعمليات البحث العام والتقارير
+    // قواعد المجموعات المشتركة (Collection Group) لدعم بوابة الأهل والبحث العام
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
     match /{path=**}/payments/{id} { allow read: if true; }

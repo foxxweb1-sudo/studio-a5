@@ -24,7 +24,8 @@ import {
   Fingerprint,
   Mail,
   User as UserIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Check
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -41,86 +42,64 @@ export default function PlansPage() {
   const [step, setStep] = useState<'info' | 'payment'>('info');
   const [paymentMethod, setPaymentMethod] = useState<'vodafone' | 'paypal'>('vodafone');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
     countryCode: '20',
     whatsapp: '',
-    senderAccount: '',
-    screenshotUrl: ''
+    senderAccount: ''
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const TELEGRAM_BOT_TOKEN = '8611761572:AAHV4uw_Adq7d3rlSQ0E8jbbLTOXHB5Q2cw';
   const TELEGRAM_CHAT_ID = '7086574224';
-  const IMGBB_API_KEY = 'd015dd34e005b5dd56d68d2fe147c267';
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const body = new FormData();
-    body.append('image', file);
-
-    try {
-      const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-        method: 'POST',
-        body
-      });
-      const result = await res.json();
-      if (result.success) {
-        setFormData(prev => ({ ...prev, screenshotUrl: result.data.url }));
-        toast({ title: "تم رفع الإيصال بنجاح" });
-      } else {
-        toast({ variant: "destructive", title: "فشل رفع الصورة" });
-      }
-    } catch (err) {
-      toast({ variant: "destructive", title: "خطأ في الاتصال بالسيرفر" });
-    } finally {
-      setIsUploading(false);
+    if (file) {
+      setSelectedFile(file);
+      toast({ title: "تم اختيار الصورة بنجاح" });
     }
   };
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.whatsapp || !formData.senderAccount || !formData.screenshotUrl) {
-      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى استكمال كافة الحقول ورفع صورة الإيصال." });
+    if (!formData.whatsapp || !formData.senderAccount || !selectedFile) {
+      toast({ variant: "destructive", title: "بيانات ناقصة", description: "يرجى استكمال كافة الحقول واختيار صورة الإيصال." });
       return;
     }
 
     setIsSubmitting(true);
     
     const fullWhatsapp = `+${formData.countryCode}${formData.whatsapp}`;
-    const message = `
-🌟 *طلب اشتراك جديد: باقة المساعد الشخصي*
+    const caption = `
+🌟 طلب اشتراك جديد: باقة المساعد الشخصي
 -------------------------------
-👤 *بيانات العميل:*
+👤 بيانات العميل:
 • الاسم: ${user?.displayName || 'غير مسجل'}
 • البريد: ${user?.email || 'N/A'}
-• الـ UID: \`${user?.uid}\`
+• الـ UID: ${user?.uid}
 
-📱 *بيانات التواصل والدفع:*
+📱 بيانات التواصل والدفع:
 • واتساب: ${fullWhatsapp}
 • طريقة الدفع: ${paymentMethod === 'vodafone' ? 'فودافون كاش' : 'باي بال'}
 • حساب المحول: ${formData.senderAccount}
 
-🖼️ *إيصال السداد:*
-${formData.screenshotUrl}
--------------------------------
 ⏰ التاريخ: ${new Date().toLocaleString('ar-EG')}
+-------------------------------
+🛡️ يرجى مراجعة الإيصال المرفق لتفعيل الحساب.
     `;
 
     try {
-      const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      const telegramFormData = new FormData();
+      telegramFormData.append('chat_id', TELEGRAM_CHAT_ID);
+      telegramFormData.append('photo', selectedFile);
+      telegramFormData.append('caption', caption);
+
+      const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: message,
-          parse_mode: 'Markdown'
-        })
+        body: telegramFormData
       });
 
       if (response.ok) {
@@ -130,13 +109,13 @@ ${formData.screenshotUrl}
         });
         router.push('/');
       } else {
-        throw new Error('Failed to send');
+        throw new Error('Failed to send to Telegram');
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "عذراً، حدث خطأ",
-        description: "فشل إرسال الطلب، يرجى المحاولة لاحقاً."
+        description: "فشل إرسال الطلب، يرجى المحاولة لاحقاً أو التواصل مع الدعم الفني."
       });
     } finally {
       setIsSubmitting(false);
@@ -354,23 +333,23 @@ ${formData.screenshotUrl}
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold px-1">صورة إيصال التحويل</Label>
                                 <div className="relative">
-                                    <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+                                    <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
                                     <Button 
                                         type="button"
                                         variant="outline" 
-                                        className={`w-full h-14 rounded-xl border-dashed border-2 transition-all ${formData.screenshotUrl ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'hover:border-primary'}`}
+                                        className={`w-full h-14 rounded-xl border-dashed border-2 transition-all ${selectedFile ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'hover:border-primary'}`}
                                         onClick={() => fileInputRef.current?.click()}
-                                        disabled={isUploading}
                                     >
-                                        {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : formData.screenshotUrl ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <UploadCloud className="h-5 w-5" />}
-                                        <span className="ms-2">{formData.screenshotUrl ? 'تم رفع الإيصال' : 'رفع صورة الإيصال'}</span>
+                                        {selectedFile ? <Check className="h-5 w-5 text-emerald-500" /> : <UploadCloud className="h-5 w-5" />}
+                                        <span className="ms-2">{selectedFile ? 'تم اختيار الإيصال' : 'اختيار صورة الإيصال'}</span>
                                     </Button>
+                                    {selectedFile && <p className="text-[10px] mt-1 text-emerald-600 font-bold text-center">ملف: {selectedFile.name}</p>}
                                 </div>
                             </div>
 
                             <Button 
                                 type="submit"
-                                disabled={isSubmitting || isUploading}
+                                disabled={isSubmitting}
                                 className="w-full h-16 rounded-2xl bg-primary hover:bg-indigo-700 text-white font-black text-lg gap-3 shadow-xl shadow-primary/20 mt-4"
                             >
                                 {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6" />}

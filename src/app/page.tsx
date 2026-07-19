@@ -27,7 +27,9 @@ import {
   LayoutDashboard,
   Bell,
   Coffee,
-  Heart
+  Heart,
+  UserCheck,
+  Star
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -81,6 +83,11 @@ export default function Home() {
     } else {
       router.push(href);
     }
+  };
+
+  const handleBuyPlan = () => {
+    const message = encodeURIComponent("أهلاً فريق TECH، أريد الاشتراك في باقة المساعد الشخصي (100 ج.م شهرياً) لإدارة حسابي.");
+    window.open(`https://wa.me/${config.contactPhone}?text=${message}`, '_blank');
   };
 
   return (
@@ -278,6 +285,48 @@ export default function Home() {
             </CardContent>
         </Card>
       </Link>
+
+      {/* Plans Banner (Personal Assistant) */}
+      <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 text-white relative transition-all duration-500 hover:scale-[1.01] hover:shadow-emerald-500/20">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+          <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+          
+          <CardContent className="p-8 sm:p-10 relative z-10">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                  <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-right">
+                      <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[2rem] flex items-center justify-center shadow-inner shrink-0">
+                          <UserCheck className="h-10 w-10 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                          <div className="flex items-center gap-2 justify-center sm:justify-start">
+                              <h3 className="text-2xl sm:text-3xl font-black">باقة المساعد الشخصي</h3>
+                              <Badge className="bg-yellow-400 text-emerald-900 font-black px-2 py-0.5 rounded-lg text-[10px]">الأكثر مبيعاً</Badge>
+                          </div>
+                          <p className="text-sm font-bold opacity-90 leading-relaxed max-w-xl">
+                              احصل على مساعد متخصص مهمته إدارة حسابك بالكامل، تسجيل بيانات طلابك، ومتابعة حضورهم ومالياتهم، مع تواصل مباشر عبر WhatsApp على مدار الساعة.
+                          </p>
+                      </div>
+                  </div>
+                  
+                  <div className="flex flex-col items-center lg:items-end gap-4 shrink-0">
+                      <div className="text-center lg:text-right">
+                          <div className="flex items-baseline gap-1 justify-center lg:justify-end">
+                              <span className="text-5xl font-black tabular-nums tracking-tighter">100</span>
+                              <span className="text-xl font-bold opacity-80">ج.م</span>
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest opacity-60">اشتراك شهري شامل</p>
+                      </div>
+                      <Button 
+                          onClick={handleBuyPlan}
+                          className="rounded-2xl h-16 px-12 bg-white text-emerald-700 font-black text-xl hover:bg-emerald-50 gap-3 shadow-xl transition-all active:scale-95"
+                      >
+                          <Star className="h-6 w-6 fill-emerald-700" />
+                          اشترك الآن
+                      </Button>
+                  </div>
+              </div>
+          </CardContent>
+      </Card>
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="rounded-[3rem] border-0 shadow-2xl max-w-md overflow-hidden p-0 bg-white">

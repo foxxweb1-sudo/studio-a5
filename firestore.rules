@@ -21,11 +21,11 @@ service cloud.firestore {
     match /users/{userId} {
       // السماح بقراءة البروفايل (الاسم واللوجو) للجميع لظهوره في بوابة الأهل
       allow read: if true;
-      // السماح بالعمليات الإدارية للمالك أو الأدمن
+      // السماح بالعمليات الإدارية للمالك أو الأدمن فقط
       allow write: if isOwner(userId) || isAdmin();
 
-      // --- سجلات الطلاب (بوابة الأهل) ---
-      // تم جعل القراءة (get & list) عامة تماماً لتعمل الروابط المباشرة بدون تسجيل دخول
+      // --- سجلات الطلاب (بوابة الأهل والروابط العامة) ---
+      // تم جعل القراءة (get & list) عامة تماماً لتعمل الروابط المباشرة وسجلات المعلم بسلاسة
       
       match /students/{id} {
         allow read: if true;
@@ -44,33 +44,37 @@ service cloud.firestore {
         allow write: if isOwner(userId) || isAdmin();
       }
       
-      // الإعدادات الخاصة بالمعلم (مثل مواعيد العمل) - للمالك فقط
+      // الإعدادات الخاصة بالمعلم (مثل مواعيد العمل) - للمالك أو الأدمن فقط
       match /config/{id} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // دعم استعلامات المجموعات المشتركة (Collection Group) لضمان عمل التقارير
+    // دعم استعلامات المجموعات المشتركة (Collection Group) 
+    // لضمان عمل التقارير والروابط العامة تحت أي ظرف
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
     match /{path=**}/payments/{id} { allow read: if true; }
     match /{path=**}/exams/{id} { allow read: if true; }
 
-    // بقية مجموعات النظام
+    // بقية مجموعات النظام (رسائل التواصل)
     match /contactMessages/{messageId} {
       allow create: if true; 
       allow read, write, delete: if isAdmin();
     }
 
+    // إعدادات التطبيق العامة (الهوية واللوجو)
     match /appConfig/{configId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
+    // طلبات الحذف والخصوصية
     match /deletionRequests/{uid} {
       allow read, write: if isOwner(uid) || isAdmin();
     }
 
+    // نظام التقييمات
     match /reviewPermissions/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow write: if isSignedIn() || isAdmin();

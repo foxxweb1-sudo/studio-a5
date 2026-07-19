@@ -2,7 +2,7 @@
   "entities": {
     "User": {
       "title": "User",
-      "description": "Represents a user of the application.",
+      "description": "Represents a user (Teacher) of the application.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
@@ -15,30 +15,59 @@
       },
       "required": ["uid", "email"]
     },
+    "Student": { 
+      "title": "Student", 
+      "type": "object", 
+      "properties": { 
+        "name": { "type": "string" }, 
+        "grade": { "type": "string" }, 
+        "parentPhone": { "type": "string" },
+        "isArchived": { "type": "boolean" } 
+      } 
+    },
+    "AttendanceRecord": { 
+      "title": "AttendanceRecord", 
+      "type": "object", 
+      "properties": { 
+        "studentId": { "type": "string" }, 
+        "status": { "type": "string", "enum": ["present", "absent"] }, 
+        "date": { "type": "string" } 
+      } 
+    },
+    "Payment": { 
+      "title": "Payment", 
+      "type": "object", 
+      "properties": { 
+        "studentId": { "type": "string" }, 
+        "amount": { "type": "number" }, 
+        "month": { "type": "string" } 
+      } 
+    },
+    "ExamResult": { 
+      "title": "ExamResult", 
+      "type": "object", 
+      "properties": { 
+        "studentId": { "type": "string" }, 
+        "score": { "type": "number" }, 
+        "totalScore": { "type": "number" }, 
+        "date": { "type": "string" } 
+      } 
+    },
     "WorkingSchedule": { "title": "WorkingSchedule", "type": "object", "properties": { "isActive": { "type": "boolean" }, "sessions": { "type": "array" } } },
-    "PaymentConfig": { "title": "PaymentConfig", "type": "object", "properties": { "grades": { "type": "object" } } },
-    "DeletionRequest": { "title": "DeletionRequest", "type": "object", "properties": { "uid": { "type": "string" } } },
-    "Student": { "title": "Student", "type": "object", "properties": { "name": { "type": "string" }, "grade": { "type": "string" }, "isArchived": { "type": "boolean" } } },
-    "AttendanceRecord": { "title": "AttendanceRecord", "type": "object", "properties": { "studentId": { "type": "string" }, "status": { "type": "string" }, "date": { "type": "string" } } },
-    "Payment": { "title": "Payment", "type": "object", "properties": { "studentId": { "type": "string" }, "amount": { "type": "number" }, "month": { "type": "string" } } },
-    "ExamResult": { "title": "ExamResult", "type": "object", "properties": { "studentId": { "type": "string" }, "score": { "type": "number" }, "totalScore": { "type": "number" }, "date": { "type": "string" } } },
     "ContactMessage": { "title": "ContactMessage", "type": "object", "properties": { "name": { "type": "string" }, "status": { "type": "string" } } },
     "Review": { "title": "Review", "type": "object", "properties": { "rating": { "type": "number" } } },
     "GlobalConfig": { "title": "GlobalConfig", "type": "object", "properties": { "appName": { "type": "string" } } }
   },
   "auth": { "providers": ["password"] },
   "firestore": {
-    "structure": [
-      { "path": "/users/{userId}", "definition": { "entityName": "User" } },
-      { "path": "/users/{userId}/students/{studentId}", "definition": { "entityName": "Student" } },
-      { "path": "/users/{userId}/attendance/{attendanceId}", "definition": { "entityName": "AttendanceRecord" } },
-      { "path": "/users/{userId}/payments/{paymentId}", "definition": { "entityName": "Payment" } },
-      { "path": "/users/{userId}/exams/{examId}", "definition": { "entityName": "ExamResult" } },
-      { "path": "/users/{userId}/config/{configId}", "definition": { "entityName": "GlobalConfig" } },
-      { "path": "/contactMessages/{messageId}", "definition": { "entityName": "ContactMessage" } },
-      { "path": "/appConfig/{configId}", "definition": { "entityName": "GlobalConfig" } },
-      { "path": "/deletionRequests/{uid}", "definition": { "entityName": "DeletionRequest" } },
-      { "path": "/reviews/{reviewId}", "definition": { "entityName": "Review" } }
-    ]
+    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Teacher profile" },
+    "/users/{userId}/students/{studentId}": { "schema": { "$ref": "#/entities/Student" }, "description": "Student records for a teacher" },
+    "/users/{userId}/attendance/{id}": { "schema": { "$ref": "#/entities/AttendanceRecord" }, "description": "Attendance logs" },
+    "/users/{userId}/payments/{id}": { "schema": { "$ref": "#/entities/Payment" }, "description": "Payment logs" },
+    "/users/{userId}/exams/{id}": { "schema": { "$ref": "#/entities/ExamResult" }, "description": "Exam results" },
+    "/users/{userId}/config/{id}": { "schema": { "type": "object" }, "description": "Teacher specific configurations" },
+    "/contactMessages/{id}": { "schema": { "$ref": "#/entities/ContactMessage" }, "description": "Global support messages" },
+    "/appConfig/{id}": { "schema": { "$ref": "#/entities/GlobalConfig" }, "description": "Global app settings" },
+    "/reviews/{id}": { "schema": { "$ref": "#/entities/Review" }, "description": "User reviews" }
   }
 }

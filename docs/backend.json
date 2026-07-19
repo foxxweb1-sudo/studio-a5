@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -16,12 +15,12 @@
       },
       "required": ["uid", "email"]
     },
-    "WorkingSchedule": { "title": "WorkingSchedule", "type": "object", "properties": { "isActive": { "type": "boolean" } } },
+    "WorkingSchedule": { "title": "WorkingSchedule", "type": "object", "properties": { "isActive": { "type": "boolean" }, "sessions": { "type": "array" } } },
     "PaymentConfig": { "title": "PaymentConfig", "type": "object", "properties": { "grades": { "type": "object" } } },
     "DeletionRequest": { "title": "DeletionRequest", "type": "object", "properties": { "uid": { "type": "string" } } },
-    "Student": { "title": "Student", "type": "object", "properties": { "name": { "type": "string" }, "grade": { "type": "string" } } },
-    "AttendanceRecord": { "title": "AttendanceRecord", "type": "object", "properties": { "studentId": { "type": "string" }, "status": { "type": "string" } } },
-    "Payment": { "title": "Payment", "type": "object", "properties": { "studentId": { "type": "string" }, "amount": { "type": "number" } } },
+    "Student": { "title": "Student", "type": "object", "properties": { "name": { "type": "string" }, "grade": { "type": "string" }, "isArchived": { "type": "boolean" } } },
+    "AttendanceRecord": { "title": "AttendanceRecord", "type": "object", "properties": { "studentId": { "type": "string" }, "status": { "type": "string" }, "date": { "type": "string" } } },
+    "Payment": { "title": "Payment", "type": "object", "properties": { "studentId": { "type": "string" }, "amount": { "type": "number" }, "month": { "type": "string" } } },
     "ExamResult": { "title": "ExamResult", "type": "object", "properties": { "studentId": { "type": "string" }, "score": { "type": "number" }, "totalScore": { "type": "number" }, "date": { "type": "string" } } },
     "ContactMessage": { "title": "ContactMessage", "type": "object", "properties": { "name": { "type": "string" }, "status": { "type": "string" } } },
     "Review": { "title": "Review", "type": "object", "properties": { "rating": { "type": "number" } } },
@@ -35,8 +34,11 @@
       { "path": "/users/{userId}/attendance/{attendanceId}", "definition": { "entityName": "AttendanceRecord" } },
       { "path": "/users/{userId}/payments/{paymentId}", "definition": { "entityName": "Payment" } },
       { "path": "/users/{userId}/exams/{examId}", "definition": { "entityName": "ExamResult" } },
+      { "path": "/users/{userId}/config/{configId}", "definition": { "entityName": "GlobalConfig" } },
       { "path": "/contactMessages/{messageId}", "definition": { "entityName": "ContactMessage" } },
-      { "path": "/appConfig/{configId}", "definition": { "entityName": "GlobalConfig" } }
+      { "path": "/appConfig/{configId}", "definition": { "entityName": "GlobalConfig" } },
+      { "path": "/deletionRequests/{uid}", "definition": { "entityName": "DeletionRequest" } },
+      { "path": "/reviews/{reviewId}", "definition": { "entityName": "Review" } }
     ]
   }
 }

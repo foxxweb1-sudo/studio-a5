@@ -19,14 +19,13 @@ service cloud.firestore {
 
     // قواعد بيانات المستخدمين والمجموعات الفرعية
     match /users/{userId} {
-      // السماح بقراءة البروفايل (الاسم واللوجو) للجميع
-      allow get: if true;
-      // السماح للمعلم برؤية قائمة المستخدمين أو للأدمن
-      allow list: if isSignedIn() || isAdmin(); 
+      // السماح بقراءة البروفايل (الاسم واللوجو) للجميع لظهوره في بوابة الأهل
+      allow read: if true;
+      // السماح بالعمليات الإدارية للمالك أو الأدمن
       allow write: if isOwner(userId) || isAdmin();
 
-      // --- المجموعات الفرعية للطلاب (بوابة الأهل) ---
-      // تم جعل القراءة (get & list) عامة تماماً لدعم الروابط المباشرة للأهل
+      // --- سجلات الطلاب (بوابة الأهل) ---
+      // تم جعل القراءة (get & list) عامة تماماً لتعمل الروابط المباشرة بدون تسجيل دخول
       
       match /students/{id} {
         allow read: if true;
@@ -45,40 +44,38 @@ service cloud.firestore {
         allow write: if isOwner(userId) || isAdmin();
       }
       
-      // الإعدادات الخاصة بالمعلم (مواعيد العمل) - للمعلم فقط
+      // الإعدادات الخاصة بالمعلم (مثل مواعيد العمل) - للمالك فقط
       match /config/{id} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // دعم استعلامات المجموعات المشتركة (Collection Group) لضمان عرض البيانات في بوابة الأهل
+    // دعم استعلامات المجموعات المشتركة (Collection Group) لضمان عمل التقارير
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
     match /{path=**}/payments/{id} { allow read: if true; }
     match /{path=**}/exams/{id} { allow read: if true; }
 
-    // رسائل التواصل (الإدارة فقط)
+    // بقية مجموعات النظام
     match /contactMessages/{messageId} {
-      allow read, write, delete: if isAdmin();
       allow create: if true; 
+      allow read, write, delete: if isAdmin();
     }
 
-    // إعدادات النظام العامة
     match /appConfig/{configId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // طلبات حذف الحساب
     match /deletionRequests/{uid} {
       allow read, write: if isOwner(uid) || isAdmin();
     }
 
-    // التقييمات
     match /reviewPermissions/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow write: if isSignedIn() || isAdmin();
     }
+    
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isSignedIn();

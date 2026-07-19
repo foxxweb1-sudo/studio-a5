@@ -2,8 +2,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useStudents, useAttendance, usePayments } from '@/hooks/use-app-data';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   GraduationCap, 
@@ -20,7 +21,10 @@ import {
   UserX,
   CheckCircle2,
   Building2,
-  History
+  History,
+  Sparkles,
+  ArrowRight,
+  BookOpen
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -28,10 +32,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import Link from 'next/link';
+import { Article } from '@/lib/definitions';
 
 export default function Home() {
   const { user } = useUser();
   const { config } = useAppConfig();
+  const firestore = useFirestore();
   const router = useRouter();
   
   const { students, isLoading: studentsLoading } = useStudents();
@@ -40,12 +47,29 @@ export default function Home() {
 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
+
+  // جلب آخر 5 مقالات من كل قسم مجمعة
+  const artsQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'articles'), orderBy('createdAt', 'desc'), limit(15)) : null,
+  [firestore]);
+  const { data: articles } = useCollection<Article>(artsQuery);
 
   useEffect(() => {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // منطق تبديل المقال كل ثانية
+  useEffect(() => {
+    if (articles && articles.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentArticleIndex((prev) => (prev + 1) % articles.length);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [articles]);
 
   const stats = useMemo(() => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -73,12 +97,38 @@ export default function Home() {
     }
   };
 
+  const activeArt = articles?.[currentArticleIndex];
+
   return (
     <div className="flex flex-col gap-10 max-w-7xl mx-auto pb-20 animate-in fade-in duration-1000">
       
-      {/* Top Row: Clock and Greeting */}
+      {/* المستطيل الذكي للمقالات (تبديل كل 1 ثانية) */}
+      {articles && articles.length > 0 && (
+        <Link href={`/art/${activeArt?.numericId}`} className="block">
+          <div className="w-full bg-slate-900 text-white rounded-[2rem] p-4 flex items-center justify-between gap-4 overflow-hidden border-2 border-primary/20 shadow-xl group hover:border-primary transition-all">
+            <div className="flex items-center gap-4 overflow-hidden">
+                <div className="p-2 bg-primary/20 rounded-xl shrink-0 group-hover:scale-110 transition-transform">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">{activeArt?.category}</span>
+                    <h4 className="text-sm font-bold truncate leading-tight animate-in slide-in-from-bottom-1 duration-300">
+                        {activeArt?.title}
+                    </h4>
+                </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+                <span className="text-[9px] font-bold text-slate-500 hidden sm:block">شريط الأخبار الذكي</span>
+                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary transition-colors">
+                    <ArrowRight className="h-4 w-4 rotate-180" />
+                </div>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Row: Clock and Greeting */}
       <div className="flex flex-col md:flex-row gap-6 items-stretch">
-        {/* Clock Card */}
         <Card className="flex-1 border-0 shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem] bg-white flex flex-col items-center justify-center p-10 text-center relative overflow-hidden">
             <div className="absolute top-6 right-8 p-2 bg-blue-50 text-blue-500 rounded-xl">
                 <Clock className="h-5 w-5" />
@@ -90,10 +140,9 @@ export default function Home() {
             <p className="text-[11px] font-bold text-slate-400 mt-3">الوقت الآن بتوقيتك المحلي</p>
         </Card>
 
-        {/* Notification & Greeting Row */}
         <div className="flex-[2] flex gap-6">
-            <Button variant="ghost" className="h-full w-20 rounded-[2rem] bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 shadow-none border-0 self-stretch flex items-center justify-center">
-                <Bell className="h-7 w-7" />
+            <Button variant="ghost" className="h-full w-20 rounded-[2rem] bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 shadow-none border-0 self-stretch flex items-center justify-center" onClick={() => router.push('/blog')}>
+                <BookOpen className="h-7 w-7" />
             </Button>
             
             <Card className="flex-grow border-0 shadow-xl rounded-[2.5rem] bg-gradient-to-l from-blue-600 to-blue-400 text-white overflow-hidden relative">
@@ -122,7 +171,6 @@ export default function Home() {
         <CardContent className="p-12 md:p-16 relative z-10 flex flex-col justify-center h-full">
             <div className="flex flex-col lg:flex-row gap-16 items-center">
                 
-                {/* Stats Grid on the Left */}
                 <div className="grid grid-cols-2 gap-5 w-full lg:w-[400px] shrink-0">
                     {[
                         { label: 'إجمالي الطلاب', value: stats.total, icon: Users, color: 'text-blue-500' },
@@ -138,7 +186,6 @@ export default function Home() {
                     ))}
                 </div>
 
-                {/* Text and Actions on the Right */}
                 <div className="flex-grow text-center lg:text-right space-y-10">
                     <div className="space-y-4">
                         <h1 className="text-5xl md:text-7xl font-black leading-[1.1] tracking-tighter">
@@ -180,7 +227,6 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {/* Stage Cards (Bottom Row) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
           { name: 'المرحلة الابتدائية', desc: 'من الصف الأول حتى السادس الابتدائي', icon: School, href: '/stage/primary', color: 'text-blue-500', bg: 'bg-blue-500/5' },
@@ -201,7 +247,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Auth Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="rounded-[3rem] border-0 shadow-2xl max-w-sm overflow-hidden p-0">
           <div className="bg-blue-600 h-2 w-full" />
@@ -226,7 +271,6 @@ export default function Home() {
           </div>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

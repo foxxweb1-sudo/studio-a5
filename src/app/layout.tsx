@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -7,6 +6,7 @@ import AuthGuard from '@/components/layout/AuthGuard';
 import { AppShell } from '@/components/layout/AppShell';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import CookieConsent from '@/components/layout/CookieConsent';
+import FloatingSupport from '@/components/layout/FloatingSupport';
 
 export const metadata: Metadata = {
   title: 'الحضور',
@@ -48,6 +48,7 @@ export default function RootLayout({
               <AppShell>
                 {children}
                 <CookieConsent />
+                <FloatingSupport />
               </AppShell>
             </AuthGuard>
           </FirebaseClientProvider>

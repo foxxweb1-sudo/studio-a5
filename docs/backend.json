@@ -16,36 +16,6 @@
       },
       "required": ["uid", "email"]
     },
-    "Article": {
-      "title": "Article",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "category": { "type": "string", "enum": ["AI", "الرقمية", "معلومات عامة", "عن المنصة"] },
-        "coverImage": { "type": "string" },
-        "views": { "type": "number" },
-        "isPinned": { "type": "boolean" },
-        "allowComments": { "type": "boolean" },
-        "searchDescription": { "type": "string" },
-        "numericId": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "AdConfig": {
-      "title": "AdConfig",
-      "type": "object",
-      "properties": {
-        "isCdm": { "type": "boolean" },
-        "cdmCode1": { "type": "string" },
-        "cdmCode2": { "type": "string" },
-        "bannerCode": { "type": "string" },
-        "sidebarCode": { "type": "string" },
-        "popupCode": { "type": "string" },
-        "middleArticleCode": { "type": "string" },
-        "underTitleCode": { "type": "string" }
-      }
-    },
     "WorkingSchedule": { "title": "WorkingSchedule", "type": "object", "properties": { "isActive": { "type": "boolean" } } },
     "PaymentConfig": { "title": "PaymentConfig", "type": "object", "properties": { "grades": { "type": "object" } } },
     "DeletionRequest": { "title": "DeletionRequest", "type": "object", "properties": { "uid": { "type": "string" } } },
@@ -60,8 +30,6 @@
   "firestore": {
     "structure": [
       { "path": "/users/{userId}", "definition": { "entityName": "User" } },
-      { "path": "/articles/{articleId}", "definition": { "entityName": "Article" } },
-      { "path": "/adConfig/global", "definition": { "entityName": "AdConfig" } },
       { "path": "/users/{userId}/students/{studentId}", "definition": { "entityName": "Student" } },
       { "path": "/users/{userId}/attendance/{attendanceId}", "definition": { "entityName": "AttendanceRecord" } },
       { "path": "/users/{userId}/payments/{paymentId}", "definition": { "entityName": "Payment" } },

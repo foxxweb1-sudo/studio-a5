@@ -12,33 +12,6 @@ export type UserProfile = {
   lastLogin?: FieldValue;
 };
 
-export type ArticleCategory = "AI" | "الرقمية" | "معلومات عامة" | "عن المنصة";
-
-export type Article = {
-  id: string;
-  numericId: number; // الرقم التعريفي المستخدم في الروابط (e.g., 1001)
-  title: string;
-  content: string;
-  category: ArticleCategory;
-  coverImage?: string;
-  views: number;
-  isPinned: boolean;
-  allowComments: boolean;
-  searchDescription?: string; // وصف الـ SEO المختصر
-  createdAt: FieldValue | any;
-};
-
-export type AdConfig = {
-  isCdm: boolean;
-  cdmCode1?: string;
-  cdmCode2?: string;
-  bannerCode?: string;
-  sidebarCode?: string;
-  popupCode?: string;
-  middleArticleCode?: string;
-  underTitleCode?: string;
-};
-
 export type ScheduleSession = {
   id: string;
   grade: string;

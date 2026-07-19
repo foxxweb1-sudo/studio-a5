@@ -14,18 +14,6 @@ service cloud.firestore {
              request.auth.token.email.lower() == 'tech.support.app@gmail.com';
     }
 
-    // قواعد المقالات (عامة للقراءة للزوار)
-    match /articles/{articleId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // إعدادات الإعلانات (عامة للقراءة للزوار)
-    match /adConfig/{id} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
     // قواعد الوصول للطلاب (يسمح لولي الأمر بالقراءة عبر الرابط)
     match /users/{userId}/students/{studentId} {
       allow read: if true; 

@@ -1,10 +1,10 @@
+
 'use client';
 
 import * as React from 'react';
 import { BadgeCheck } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
-import Link from 'next/link';
 import Image from 'next/image';
 import Footer from './Footer';
 import { format } from 'date-fns';
@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <div className="relative">
               <div className="relative w-10 h-10 rounded-xl overflow-hidden border shadow-sm bg-white">
-                <Image src={config.appLogo} alt="Logo" fill className="object-contain p-1" />
+                <Image src={config.appLogo || ''} alt="Logo" fill className="object-contain p-1" />
               </div>
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-md">
                 <BadgeCheck className="h-4 w-4 fill-blue-500 text-white" />
@@ -56,9 +56,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Right: App Name */}
           <div className="flex items-center gap-2">
-            <span className="font-black text-lg text-slate-800 tracking-tighter">الحضور</span>
+            <span className="font-black text-lg text-slate-800 tracking-tighter">{config.appName}</span>
             <div className="w-6 h-6 relative opacity-20">
-               <Image src={config.appLogo} alt="icon" fill className="object-contain grayscale" />
+               <Image src={config.appLogo || ''} alt="icon" fill className="object-contain grayscale" />
             </div>
           </div>
 

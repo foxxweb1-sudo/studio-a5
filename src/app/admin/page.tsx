@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -339,7 +340,7 @@ export default function AdminPage() {
                     ) : users.map((u) => {
                         const isAccountAdmin = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
                         const uDisplayName = u.displayName || 'مستخدم';
-                        const showBadgeBefore = isArabic(uDisplayName); // Reversed: Arabic -> Before (Right)
+                        const showBadgeBefore = isArabic(uDisplayName); 
                         
                         return (
                           <Card key={u.uid} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'} ${isAccountAdmin ? 'border-2 border-primary/20' : ''}`}>

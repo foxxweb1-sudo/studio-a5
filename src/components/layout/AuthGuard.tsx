@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -11,6 +10,7 @@ import { signOut, deleteUser } from "firebase/auth";
 import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import SplashScreen from "./SplashScreen";
 
 const publicRoutes = ["/login", "/signup", "/forgot-password", "/", "/blog"];
 
@@ -85,7 +85,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [user, firestore, deletionRequest, userProfile?.isBlocked]);
 
   if (isUserLoading || (user && isProfileLoading) || isFinalizingDeletion) {
-    return null; // يمكن عرض لودر بسيط هنا إذا لزم الأمر، لكن تم إلغاء شاشة الأكواد تماماً
+    return <SplashScreen />;
   }
 
   const isSuperAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();

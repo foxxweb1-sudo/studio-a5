@@ -24,18 +24,6 @@
     "Payment": { "title": "Payment", "type": "object", "properties": { "studentId": { "type": "string" }, "amount": { "type": "number" } } },
     "ContactMessage": { "title": "ContactMessage", "type": "object", "properties": { "name": { "type": "string" }, "status": { "type": "string" } } },
     "Review": { "title": "Review", "type": "object", "properties": { "rating": { "type": "number" } } },
-    "Article": { 
-      "title": "Article", 
-      "type": "object", 
-      "properties": { 
-        "title": { "type": "string" }, 
-        "content": { "type": "string" }, 
-        "category": { "type": "string" }, 
-        "numericId": { "type": "number" },
-        "views": { "type": "number" }
-      } 
-    },
-    "AdConfig": { "title": "AdConfig", "type": "object", "properties": { "popupCode": { "type": "string" } } },
     "GlobalConfig": { "title": "GlobalConfig", "type": "object", "properties": { "appName": { "type": "string" } } }
   },
   "auth": { "providers": ["password"] },
@@ -46,9 +34,7 @@
       { "path": "/users/{userId}/attendance/{attendanceId}", "definition": { "entityName": "AttendanceRecord" } },
       { "path": "/users/{userId}/payments/{paymentId}", "definition": { "entityName": "Payment" } },
       { "path": "/contactMessages/{messageId}", "definition": { "entityName": "ContactMessage" } },
-      { "path": "/appConfig/{configId}", "definition": { "entityName": "GlobalConfig" } },
-      { "path": "/articles/{articleId}", "definition": { "entityName": "Article" } },
-      { "path": "/adConfig/{configId}", "definition": { "entityName": "AdConfig" } }
+      { "path": "/appConfig/{configId}", "definition": { "entityName": "GlobalConfig" } }
     ]
   }
 }

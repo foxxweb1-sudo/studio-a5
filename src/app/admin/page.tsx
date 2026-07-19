@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -243,7 +243,7 @@ export default function AdminPage() {
             { label: 'التقييمات', value: reviews?.length || 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-100', loading: reviewsLoading },
             { label: 'طلبات الحذف', value: activeDeletionCount, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: deletionLoading },
         ].map((stat, i) => (
-            <Card key={i} className={`border-0 shadow-sm hover-lift`}>
+            <Card key={i} className={`border-0 shadow-sm hover:shadow-md transition-all`}>
                 <CardContent className="p-6 flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
                         {stat.loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
@@ -276,7 +276,6 @@ export default function AdminPage() {
             <TabsContent value="users">
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* حظر يدوي */}
                     <Card className="border-2 border-rose-500/10 shadow-none rounded-3xl overflow-hidden bg-rose-500/5">
                         <CardContent className="p-6">
                         <div className="flex flex-col gap-4">
@@ -304,7 +303,6 @@ export default function AdminPage() {
                         </CardContent>
                     </Card>
 
-                    {/* توثيق يدوي */}
                     <Card className="border-2 border-blue-500/10 shadow-none rounded-3xl overflow-hidden bg-blue-500/5">
                         <CardContent className="p-6">
                         <div className="flex flex-col gap-4">
@@ -391,7 +389,6 @@ export default function AdminPage() {
 
             <TabsContent value="reviews">
                 <div className="space-y-6">
-                  {/* منح إذن تقييم */}
                   <Card className="border-2 border-amber-500/10 shadow-none rounded-3xl overflow-hidden bg-amber-500/5">
                     <CardContent className="p-6">
                       <div className="flex flex-col lg:flex-row gap-4 items-end">
@@ -415,7 +412,6 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
 
-                  {/* قائمة التقييمات */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {reviews?.map((rev) => (
                       <Card key={rev.id} className="border-0 shadow-sm bg-white overflow-hidden rounded-[2rem]">
@@ -446,11 +442,6 @@ export default function AdminPage() {
                         </CardContent>
                       </Card>
                     ))}
-                    {(!reviews || reviews.length === 0) && !reviewsLoading && (
-                      <div className="col-span-full py-20 text-center text-slate-400 font-bold bg-slate-50 rounded-[2rem] border border-dashed">
-                        لا توجد تقييمات منشورة حالياً.
-                      </div>
-                    )}
                   </div>
                 </div>
             </TabsContent>
@@ -459,7 +450,7 @@ export default function AdminPage() {
                 <div className="space-y-4">
                   {deletionRequests && deletionRequests.length > 0 ? (
                     deletionRequests.map((req) => (
-                      <div key={req.uid} className="flex flex-col gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-rose-100 hover:shadow-md transition-all border-r-8 border-r-rose-500">
+                      <div key={req.uid} className="flex flex-col gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-rose-100 border-r-8 border-r-rose-500">
                         <div className="flex flex-col lg:flex-row items-center gap-6">
                             <div className="flex items-center gap-4 flex-1 w-full">
                                 <Avatar className="h-14 w-14 border-2 border-rose-50">
@@ -474,7 +465,6 @@ export default function AdminPage() {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="flex-1 w-full space-y-2">
                                 <div className="bg-rose-50/80 px-4 py-2 rounded-2xl flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-rose-600 font-bold text-xs">
@@ -483,31 +473,14 @@ export default function AdminPage() {
                                     </div>
                                     <span className="font-black text-rose-700 text-xs">{calculateRemainingTime(req.requestedAt)}</span>
                                 </div>
-                                <div className="bg-blue-50 px-4 py-2 rounded-2xl flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-blue-500 font-bold text-xs">
-                                        <GraduationCap className="h-4 w-4" />
-                                        <span>عدد الطلاب:</span>
-                                    </div>
-                                    <span className="font-black text-blue-700 text-xs">{req.studentCount} طالب</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-2 pt-3 border-t border-dashed border-rose-100 flex items-start gap-3">
-                            <div className="p-2 bg-amber-50 rounded-xl text-amber-600 shrink-0">
-                                <MessageSquareQuote className="h-5 w-5" />
-                            </div>
-                            <div className="space-y-1">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">سبب الحذف المصرح به:</span>
-                                <p className="text-sm font-bold text-slate-700 leading-relaxed italic">"{req.reason || 'لم يتم ذكر سبب محدد'}"</p>
                             </div>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="py-20 text-center space-y-4 bg-slate-50 rounded-[2rem] border border-dashed">
-                      {deletionLoading ? <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary/20" /> : <Trash2 className="h-16 w-16 mx-auto text-slate-200" />}
-                      <p className="text-slate-400 font-black">{deletionLoading ? 'جاري جلب الطلبات...' : 'لا توجد طلبات حذف حالياً'}</p>
+                      <Trash2 className="h-16 w-16 mx-auto text-slate-200" />
+                      <p className="text-slate-400 font-black">لا توجد طلبات حذف حالياً</p>
                     </div>
                   )}
                 </div>
@@ -558,16 +531,6 @@ export default function AdminPage() {
                                 </div>
                                 <div className="flex-grow bg-slate-50 p-4 rounded-2xl text-slate-600 text-xs italic leading-relaxed line-clamp-3 text-right">
                                   "{msg.message}"
-                                </div>
-                                <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                                  <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground font-bold">
-                                    <Clock className="h-3 w-3" />
-                                    {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
-                                  </div>
-                                  <span className="text-[10px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                                    عرض التفاصيل
-                                    <ChevronRight className="h-3 w-3" />
-                                  </span>
                                 </div>
                             </CardContent>
                           </Card>

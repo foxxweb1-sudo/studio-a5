@@ -1,14 +1,14 @@
+
 'use client';
 
 import * as React from 'react';
-import { BadgeCheck, LayoutGrid, BookOpen, User, Settings as SettingsIcon } from 'lucide-react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { BadgeCheck, LayoutGrid, User, Settings as SettingsIcon } from 'lucide-react';
+import { useUser } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import Image from 'next/image';
 import Footer from './Footer';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { doc } from 'firebase/firestore';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { name: 'الرئيسية', href: '/', icon: LayoutGrid },
-    { name: 'المدونة', href: '/blog', icon: BookOpen },
     { name: 'الإعدادات', href: '/settings', icon: SettingsIcon },
   ];
 
@@ -43,7 +42,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-xl dark:bg-slate-900/80">
         <div className="container flex h-20 items-center justify-between max-w-screen-2xl px-6">
           
-          {/* Left: Identity & Navigation */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
@@ -78,7 +76,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
 
-          {/* Center: Live Time Pill (Visible on Desktop) */}
           <div className="hidden md:flex items-center gap-4 bg-primary/5 border border-primary/10 px-6 py-2 rounded-full shadow-inner">
              <div className="flex items-center gap-3 text-[12px] font-black text-primary">
                 <span className="tabular-nums tracking-wider">{time ? format(time, 'hh:mm:ss a', { locale: ar }) : '--:--:--'}</span>
@@ -87,14 +84,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
              </div>
           </div>
 
-          {/* Right: Mobile Menu / Quick Actions */}
           <div className="flex items-center gap-3">
              <Link href="/account" className="flex items-center gap-2 p-2 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                 <div className="text-right hidden sm:block">
                     <p className="text-[10px] font-black text-slate-400 leading-none">مرحباً بك</p>
                     <p className="text-xs font-black text-slate-800 dark:text-white truncate max-w-[100px]">{user?.displayName || 'ضيف'}</p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-400 flex items-center justify-center text-white shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-400 flex items-center justify-center text-white shadow-lg overflow-hidden">
                     {user?.photoURL ? (
                         <Image src={user.photoURL} alt="User" width={40} height={40} className="rounded-xl object-cover" />
                     ) : (

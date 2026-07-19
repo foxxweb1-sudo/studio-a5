@@ -1,11 +1,10 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
 import {
   ChevronUp,
   LayoutGrid,
-  BookOpen,
-  Settings as SettingsIcon,
   ShieldCheck,
   UserCheck
 } from 'lucide-react';
@@ -22,7 +21,6 @@ export default function Footer() {
       <div className="container max-w-screen-xl px-6 lg:px-8 space-y-12">
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-              {/* Brand Section */}
               <div className="md:col-span-1 space-y-6">
                   <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
@@ -40,12 +38,10 @@ export default function Footer() {
                   </div>
               </div>
 
-              {/* Links Sections */}
               <div className="space-y-4">
                   <h4 className="text-sm font-black text-slate-900 dark:text-white border-r-4 border-primary pr-3 leading-none">روابط سريعة</h4>
                   <ul className="space-y-2 pr-1">
                       <li><Link href="/" className="text-xs font-bold text-slate-500 hover:text-primary transition-colors">الرئيسية</Link></li>
-                      <li><Link href="/blog" className="text-xs font-bold text-slate-500 hover:text-primary transition-colors">المدونة التقنية</Link></li>
                       <li><Link href="/attendance" className="text-xs font-bold text-slate-500 hover:text-primary transition-colors">تسجيل الحضور</Link></li>
                       <li><Link href="/payments" className="text-xs font-bold text-slate-500 hover:text-primary transition-colors">إدارة المدفوعات</Link></li>
                   </ul>
@@ -61,7 +57,6 @@ export default function Footer() {
                   </ul>
               </div>
 
-              {/* Trust Badge */}
               <div className="space-y-6">
                   <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-3 mb-3">

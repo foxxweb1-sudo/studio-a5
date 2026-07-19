@@ -93,6 +93,17 @@ export type PaymentRecord = {
   createdAt: FieldValue;
 };
 
+export type ExamResult = {
+  id: string;
+  studentId: string;
+  score: number;
+  totalScore: number;
+  date: string;
+  createdAt: FieldValue;
+};
+
+export type NewExamResult = Omit<ExamResult, 'id' | 'createdAt'>;
+
 export type GlobalConfig = {
   id: string;
   appName?: string;

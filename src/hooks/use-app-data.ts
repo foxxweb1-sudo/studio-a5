@@ -2,7 +2,7 @@
 "use client";
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule, PaymentConfig, GradePaymentConfig } from "@/lib/definitions";
+import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule, PaymentConfig, GradePaymentConfig, ExamResult, NewExamResult } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc } from "firebase/firestore";
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -22,10 +22,9 @@ export function useAllUsers() {
   const toggleUserBlock = (userId: string, currentStatus: boolean) => {
     if (!isAdmin || !firestore) return;
     
-    // حماية برمجية إضافية: التحقق من أن المستخدم ليس هو المسؤول قبل تحديث الحالة
     const targetUser = users?.find(u => u.uid === userId);
     if (targetUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-        return; // تجاهل العملية للمسؤول
+        return; 
     }
 
     const userDoc = doc(firestore, 'users', userId);
@@ -206,7 +205,6 @@ export function useAttendance() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const studentsInGrade = studentsList.filter(s => s.grade === grade);
     
-    // الطلاب الذين لديهم سجل حضور (سواء حاضر أو غائب) اليوم
     const recordsToday = attendance.filter(a => a.date === today);
     const studentsWithRecordsIds = new Set(recordsToday.map(r => r.studentId));
     
@@ -252,4 +250,51 @@ export function usePayments() {
     };
 
     return { payments: payments || [], isLoading, addPayment };
+}
+
+// --- Exams Hook ---
+export function useExams() {
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  const examsQuery = useMemoFirebase(() =>
+    (firestore && user) ? query(collection(firestore, `users/${user.uid}/exams`), orderBy("createdAt", "desc")) : null,
+  [user, firestore]);
+
+  const { data: exams, isLoading } = useCollection<ExamResult>(examsQuery);
+
+  const addExamResult = (examData: NewExamResult) => {
+    if (!user || !firestore) return;
+    const examsCollection = collection(firestore, `users/${user.uid}/exams`);
+    const newExam = {
+      ...examData,
+      createdAt: serverTimestamp(),
+    };
+    addDoc(examsCollection, newExam).catch(error => {
+      errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: examsCollection.path,
+          operation: 'create',
+          requestResourceData: newExam,
+        })
+      )
+    });
+  };
+
+  const deleteExamResult = (id: string) => {
+    if (!user || !firestore) return;
+    const examDoc = doc(firestore, `users/${user.uid}/exams`, id);
+    deleteDoc(examDoc).catch(error => {
+       errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: examDoc.path,
+          operation: 'delete',
+        })
+      )
+    });
+  };
+
+  return { exams: exams || [], isLoading, addExamResult, deleteExamResult };
 }

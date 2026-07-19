@@ -28,9 +28,15 @@ service cloud.firestore {
       allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
     }
 
+    match /users/{userId}/exams/{id} {
+      allow read: if true; 
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
     match /{path=**}/payments/{id} { allow read: if true; }
+    match /{path=**}/exams/{id} { allow read: if true; }
 
     match /users/{userId} {
       allow get: if true;

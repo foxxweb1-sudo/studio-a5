@@ -7,7 +7,7 @@ import { useUser } from '@/firebase';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, User, GraduationCap, Phone, ArrowLeft, Share2, Award, CheckCircle2, XCircle, Trophy, Sparkles, Construction } from 'lucide-react';
+import { Loader2, User, GraduationCap, Phone, ArrowLeft, Share2, Award, CheckCircle2, XCircle, Trophy, Sparkles, Construction, Wallet } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';

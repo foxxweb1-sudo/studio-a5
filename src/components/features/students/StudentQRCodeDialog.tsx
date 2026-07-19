@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useRef } from "react";
@@ -30,7 +29,6 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
   };
 
   const handlePrint = () => {
-    // الحصول على الـ SVG الفعلي من داخل الحاوية
     const svgElement = qrContainerRef.current?.querySelector('svg');
     if (!svgElement) {
       toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على الكود للطباعة." });
@@ -105,7 +103,7 @@ export default function StudentQRCodeDialog({ student, open, onOpenChange }: Stu
               <div style="font-size: 10px; color: #999; margin-bottom: 5px;">كود الطالب الرقمي</div>
               <div class="code-text">${student.id}</div>
             </div>
-            <div class="footer">تطبيق الحضور الذكي - TECH TEAM</div>
+            <div class="footer">تطبيق الحضور - TECH TEAM</div>
           </div>
           <script>
             window.onload = () => {

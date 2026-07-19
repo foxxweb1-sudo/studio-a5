@@ -12,10 +12,19 @@ export const metadata: Metadata = {
   title: 'الحضور',
   description: 'تطبيق لإدارة الطلاب والمدفوعات بكفاءة تامة أوفلاين وأونلاين',
   manifest: '/manifest.json',
-  themeColor: '#4F46E5',
   icons: {
-    icon: 'https://i.ibb.co/Nbhqk4f/36465.png',
-    apple: 'https://i.ibb.co/Nbhqk4f/36465.png',
+    icon: [
+      {
+        url: 'https://i.ibb.co/Nbhqk4f/36465.png',
+        href: 'https://i.ibb.co/Nbhqk4f/36465.png',
+      },
+    ],
+    apple: [
+      {
+        url: 'https://i.ibb.co/Nbhqk4f/36465.png',
+        href: 'https://i.ibb.co/Nbhqk4f/36465.png',
+      },
+    ],
   },
 };
 
@@ -37,11 +46,13 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" href="https://i.ibb.co/Nbhqk4f/36465.png" />
-        <link rel="apple-touch-icon" href="https://i.ibb.co/Nbhqk4f/36465.png" />
+        {/* إجبار المتصفح على تحديث الأيقونة عبر إضافة query string */}
+        <link rel="icon" href="https://i.ibb.co/Nbhqk4f/36465.png?v=2" />
+        <link rel="apple-touch-icon" href="https://i.ibb.co/Nbhqk4f/36465.png?v=2" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="الحضور" />
+        <meta name="theme-color" content="#4F46E5" />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider

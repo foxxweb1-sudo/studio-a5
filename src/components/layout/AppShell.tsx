@@ -74,7 +74,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-white group-hover:rotate-6 transition-transform">
                     <Image src={config.appLogo || ''} alt="Logo" fill className="object-contain p-1.5" />
                   </div>
-                  {/* تمت إزالة شارة التوثيق من هنا بناءً على طلب المستخدم */}
                 </div>
                 <span className="font-black text-2xl text-slate-900 dark:text-white tracking-tighter hidden sm:block">
                   {config.appName}
@@ -169,15 +168,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                     <SettingsIcon className="h-4 w-4" />
                                 </div>
                             </Link>
-                        </DropdownMenuItem>
-                    </div>
-                    <DropdownMenuSeparator className="mx-2" />
-                    <div className="p-1">
-                        <DropdownMenuItem onClick={handleSignOut} className="flex items-center justify-between w-full p-3 rounded-xl hover:bg-rose-50 text-rose-600 group cursor-pointer">
-                            <span className="font-black text-sm">تسجيل الخروج</span>
-                            <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg group-hover:bg-rose-600 group-hover:text-white transition-colors">
-                                <LogOut className="h-4 w-4" />
-                            </div>
                         </DropdownMenuItem>
                     </div>
                   </DropdownMenuContent>

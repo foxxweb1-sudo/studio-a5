@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +26,7 @@ import { useAuth } from "@/firebase";
 import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon } from "lucide-react";
+import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -35,6 +35,7 @@ const formSchema = z.object({
   displayName: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل."),
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
   password: z.string().min(6, "يجب أن تكون كلمة المرور 6 أحرف على الأقل."),
+  photoURL: z.string().url("يجب رفع صورة شخصية أو وضع رابط صالح.").min(1, "الصورة الشخصية إجبارية."),
 });
 
 export default function SignUp() {
@@ -42,7 +43,9 @@ export default function SignUp() {
   const { config } = useAppConfig();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,8 +53,36 @@ export default function SignUp() {
       displayName: "",
       email: "",
       password: "",
+      photoURL: "",
     },
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const body = new FormData();
+    body.append('image', file);
+
+    try {
+        const res = await fetch('https://api.imgbb.com/1/upload?key=d015dd34e005b5dd56d68d2fe147c267', {
+            method: 'POST',
+            body
+        });
+        const result = await res.json();
+        if (result.success) {
+            form.setValue('photoURL', result.data.url, { shouldValidate: true });
+            toast({ title: "تم رفع الصورة بنجاح" });
+        } else {
+            toast({ variant: "destructive", title: "فشل الرفع" });
+        }
+    } catch (err) {
+        toast({ variant: "destructive", title: "خطأ في الاتصال بالخادم" });
+    } finally {
+        setIsUploading(false);
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
@@ -59,7 +90,8 @@ export default function SignUp() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       
       await updateProfile(userCredential.user, {
-        displayName: values.displayName
+        displayName: values.displayName,
+        photoURL: values.photoURL
       });
 
       toast({
@@ -88,7 +120,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen">
+    <div className="relative flex items-center justify-center min-h-screen p-4">
        <Image
         src={config.signupBg}
         alt="Signup Background"
@@ -98,79 +130,124 @@ export default function SignUp() {
         data-ai-hint="background"
         priority
       />
-      <div className="absolute inset-0 bg-black/60 z-10" />
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute inset-0 bg-black/70 z-10" />
+      
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-4">
+        <Link href="/" className="text-white/60 hover:text-white font-bold text-sm transition-colors">العودة للرئيسية</Link>
         <ModeToggle />
       </div>
-      <Card className="w-full max-w-md mx-auto z-20 bg-card/80 backdrop-blur-sm shadow-2xl rounded-[2.5rem] border-0">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-black">إنشاء حساب جديد</CardTitle>
-          <CardDescription className="text-muted-foreground font-bold">
-            ابدأ الآن بإدارة فصولك الدراسية بذكاء في {config.appName}
+
+      <Card className="w-full max-w-lg mx-auto z-20 bg-white/10 backdrop-blur-xl shadow-[0_0_50px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] border border-white/20 text-white overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-primary h-2 w-full" />
+        <CardHeader className="text-center pb-2">
+          <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-white/10 shadow-inner">
+             <UserPlus className="h-10 w-10 text-primary" />
+          </div>
+          <CardTitle className="text-3xl font-black tracking-tight">إنشاء حساب معلم</CardTitle>
+          <CardDescription className="text-white/60 font-bold mt-2">
+            انضم الآن لأكثر من 500 معلم يديرون فصولهم بذكاء
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="displayName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-white/80">الاسم الكامل</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                            <Input
+                              placeholder="أحمد محمد..."
+                              className="pr-10 rounded-xl h-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-white/80">البريد الإلكتروني</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <MailIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                            <Input
+                              type="email"
+                              placeholder="name@example.com"
+                              className="pr-10 rounded-xl h-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10 font-mono"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
+
               <FormField
                 control={form.control}
-                name="displayName"
+                name="photoURL"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold">الاسم الكامل</FormLabel>
+                    <FormLabel className="font-bold text-white/80">الصورة الشخصية (إلزامية)</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
-                        <Input
-                          placeholder="أدخل اسمك بالكامل"
-                          className="pr-10 rounded-xl h-12"
-                          {...field}
-                        />
+                      <div className="flex gap-2">
+                        <div className="relative flex-grow">
+                            <ImageIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                            <Input
+                                placeholder="رابط الصورة أو ارفع ملفاً..."
+                                className="pr-10 rounded-xl h-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10 text-xs font-mono"
+                                {...field}
+                                readOnly
+                            />
+                        </div>
+                        <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            className="h-12 rounded-xl border-dashed border-white/20 bg-white/5 hover:bg-white/10 text-white gap-2"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                        >
+                            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                            {form.getValues('photoURL') ? 'تم الرفع' : 'رفع'}
+                        </Button>
                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-bold">البريد الإلكتروني</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <MailIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
-                        <Input
-                          type="email"
-                          placeholder="your@email.com"
-                          className="pr-10 rounded-xl h-12"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold">كلمة المرور</FormLabel>
+                    <FormLabel className="font-bold text-white/80">كلمة المرور</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="********"
-                          className="pl-10 rounded-xl h-12"
+                          placeholder="••••••••"
+                          className="pl-10 rounded-xl h-12 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10"
                           {...field}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
@@ -180,20 +257,21 @@ export default function SignUp() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full h-12 rounded-xl font-bold gap-2 text-lg shadow-lg shadow-primary/30" disabled={isLoading}>
+
+              <Button type="submit" className="w-full h-14 rounded-2xl font-black gap-3 text-lg shadow-xl shadow-primary/20 bg-primary hover:bg-indigo-700 transition-all mt-4" disabled={isLoading}>
                 {isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
-                    <UserPlus className="h-5 w-5" />
+                    <CheckCircle2 className="h-6 w-6" />
                 )}
-                إنشاء الحساب
+                إتمام التسجيل والدخول
               </Button>
             </form>
           </Form>
-          <div className="mt-6 text-center text-sm font-medium">
+          <div className="mt-8 text-center text-sm font-bold border-t border-white/5 pt-6">
             لديك حساب بالفعل؟{" "}
-            <Link href="/login" className="text-primary font-bold hover:underline">
-              تسجيل الدخول
+            <Link href="/login" className="text-primary hover:text-indigo-400 underline-offset-4 hover:underline transition-all">
+              سجل دخولك من هنا
             </Link>
           </div>
         </CardContent>

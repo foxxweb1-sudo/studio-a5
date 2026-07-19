@@ -26,7 +26,7 @@ import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2, ArrowRight } from "lucide-center";
+import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
@@ -140,7 +140,7 @@ export default function SignUp() {
   return (
     <div className="relative flex items-center justify-center min-h-screen p-4 overflow-hidden">
        <Image
-        src={config.signupBg}
+        src={config.signupBg || '/placeholder-bg.jpg'}
         alt="Signup Background"
         fill
         style={{ objectFit: 'cover' }}
@@ -154,7 +154,7 @@ export default function SignUp() {
         <ModeToggle />
       </div>
 
-      <Card className="w-full max-w-lg mx-auto z-20 bg-white/5 backdrop-blur-2xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] rounded-[3rem] border border-white/10 text-white overflow-hidden animate-in fade-in zoom-in-95 duration-700">
+      <Card className="w-full max-w-lg mx-auto z-20 bg-white/5 backdrop-blur-2xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] rounded-[3rem] border border-white/10 text-white overflow-hidden animate-in fade-in zoom-in-95 duration-700">
         <div className="bg-primary h-1.5 w-full opacity-50" />
         <CardHeader className="text-center pb-2 pt-10 space-y-4">
           <div className="w-24 h-24 bg-primary/20 rounded-[2.5rem] flex items-center justify-center mx-auto mb-2 border border-white/10 shadow-inner group hover:rotate-6 transition-all duration-500">

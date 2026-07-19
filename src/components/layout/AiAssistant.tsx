@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Bot, Send, Loader2, User, Sparkles } from 'lucide-react';
@@ -53,17 +52,14 @@ export default function AiAssistant() {
 
   return (
     <>
-      <div className="flex flex-col items-center gap-2">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="rounded-full h-14 w-14 bg-primary text-white shadow-[0_10px_40px_-5px_rgba(79,70,229,0.5)] hover:scale-110 transition-all duration-300 p-0 relative group"
-          aria-label="مساعد الذكاء الاصطناعي"
-        >
-          <Bot className="h-7 w-7" />
-          <div className="absolute inset-0 bg-white/20 rounded-full animate-ping group-hover:block hidden" />
-        </Button>
-        <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full shadow-sm">AI Assistant</span>
-      </div>
+      <Button
+        onClick={() => setIsOpen(true)}
+        variant="outline"
+        className="rounded-full h-12 w-12 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all duration-300 p-0 shadow-sm"
+        aria-label="مساعد الذكاء الاصطناعي"
+      >
+        <Bot className="h-6 w-6" />
+      </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md flex flex-col h-[75vh] rounded-[2.5rem] border-0 shadow-2xl p-0 overflow-hidden">
@@ -72,7 +68,7 @@ export default function AiAssistant() {
                 <div className="p-2 bg-white/20 rounded-xl">
                     <Bot className="h-6 w-6" />
                 </div>
-                <div>
+                <div className="text-right">
                     <DialogTitle className="text-xl font-black">المساعد الذكي</DialogTitle>
                     <DialogDescription className="text-white/70 text-xs font-bold">
                       أنا هنا لمساعدتك في إدارة شؤون طلابك.
@@ -136,7 +132,7 @@ export default function AiAssistant() {
             <div className="flex w-full items-center gap-2">
               <Input
                 placeholder="اكتب استفسارك هنا..."
-                className="flex-1 h-12 rounded-xl bg-slate-50 border-0 focus-visible:ring-primary font-bold"
+                className="flex-1 h-12 rounded-xl bg-slate-50 border-0 focus-visible:ring-primary font-bold text-right"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}

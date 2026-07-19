@@ -37,6 +37,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="https://i.ibb.co/Nbhqk4f/36465.png" />
+        <link rel="apple-touch-icon" href="https://i.ibb.co/Nbhqk4f/36465.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="الحضور" />

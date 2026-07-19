@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -24,7 +25,9 @@ import {
   Zap,
   TrendingUp,
   LayoutDashboard,
-  Bell
+  Bell,
+  Coffee,
+  Heart
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -32,6 +35,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import Link from 'next/link';
+import placeholderImages from '@/app/lib/placeholder-images.json';
+import Image from 'next/image';
 
 export default function Home() {
   const { user } = useUser();
@@ -78,7 +84,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24">
+    <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24 px-4">
       
       {/* Upper Row: Welcome & Time Compact Side-by-Side */}
       <div className="grid grid-cols-2 gap-4 items-stretch">
@@ -237,6 +243,41 @@ export default function Home() {
           </button>
         ))}
       </div>
+
+      {/* Support Banner (Buy Me a Coffee) */}
+      <Link href="/support" className="block group">
+        <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 text-white relative transition-all duration-500 hover:scale-[1.01] hover:shadow-amber-500/20">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/20 rounded-full blur-3xl animate-pulse" />
+            
+            <CardContent className="p-8 sm:p-10 relative z-10">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-6 text-center sm:text-right">
+                        <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[2rem] flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform duration-500">
+                            <Coffee className="h-10 w-10 text-white" />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-2xl sm:text-3xl font-black">Buy Me a Coffee</h3>
+                            <p className="text-sm font-bold opacity-90">ادعم تطوير التطبيق واستمرارية فريق TECH</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="hidden lg:flex -space-x-4 space-x-reverse">
+                           {[1, 2, 3].map(i => (
+                               <div key={i} className="w-10 h-10 rounded-full border-2 border-amber-500 bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                                   <Heart className="h-4 w-4 text-white fill-current" />
+                               </div>
+                           ))}
+                        </div>
+                        <Button className="rounded-2xl h-14 px-8 bg-white text-amber-600 font-black text-lg hover:bg-slate-50 gap-2 shadow-xl">
+                            ادعمنا الآن
+                            <ArrowRight className="h-5 w-5 rotate-180" />
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+      </Link>
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="rounded-[3rem] border-0 shadow-2xl max-w-md overflow-hidden p-0 bg-white">

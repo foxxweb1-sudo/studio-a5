@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef } from "react";
@@ -27,7 +26,7 @@ import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2, ArrowRight } from "lucide-react";
+import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2, ArrowRight } from "lucide-center";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
@@ -99,7 +98,7 @@ export default function SignUp() {
 
       toast({
         title: "تم إنشاء الحساب بنجاح",
-        description: `مرحباً بك يا ${values.displayName}، جاري توجيهك...`,
+        description: `مرحباً بك يا ${values.displayName} في نظام ${config.appName}، جاري توجيهك...`,
       });
       router.push('/');
     } catch (error: any) {
@@ -124,7 +123,7 @@ export default function SignUp() {
       await signInWithPopup(auth, provider);
       toast({
         title: "تم التسجيل بنجاح",
-        description: "مرحباً بك في المنظومة عبر حساب جوجل.",
+        description: `مرحباً بك في نظام ${config.appName} عبر حساب جوجل.`,
       });
       router.push('/');
     } catch (error: any) {
@@ -326,7 +325,7 @@ export default function SignUp() {
                     />
                 </svg>
             )}
-            تسجيل سريع بجوجل
+            التسجيل عبر جوجل
           </Button>
           
           <div className="mt-10 text-center text-xs font-bold border-t border-white/5 pt-8 flex flex-col gap-2">

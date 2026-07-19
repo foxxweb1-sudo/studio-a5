@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -60,7 +59,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: "تم تسجيل الدخول بنجاح",
-        description: "مرحباً بك مجدداً في نظام الحضور الذكي.",
+        description: `مرحباً بك مجدداً في نظام ${config.appName}.`,
       });
       router.push('/');
     } catch (error: any) {
@@ -85,7 +84,7 @@ export default function Login() {
       await signInWithPopup(auth, provider);
       toast({
         title: "تم تسجيل الدخول بنجاح",
-        description: "مرحباً بك في نظام الحضور الذكي عبر حساب جوجل.",
+        description: `مرحباً بك في نظام ${config.appName} عبر حساب جوجل.`,
       });
       router.push('/');
     } catch (error: any) {
@@ -125,7 +124,7 @@ export default function Login() {
           <div className="space-y-1">
             <CardTitle className="text-4xl font-black tracking-tighter">دخول المعلمين</CardTitle>
             <CardDescription className="text-white/40 font-bold">
-              لوحة التحكم الذكية لـ {config.appName}
+              لوحة التحكم لـ {config.appName}
             </CardDescription>
           </div>
         </CardHeader>

@@ -9,13 +9,13 @@ import CookieConsent from '@/components/layout/CookieConsent';
 import FloatingSupport from '@/components/layout/FloatingSupport';
 
 export const metadata: Metadata = {
-  title: 'الحضور الذكي',
+  title: 'الحضور',
   description: 'تطبيق لإدارة الطلاب والمدفوعات بكفاءة تامة أوفلاين وأونلاين',
   manifest: '/manifest.json',
   themeColor: '#4F46E5',
   icons: {
-    icon: 'https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19',
-    apple: 'https://www.appcreator24.com/srv/imgs/gen/3816551_ico.png?v=19',
+    icon: 'https://i.ibb.co/Nbhqk4f/36465.png',
+    apple: 'https://i.ibb.co/Nbhqk4f/36465.png',
   },
 };
 
@@ -39,7 +39,7 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Smart Attendance" />
+        <meta name="apple-mobile-web-app-title" content="الحضور" />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider

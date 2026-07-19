@@ -87,7 +87,6 @@ export default function Home() {
         <Card className="border-0 shadow-xl rounded-[2.5rem] bg-gradient-to-br from-indigo-600 via-indigo-500 to-primary text-white overflow-hidden relative group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
             
-            {/* Notification Bell Button linked to Database */}
             <a 
               href={config.updatesUrl || '#'} 
               target="_blank" 
@@ -142,66 +141,73 @@ export default function Home() {
         <CardContent className="p-8 md:p-16 relative z-10 flex flex-col justify-center h-full">
             <div className="flex flex-col xl:flex-row gap-12 items-center">
                 
-                {/* Visual Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 w-full xl:w-[400px] shrink-0">
+                {/* Hero Text & Premium Actions (Right Side in RTL) */}
+                <div className="flex-grow text-center xl:text-right space-y-10 order-1">
+                    <div className="space-y-4">
+                        <h1 className="text-4xl md:text-7xl font-black leading-[1.1] tracking-tighter">
+                            إدارة ذكية <br/> 
+                            <span className="text-transparent bg-clip-text bg-gradient-to-l from-primary to-indigo-300">
+                              لمستقبل تعليمي أفضل
+                            </span>
+                        </h1>
+                        <p className="text-slate-400 text-base md:text-xl font-medium max-w-2xl xl:ml-0 xl:mr-auto leading-relaxed">
+                          تابع حضور طلابك ومدفوعاتهم بدقة متناهية وسهولة تامة.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-5 items-center xl:items-end">
+                        {/* Upper Buttons Row */}
+                        <div className="flex flex-wrap gap-4 justify-center xl:justify-start">
+                            <Button 
+                                onClick={(e) => handleProtectedClick(e, '/attendance')}
+                                className="rounded-[1.5rem] h-16 px-10 font-black gap-3 shadow-lg bg-blue-600 hover:bg-blue-700 text-lg transition-all"
+                            >
+                                <CalendarCheck className="h-6 w-6" /> تسجيل الحضور الآن
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                onClick={(e) => handleProtectedClick(e, '/students')}
+                                className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-base backdrop-blur-md"
+                            >
+                                <Users className="h-5 w-5" /> عرض جميع الطلاب
+                            </Button>
+                            <Button 
+                                variant="outline"
+                                onClick={(e) => handleProtectedClick(e, '/schedule')}
+                                className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-base"
+                            >
+                                <Clock className="h-5 w-5" /> مواعيد العمل
+                            </Button>
+                        </div>
+                        
+                        {/* Lower Button Row */}
+                        <Button 
+                            onClick={(e) => handleProtectedClick(e, '/accounting-period')}
+                            className="rounded-[1.5rem] h-16 px-12 font-black gap-2 bg-orange-600 hover:bg-orange-700 shadow-xl shadow-orange-600/20 text-lg w-full sm:w-auto"
+                        >
+                            <History className="h-5 w-5" /> الفترة المحاسبية
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Visual Stats Grid (Left Side in RTL) */}
+                <div className="grid grid-cols-2 gap-4 w-full xl:w-[420px] shrink-0 order-2">
                     {[
-                        { label: 'إجمالي الطلاب', value: stats.total, icon: Users, color: 'from-blue-500 to-indigo-500', shadow: 'shadow-blue-500/20' },
-                        { label: 'حضور اليوم', value: stats.attended, icon: CheckCircle2, color: 'from-emerald-500 to-teal-500', shadow: 'shadow-emerald-500/20' },
-                        { label: 'غياب اليوم', value: stats.absent, icon: UserX, color: 'from-rose-500 to-pink-500', shadow: 'shadow-rose-500/20' },
-                        { label: 'مدفوعات الشهر', value: stats.paid, icon: Wallet, color: 'from-amber-500 to-orange-500', shadow: 'shadow-amber-500/20' },
+                        { label: 'حضور اليوم', value: stats.attended, icon: CheckCircle2, color: 'text-emerald-500', shadow: 'shadow-emerald-500/20' },
+                        { label: 'إجمالي الطلاب', value: stats.total, icon: Users, color: 'text-blue-500', shadow: 'shadow-blue-500/20' },
+                        { label: 'مدفوعات الشهر', value: stats.paid, icon: Wallet, color: 'text-amber-500', shadow: 'shadow-amber-500/20' },
+                        { label: 'غياب اليوم', value: stats.absent, icon: Clock, color: 'text-rose-500', shadow: 'shadow-rose-500/20' },
                     ].map((s, i) => (
-                        <div key={i} className={`bg-white/[0.04] border border-white/10 p-6 rounded-[2.5rem] text-center space-y-2 hover:bg-white/[0.08] transition-all duration-500 group relative overflow-hidden ${s.shadow}`}>
-                            <div className={`mx-auto w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br ${s.color} text-white shadow-lg`}>
-                                <s.icon className="h-5 w-5" />
+                        <div key={i} className={`bg-white/[0.04] border border-white/10 p-7 rounded-[2.5rem] text-center space-y-2 hover:bg-white/[0.08] transition-all duration-500 group relative overflow-hidden`}>
+                            <div className={`mx-auto w-12 h-12 flex items-center justify-center rounded-2xl bg-white/[0.05] ${s.color} shadow-lg mb-3`}>
+                                <s.icon className="h-6 w-6" />
                             </div>
-                            <div className="text-3xl font-black tabular-nums tracking-tighter">{s.value}</div>
-                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">{s.label}</p>
+                            <div className="text-4xl font-black tabular-nums tracking-tighter">{s.value}</div>
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{s.label}</p>
                         </div>
                     ))}
                 </div>
 
-                {/* Hero Text & Premium Actions */}
-                <div className="flex-grow text-center xl:text-right space-y-10">
-                    <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-2xl border border-indigo-500/20">
-                            <Zap className="h-4 w-4 fill-current" />
-                            <span className="text-xs font-black uppercase tracking-widest">v3.0 Next-Gen Admin</span>
-                        </div>
-                        <h1 className="text-4xl md:text-7xl font-black leading-[1.1] tracking-tighter">
-                            الذكاء في <br/> <span className="text-transparent bg-clip-text bg-gradient-to-l from-primary to-indigo-300">إدارة التعليم</span>
-                        </h1>
-                        <p className="text-slate-400 text-base md:text-xl font-medium max-w-2xl xl:ml-0 xl:mr-auto leading-relaxed">بوابتك الرقمية المتطورة لمتابعة أدق تفاصيل طلابك بأسلوب عصري ومبسط.</p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-4 justify-center xl:justify-start">
-                        <Button 
-                            onClick={(e) => handleProtectedClick(e, '/attendance')}
-                            className="rounded-[1.5rem] h-16 px-8 font-black gap-3 shadow-lg bg-primary hover:bg-indigo-700 text-lg transition-all"
-                        >
-                            <CalendarCheck className="h-6 w-6" /> سجل الحضور
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            onClick={(e) => handleProtectedClick(e, '/students')}
-                            className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-base backdrop-blur-md"
-                        >
-                            <Users className="h-5 w-5" /> إدارة الطلاب
-                        </Button>
-                        <Button 
-                            onClick={(e) => handleProtectedClick(e, '/accounting-period')}
-                            className="rounded-[1.5rem] h-16 px-8 font-black gap-2 bg-amber-600 hover:bg-amber-700 shadow-xl shadow-amber-600/20 text-base"
-                        >
-                            <History className="h-5 w-5" /> المحاسبة
-                        </Button>
-                        <Button 
-                            variant="outline"
-                            onClick={(e) => handleProtectedClick(e, '/schedule')}
-                            className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-base"
-                        >
-                            <Clock className="h-5 w-5" /> المواعيد
-                        </Button>
-                    </div>
-                </div>
             </div>
         </CardContent>
       </Card>

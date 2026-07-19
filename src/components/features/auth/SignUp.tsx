@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
 import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2, ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -40,6 +41,7 @@ const formSchema = z.object({
 
 export default function SignUp() {
   const auth = useAuth();
+  const router = useRouter();
   const { config } = useAppConfig();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -99,12 +101,12 @@ export default function SignUp() {
         title: "تم إنشاء الحساب بنجاح",
         description: `مرحباً بك يا ${values.displayName}، جاري توجيهك...`,
       });
+      router.push('/');
     } catch (error: any) {
-      let description = "فشل إنشاء الحساب. قد يكون البريد مسجل مسبقاً.";
       toast({
         variant: "destructive",
         title: "خطأ في التسجيل",
-        description: description,
+        description: "فشل إنشاء الحساب. قد يكون البريد مسجل مسبقاً.",
       });
     } finally {
       setIsLoading(false);
@@ -124,6 +126,7 @@ export default function SignUp() {
         title: "تم التسجيل بنجاح",
         description: "مرحباً بك في المنظومة عبر حساب جوجل.",
       });
+      router.push('/');
     } catch (error: any) {
       toast({
         variant: "destructive",

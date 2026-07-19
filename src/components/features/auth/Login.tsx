@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
 import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, Loader2, Eye, EyeOff, ShieldCheck, Mail, ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -38,6 +39,7 @@ const formSchema = z.object({
 
 export default function Login() {
   const auth = useAuth();
+  const router = useRouter();
   const { config } = useAppConfig();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -60,12 +62,12 @@ export default function Login() {
         title: "تم تسجيل الدخول بنجاح",
         description: "مرحباً بك مجدداً في نظام الحضور الذكي.",
       });
+      router.push('/');
     } catch (error: any) {
-      let description = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
       toast({
         variant: "destructive",
         title: "فشل تسجيل الدخول",
-        description: description,
+        description: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
       });
     } finally {
       setIsLoading(false);
@@ -75,7 +77,6 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    // إعداد الـ Client ID الموفر من قبل المستخدم
     provider.setCustomParameters({
       client_id: '24940764496-i6sn5lurj8q2pt4bsbaro5r1uqboovb4.apps.googleusercontent.com'
     });
@@ -86,6 +87,7 @@ export default function Login() {
         title: "تم تسجيل الدخول بنجاح",
         description: "مرحباً بك في نظام الحضور الذكي عبر حساب جوجل.",
       });
+      router.push('/');
     } catch (error: any) {
       toast({
         variant: "destructive",

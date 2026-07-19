@@ -85,11 +85,6 @@ export default function Home() {
     }
   };
 
-  const handleBuyPlan = () => {
-    const message = encodeURIComponent("أهلاً فريق TECH، أريد الاشتراك في باقة المساعد الشخصي (100 ج.م شهرياً) لإدارة حسابي.");
-    window.open(`https://wa.me/${config.contactPhone}?text=${message}`, '_blank');
-  };
-
   return (
     <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24 px-4">
       
@@ -97,7 +92,7 @@ export default function Home() {
       <div className="grid grid-cols-2 gap-4 items-stretch">
         
         {/* Right: Compact Welcome Card */}
-        <Card className="border-0 shadow-xl rounded-[2.5rem] bg-gradient-to-br from-indigo-600 via-indigo-500 to-primary text-white overflow-hidden relative group">
+        <Card className="border-0 shadow-xl rounded-[2rem] bg-gradient-to-br from-indigo-600 via-indigo-500 to-primary text-white overflow-hidden relative group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
             
             <a 
@@ -132,7 +127,7 @@ export default function Home() {
         </Card>
 
         {/* Left: Compact Digital Clock */}
-        <Card className="border-0 shadow-xl rounded-[2.5rem] bg-white dark:bg-slate-900 p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+        <Card className="border-0 shadow-xl rounded-[2rem] bg-white dark:bg-slate-900 p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
             <div className="relative z-10 flex flex-col items-center text-center">
                 <div className="p-2 bg-primary/10 text-primary rounded-xl mb-2">
@@ -171,35 +166,33 @@ export default function Home() {
                     <div className="flex flex-col gap-5 items-center xl:items-end">
                         {/* Upper Buttons Row */}
                         <div className="flex flex-wrap gap-4 justify-center xl:justify-start">
-                            <Button 
+                            <button 
                                 onClick={(e) => handleProtectedClick(e, '/attendance')}
-                                className="rounded-[1.5rem] h-16 px-10 font-black gap-3 shadow-lg bg-blue-600 hover:bg-blue-700 text-lg transition-all"
+                                className="rounded-[1.5rem] h-16 px-10 font-black gap-3 shadow-lg bg-blue-600 hover:bg-blue-700 text-white text-lg transition-all flex items-center"
                             >
                                 <CalendarCheck className="h-6 w-6" /> تسجيل الحضور الآن
-                            </Button>
-                            <Button 
-                                variant="outline" 
+                            </button>
+                            <button 
                                 onClick={(e) => handleProtectedClick(e, '/students')}
-                                className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-base backdrop-blur-md"
+                                className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border border-white/10 bg-white/5 hover:bg-white/10 text-white text-base backdrop-blur-md flex items-center"
                             >
                                 <Users className="h-5 w-5" /> عرض جميع الطلاب
-                            </Button>
-                            <Button 
-                                variant="outline"
+                            </button>
+                            <button 
                                 onClick={(e) => handleProtectedClick(e, '/schedule')}
-                                className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-white text-base"
+                                className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border border-white/10 bg-white/5 hover:bg-white/10 text-white text-base flex items-center"
                             >
                                 <Clock className="h-5 w-5" /> مواعيد العمل
-                            </Button>
+                            </button>
                         </div>
                         
                         {/* Lower Button Row */}
-                        <Button 
+                        <button 
                             onClick={(e) => handleProtectedClick(e, '/accounting-period')}
-                            className="rounded-[1.5rem] h-16 px-12 font-black gap-2 bg-orange-600 hover:bg-orange-700 shadow-xl shadow-orange-600/20 text-lg w-full sm:w-auto"
+                            className="rounded-[1.5rem] h-16 px-12 font-black gap-2 bg-orange-600 hover:bg-orange-700 shadow-xl shadow-orange-600/20 text-white text-lg w-full sm:w-auto flex items-center justify-center"
                         >
                             <History className="h-5 w-5" /> الفترة المحاسبية
-                        </Button>
+                        </button>
                     </div>
                 </div>
 
@@ -276,10 +269,10 @@ export default function Home() {
                                </div>
                            ))}
                         </div>
-                        <Button className="rounded-2xl h-14 px-8 bg-white text-amber-600 font-black text-lg hover:bg-slate-50 gap-2 shadow-xl">
+                        <div className="rounded-2xl h-14 px-8 bg-white text-amber-600 font-black text-lg hover:bg-slate-50 gap-2 shadow-xl flex items-center">
                             ادعمنا الآن
                             <ArrowRight className="h-5 w-5 rotate-180" />
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </CardContent>
@@ -287,46 +280,47 @@ export default function Home() {
       </Link>
 
       {/* Plans Banner (Personal Assistant) */}
-      <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 text-white relative transition-all duration-500 hover:scale-[1.01] hover:shadow-emerald-500/20">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
-          <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-          
-          <CardContent className="p-8 sm:p-10 relative z-10">
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-                  <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-right">
-                      <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[2rem] flex items-center justify-center shadow-inner shrink-0">
-                          <UserCheck className="h-10 w-10 text-white" />
-                      </div>
-                      <div className="space-y-2">
-                          <div className="flex items-center gap-2 justify-center sm:justify-start">
-                              <h3 className="text-2xl sm:text-3xl font-black">باقة المساعد الشخصي</h3>
-                              <Badge className="bg-yellow-400 text-emerald-900 font-black px-2 py-0.5 rounded-lg text-[10px]">الأكثر مبيعاً</Badge>
-                          </div>
-                          <p className="text-sm font-bold opacity-90 leading-relaxed max-w-xl">
-                              احصل على مساعد متخصص مهمته إدارة حسابك بالكامل، تسجيل بيانات طلابك، ومتابعة حضورهم ومالياتهم، مع تواصل مباشر عبر WhatsApp على مدار الساعة.
-                          </p>
-                      </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-center lg:items-end gap-4 shrink-0">
-                      <div className="text-center lg:text-right">
-                          <div className="flex items-baseline gap-1 justify-center lg:justify-end">
-                              <span className="text-5xl font-black tabular-nums tracking-tighter">100</span>
-                              <span className="text-xl font-bold opacity-80">ج.م</span>
-                          </div>
-                          <p className="text-[10px] font-black uppercase tracking-widest opacity-60">اشتراك شهري شامل</p>
-                      </div>
-                      <Button 
-                          onClick={handleBuyPlan}
-                          className="rounded-2xl h-16 px-12 bg-white text-emerald-700 font-black text-xl hover:bg-emerald-50 gap-3 shadow-xl transition-all active:scale-95"
-                      >
-                          <Star className="h-6 w-6 fill-emerald-700" />
-                          اشترك الآن
-                      </Button>
-                  </div>
-              </div>
-          </CardContent>
-      </Card>
+      <Link href="/plans" className="block group">
+        <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 text-white relative transition-all duration-500 hover:scale-[1.01] hover:shadow-emerald-500/20">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+            
+            <CardContent className="p-8 sm:p-10 relative z-10">
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                    <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-right">
+                        <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[2rem] flex items-center justify-center shadow-inner shrink-0">
+                            <UserCheck className="h-10 w-10 text-white" />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 justify-center sm:justify-start">
+                                <h3 className="text-2xl sm:text-3xl font-black">باقة المساعد الشخصي</h3>
+                                <Badge className="bg-yellow-400 text-emerald-900 font-black px-2 py-0.5 rounded-lg text-[10px]">الأكثر مبيعاً</Badge>
+                            </div>
+                            <p className="text-sm font-bold opacity-90 leading-relaxed max-w-xl">
+                                احصل على مساعد متخصص مهمته إدارة حسابك بالكامل، تسجيل بيانات طلابك، ومتابعة حضورهم ومالياتهم، مع تواصل مباشر عبر WhatsApp على مدار الساعة.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-center lg:items-end gap-4 shrink-0">
+                        <div className="text-center lg:text-right">
+                            <div className="flex items-baseline gap-1 justify-center lg:justify-end">
+                                <span className="text-5xl font-black tabular-nums tracking-tighter">100</span>
+                                <span className="text-xl font-bold opacity-80">ج.م</span>
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">اشتراك شهري شامل</p>
+                        </div>
+                        <div 
+                            className="rounded-2xl h-16 px-12 bg-white text-emerald-700 font-black text-xl hover:bg-emerald-50 gap-3 shadow-xl transition-all active:scale-95 flex items-center"
+                        >
+                            <Star className="h-6 w-6 fill-emerald-700" />
+                            عرض التفاصيل
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+      </Link>
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="rounded-[3rem] border-0 shadow-2xl max-w-md overflow-hidden p-0 bg-white">

@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import SplashScreen from "./SplashScreen";
 
-const publicRoutes = ["/login", "/signup", "/forgot-password", "/", "/blog"];
+const publicRoutes = ["/login", "/signup", "/forgot-password", "/", "/blog", "/support", "/plans", "/privacy", "/terms"];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();

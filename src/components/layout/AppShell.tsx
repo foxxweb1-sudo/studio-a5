@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,7 +5,7 @@ import { BadgeCheck, LayoutGrid, User, Settings as SettingsIcon } from 'lucide-r
 import { useUser } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import Image from 'next/image';
-import Footer from './Footer';
+import AiAssistant from './AiAssistant';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import Link from 'next/link';
@@ -106,8 +105,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="container flex-grow py-10 max-w-screen-2xl px-6">
         {children}
       </main>
-      
-      <Footer />
+
+      {/* Floating AI Assistant Button */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <AiAssistant />
+      </div>
     </div>
   );
 }

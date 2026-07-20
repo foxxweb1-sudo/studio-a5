@@ -1,10 +1,10 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
     // 1. القراءة العامة لكافة سجلات الطلاب (الحضور، المدفوعات، الامتحانات، والبيانات)
-    // هذا الجزء يحل مشكلة بوابة الأهل ويسمح للمعلم برؤية قوائمه دون أي قيود
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
     match /{path=**}/payments/{id} { allow read: if true; }
@@ -12,13 +12,9 @@ service cloud.firestore {
 
     // 2. قواعد المستخدمين (المعلمين)
     match /users/{userId} {
-      // السماح للجميع برؤية بروفايل المعلم (الاسم واللوجو)
       allow read: if true;
-      
-      // السماح للمعلم صاحب الحساب أو الأدمن بالتحكم الكامل (كتابة وتعديل)
       allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'tech.support.app@gmail.com');
       
-      // حماية المجموعات الحساسة (مثل الإعدادات والجداول) لتكون للمالك فقط
       match /{allSub=**} {
         allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'tech.support.app@gmail.com');
       }
@@ -51,9 +47,9 @@ service cloud.firestore {
 
     // 4. قواعد أكواد التفعيل (إلغاء الإعلانات)
     match /activationCodes/{id} {
-      // المسؤول لديه صلاحية كاملة للقراءة والكتابة
+      // المسؤول لديه صلاحية كاملة
       allow read, write: if request.auth != null && request.auth.token.email.lower() == 'tech.support.app@gmail.com';
-      // المستخدمين يمكنهم القراءة فقط للتحقق من الأكواد المخصصة لهم
+      // المستخدمين يمكنهم البحث عن الكود الخاص بهم فقط باستخدام targetId
       allow read: if request.auth != null && (resource.data.targetId == request.auth.uid || resource.data.targetId == request.auth.token.email);
     }
   }

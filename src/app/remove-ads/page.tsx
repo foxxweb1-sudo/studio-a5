@@ -41,29 +41,23 @@ export default function RemoveAdsPage() {
 
     setIsActivating(true);
     try {
+      // تأكيد البحث عن الكود مع تقييده بالمستخدم الحالي لضمان عمل قواعد الأمان
       const q = query(
         collection(firestore, 'activationCodes'), 
         where('code', '==', activationCode.trim().toUpperCase()),
+        where('targetId', 'in', [user.uid, user.email || '']),
         where('isUsed', '==', false)
       );
       
       const snap = await getDocs(q);
       
       if (snap.empty) {
-        toast({ variant: "destructive", title: "كود غير صالح", description: "هذا الكود غير صحيح أو تم استخدامه مسبقاً." });
+        toast({ variant: "destructive", title: "كود غير صالح", description: "هذا الكود غير صحيح، أو تم استخدامه، أو ليس مخصصاً لهذا الحساب." });
         setIsActivating(false);
         return;
       }
 
       const codeDoc = snap.docs[0];
-      const codeData = codeDoc.data();
-
-      // التحقق إذا كان الكود مخصصاً لهذا المستخدم
-      if (codeData.targetId !== user.uid && codeData.targetId !== user.email) {
-        toast({ variant: "destructive", title: "كود غير مخصص", description: "هذا الكود مخصص لحساب آخر." });
-        setIsActivating(false);
-        return;
-      }
 
       // 1. تحديث حالة الكود
       await updateDoc(doc(firestore, 'activationCodes', codeDoc.id), {
@@ -81,7 +75,8 @@ export default function RemoveAdsPage() {
       toast({ title: "مبروك!", description: "تم تفعيل حسابك بدون إعلانات مدى الحياة بنجاح." });
       router.push('/settings');
     } catch (error) {
-      toast({ variant: "destructive", title: "خطأ في التفعيل" });
+      console.error(error);
+      toast({ variant: "destructive", title: "خطأ في التفعيل", description: "حدث خطأ أثناء الاتصال بالخادم." });
     } finally {
       setIsActivating(false);
     }

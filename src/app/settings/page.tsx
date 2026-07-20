@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -33,9 +32,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { doc } from 'firebase/firestore';
+import { ADMIN_EMAIL } from '@/lib/constants';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -48,6 +48,8 @@ export default function SettingsPage() {
 
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: profile } = useDoc<any>(userRef);
+
+  const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
   const handleProtectedClick = (e: React.MouseEvent, href: string) => {
     if (!user) {
@@ -80,7 +82,9 @@ export default function SettingsPage() {
   };
 
   const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
-  const showRemoveAds = (config.enableAds1 || config.enableAds2) && !profile?.isAdFree;
+  
+  // الإعلانات تعمل دائماً لغير المشتركين، لذا نظهر زر الإلغاء دائماً إذا لم يكن الحساب مفعلاً
+  const showRemoveAds = !profile?.isAdFree && !isAdmin;
 
   return (
     <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-12 px-4">

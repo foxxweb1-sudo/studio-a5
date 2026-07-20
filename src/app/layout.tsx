@@ -53,6 +53,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="الحضور" />
         <meta name="theme-color" content="#4F46E5" />
+        
+        {/* Verification & Monetization Tags */}
+        <meta name="yandex-verification" content="0faaccb6c44771f0" />
+        <meta name="monetag" content="c19798fcf2477911030e84ada43ae778" />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider

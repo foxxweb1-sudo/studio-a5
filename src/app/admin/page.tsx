@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -31,7 +31,8 @@ import {
   ShieldAlert,
   BadgeCheck,
   ZapOff,
-  Key
+  Key,
+  Copy
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -186,6 +187,21 @@ export default function AdminPage() {
     } finally {
       setIsGeneratingCode(false);
     }
+  };
+
+  const handleDeleteCode = async (id: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'activationCodes', id));
+      toast({ title: "تم حذف الكود بنجاح" });
+    } catch (error) {
+      toast({ variant: "destructive", title: "فشل الحذف" });
+    }
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast({ title: "تم نسخ الكود", description: code });
   };
 
   const handleGrantReview = async () => {
@@ -467,6 +483,7 @@ export default function AdminPage() {
                                             <TableHead className="text-right">المستهدف</TableHead>
                                             <TableHead className="text-center">الحالة</TableHead>
                                             <TableHead className="text-right px-6">تاريخ الإنشاء</TableHead>
+                                            <TableHead className="text-center px-6">إجراءات</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -483,6 +500,26 @@ export default function AdminPage() {
                                                 </TableCell>
                                                 <TableCell className="px-6 text-[10px] text-slate-400">
                                                     {c.createdAt?.toDate ? new Date(c.createdAt.toDate()).toLocaleString('ar-EG') : '...'}
+                                                </TableCell>
+                                                <TableCell className="text-center px-6">
+                                                  <div className="flex items-center justify-center gap-1">
+                                                    <Button 
+                                                      variant="ghost" 
+                                                      size="icon" 
+                                                      className="h-8 w-8 text-indigo-600 hover:bg-indigo-50" 
+                                                      onClick={() => handleCopyCode(c.code)}
+                                                    >
+                                                      <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button 
+                                                      variant="ghost" 
+                                                      size="icon" 
+                                                      className="h-8 w-8 text-rose-500 hover:bg-rose-50" 
+                                                      onClick={() => handleDeleteCode(c.id)}
+                                                    >
+                                                      <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                  </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))}

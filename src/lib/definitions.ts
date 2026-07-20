@@ -119,6 +119,7 @@ export type GlobalConfig = {
   twitter?: string;
   telegram?: string;
   techStoreUrl?: string;
+  apkDownloadUrl?: string;
   cookiePolicyUrl?: string;
   updatesUrl?: string;
   lastRulesUpdate?: FieldValue;

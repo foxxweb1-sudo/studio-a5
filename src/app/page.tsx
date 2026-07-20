@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -29,11 +30,23 @@ import {
   Heart,
   UserCheck,
   Star,
-  DownloadCloud
+  DownloadCloud,
+  Smartphone
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -86,6 +99,12 @@ export default function Home() {
     }
   };
 
+  const handleDownloadApk = () => {
+    if (config.apkDownloadUrl && config.apkDownloadUrl !== '#') {
+      window.open(config.apkDownloadUrl, '_blank');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24 px-4">
       
@@ -119,6 +138,29 @@ export default function Home() {
                 >
                   <DownloadCloud className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button 
+                      className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl transition-all border border-white/10 hover:scale-110 active:scale-95 group/apk"
+                      title="تحميل تطبيق الأندرويد APK"
+                    >
+                      <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-300" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-[2.5rem]">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-right text-xl font-black">تحميل تطبيق المنصة (APK)</AlertDialogTitle>
+                      <AlertDialogDescription className="text-right font-bold leading-relaxed">
+                        أنت على وشك التوجه لتحميل النسخة الخاصة بنظام الأندرويد (APK). يرجى التأكد من السماح بتثبيت التطبيقات من مصادر غير معروفة في إعدادات هاتفك.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-row-reverse gap-2">
+                      <AlertDialogAction onClick={handleDownloadApk} className="bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold flex-1 h-12">تأكيد التوجيه</AlertDialogAction>
+                      <AlertDialogCancel className="rounded-xl font-bold flex-1 h-12">إلغاء</AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
             </div>
 
             <CardContent className="h-full p-4 sm:p-6 flex flex-col justify-center relative z-10">

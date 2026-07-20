@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -19,6 +20,7 @@ export const DEFAULT_FACEBOOK = "https://web.facebook.com/share/g/18Ky7vbzqF/";
 export const DEFAULT_TWITTER = "https://x.com/tqnyt170296";
 export const DEFAULT_TELEGRAM = "https://t.me/TqnyatStore";
 export const DEFAULT_TECH_STORE = "https://techstore-servers.vercel.app/";
+export const DEFAULT_APK_URL = "#";
 export const DEFAULT_COOKIE_POLICY_URL = "/privacy";
 export const DEFAULT_UPDATES_URL = "#";
 
@@ -46,6 +48,7 @@ export function useAppConfig() {
     twitter: config?.twitter || DEFAULT_TWITTER,
     telegram: config?.telegram || DEFAULT_TELEGRAM,
     techStoreUrl: config?.techStoreUrl || DEFAULT_TECH_STORE,
+    apkDownloadUrl: config?.apkDownloadUrl || DEFAULT_APK_URL,
     cookiePolicyUrl: config?.cookiePolicyUrl || DEFAULT_COOKIE_POLICY_URL,
     updatesUrl: config?.updatesUrl || DEFAULT_UPDATES_URL,
   }), [
@@ -62,6 +65,7 @@ export function useAppConfig() {
     config?.twitter,
     config?.telegram,
     config?.techStoreUrl,
+    config?.apkDownloadUrl,
     config?.cookiePolicyUrl,
     config?.updatesUrl
   ]);

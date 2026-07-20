@@ -32,7 +32,8 @@ import {
   Bell,
   UploadCloud,
   Megaphone,
-  EyeOff
+  EyeOff,
+  Smartphone
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { serverTimestamp } from 'firebase/firestore';
@@ -58,6 +59,7 @@ export default function AdminAppSettingsPage() {
     twitter: '',
     telegram: '',
     techStoreUrl: '',
+    apkDownloadUrl: '',
     cookiePolicyUrl: '',
     updatesUrl: '',
     enableAds1: false,
@@ -96,6 +98,7 @@ export default function AdminAppSettingsPage() {
         twitter: config.twitter || '',
         telegram: config.telegram || '',
         techStoreUrl: config.techStoreUrl || '',
+        apkDownloadUrl: config.apkDownloadUrl || '',
         cookiePolicyUrl: config.cookiePolicyUrl || '',
         updatesUrl: config.updatesUrl || '',
         enableAds1: !!config.enableAds1,
@@ -369,6 +372,17 @@ export default function AdminAppSettingsPage() {
                       onChange={(e) => setFormData({...formData, whatsappChannel: e.target.value})}
                       placeholder="رابط القناة..."
                       className="rounded-xl h-11 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-indigo-600" /> رابط تحميل APK
+                    </Label>
+                    <Input 
+                      value={formData.apkDownloadUrl}
+                      onChange={(e) => setFormData({...formData, apkDownloadUrl: e.target.value})}
+                      placeholder="https://..."
+                      className="rounded-xl h-11 text-xs font-mono"
                     />
                   </div>
                   <div className="space-y-2">

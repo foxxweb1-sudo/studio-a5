@@ -28,7 +28,8 @@ import {
   Coffee,
   Heart,
   UserCheck,
-  Star
+  Star,
+  DownloadCloud
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -95,19 +96,30 @@ export default function Home() {
         <Card className="border-0 shadow-xl rounded-[2rem] bg-gradient-to-br from-indigo-600 via-indigo-500 to-primary text-white overflow-hidden relative group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
             
-            <a 
-              href={config.updatesUrl || '#'} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="absolute top-4 left-4 z-20 p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl transition-all border border-white/10 group-hover:scale-110 active:scale-95"
-              title="الإشعارات والتحديثات"
-            >
-              <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="absolute top-2 right-2 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-              </span>
-            </a>
+            {/* Action Buttons Column (Top Left) */}
+            <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+                <a 
+                  href={config.updatesUrl || '#'} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl transition-all border border-white/10 hover:scale-110 active:scale-95 group/bell relative"
+                  title="الإشعارات والتحديثات"
+                >
+                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="absolute top-2 right-2 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                  </span>
+                </a>
+
+                <button 
+                  onClick={() => router.push('/offline-sync')}
+                  className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl transition-all border border-white/10 hover:scale-110 active:scale-95 group/sync"
+                  title="العمل بدون إنترنت ومزامنة البيانات"
+                >
+                  <DownloadCloud className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+            </div>
 
             <CardContent className="h-full p-4 sm:p-6 flex flex-col justify-center relative z-10">
                 <div className="space-y-1 text-right">

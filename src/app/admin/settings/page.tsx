@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
@@ -11,11 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { 
   ArrowLeft, 
   Loader2, 
   Save, 
-  Image as ImageIcon, 
   Layout, 
   Wallpaper, 
   Database, 
@@ -23,18 +24,17 @@ import {
   AlertCircle,
   Link as LinkIcon,
   Phone,
-  Mail,
   Facebook,
   Twitter,
   Send,
-  LifeBuoy,
   Tag,
   ShieldCheck,
   Bell,
-  UploadCloud
+  UploadCloud,
+  Megaphone,
+  EyeOff
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 import { serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -59,7 +59,9 @@ export default function AdminAppSettingsPage() {
     telegram: '',
     techStoreUrl: '',
     cookiePolicyUrl: '',
-    updatesUrl: ''
+    updatesUrl: '',
+    enableAds1: false,
+    enableAds2: false
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -95,7 +97,9 @@ export default function AdminAppSettingsPage() {
         telegram: config.telegram || '',
         techStoreUrl: config.techStoreUrl || '',
         cookiePolicyUrl: config.cookiePolicyUrl || '',
-        updatesUrl: config.updatesUrl || ''
+        updatesUrl: config.updatesUrl || '',
+        enableAds1: !!config.enableAds1,
+        enableAds2: !!config.enableAds2
       });
     }
   }, [config]);
@@ -212,6 +216,7 @@ export default function AdminAppSettingsPage() {
         <TabsList className="bg-slate-100 p-1 rounded-xl mb-8 flex flex-wrap h-auto gap-1">
           <TabsTrigger value="identity" className="rounded-lg font-bold py-2.5">الهوية والصور</TabsTrigger>
           <TabsTrigger value="social" className="rounded-lg font-bold py-2.5">التواصل والروابط</TabsTrigger>
+          <TabsTrigger value="ads" className="rounded-lg font-bold py-2.5">إدارة الإعلانات</TabsTrigger>
           <TabsTrigger value="system" className="rounded-lg font-bold py-2.5">صيانة النظام</TabsTrigger>
         </TabsList>
 
@@ -423,6 +428,56 @@ export default function AdminAppSettingsPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="ads" className="space-y-6">
+          <Card className="border-0 shadow-sm rounded-3xl overflow-hidden border-r-4 border-amber-500">
+            <CardHeader className="bg-amber-50 p-6 border-b">
+              <CardTitle className="text-lg flex items-center gap-2 text-amber-700">
+                <Megaphone className="h-5 w-5" />
+                إدارة الأكواد الخارجية والتحسينات
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* مفتاح الكود الأول */}
+                <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-md transition-all">
+                  <div className="space-y-1">
+                    <h4 className="font-black text-sm text-slate-800">تفعيل الكود المباشر (Direct Link)</h4>
+                    <p className="text-[10px] text-slate-500 font-bold">رابط: omg10.com/4/11350283</p>
+                  </div>
+                  <Switch 
+                    checked={formData.enableAds1} 
+                    onCheckedChange={(val) => setFormData({...formData, enableAds1: val})}
+                  />
+                </div>
+
+                {/* مفتاح الكود الثاني */}
+                <div className="flex items-center justify-between p-6 bg-slate-50 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-md transition-all">
+                  <div className="space-y-1">
+                    <h4 className="font-black text-sm text-slate-800">تفعيل إعلانات الفينييت (Vignette)</h4>
+                    <p className="text-[10px] text-slate-500 font-bold">كود المنطقة: 11350285</p>
+                  </div>
+                  <Switch 
+                    checked={formData.enableAds2} 
+                    onCheckedChange={(val) => setFormData({...formData, enableAds2: val})}
+                  />
+                </div>
+              </div>
+
+              <div className="p-5 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-4">
+                <div className="p-2 bg-blue-500 rounded-xl text-white">
+                  <EyeOff className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-black text-blue-900 text-sm">وضع "عدم إزعاج المسؤول" مفعل تلقائياً</h4>
+                  <p className="text-[11px] text-blue-700 leading-relaxed font-bold">
+                    هذه الأكواد **لن تظهر لك مطلقاً** أثناء تصفحك للتطبيق بحساب المسؤول ({ADMIN_EMAIL}) لضمان تركيزك على العمل. ستظهر فقط للمستخدمين والزوار العاديين عند تفعيلها.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">

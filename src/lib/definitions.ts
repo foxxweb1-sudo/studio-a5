@@ -122,4 +122,6 @@ export type GlobalConfig = {
   cookiePolicyUrl?: string;
   updatesUrl?: string;
   lastRulesUpdate?: FieldValue;
+  enableAds1?: boolean;
+  enableAds2?: boolean;
 };

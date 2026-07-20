@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -7,6 +8,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import CookieConsent from '@/components/layout/CookieConsent';
 import FloatingSupport from '@/components/layout/FloatingSupport';
+import ExternalScripts from '@/components/layout/ExternalScripts';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
@@ -88,6 +90,7 @@ export default function RootLayout({
                 {children}
                 <CookieConsent />
                 <FloatingSupport />
+                <ExternalScripts />
               </AppShell>
             </AuthGuard>
           </FirebaseClientProvider>

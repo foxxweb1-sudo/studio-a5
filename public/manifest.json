@@ -1,7 +1,7 @@
 {
   "name": "الحضور",
   "short_name": "الحضور",
-  "description": "تطبيق إدارة حضور الطلاب والمدفوعات",
+  "description": "تطبيق إدارة الطلاب والمدفوعات والحضور",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#4F46E5",

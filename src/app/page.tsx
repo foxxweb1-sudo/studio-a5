@@ -78,7 +78,7 @@ export default function Home() {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // لا تظهر الزر إذا كان المستخدم يستخدم التطبيق بالفعل
+      // إظهار الإشعار إذا لم يكن مثبتاً بالفعل
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setIsInstallable(true);
       }
@@ -119,12 +119,15 @@ export default function Home() {
   };
 
   const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      toast({ title: "التثبيت متاح عبر القائمة", description: "يمكنك تثبيت التطبيق من إعدادات المتصفح (Add to Home Screen)." });
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setIsInstallable(false);
-      toast({ title: "شكراً لك!", description: "يتم الآن تثبيت التطبيق على جهازك." });
+      toast({ title: "شكراً لك!", description: "يتم الآن إضافة الحضور إلى شاشتك الرئيسية." });
     }
     setDeferredPrompt(null);
   };

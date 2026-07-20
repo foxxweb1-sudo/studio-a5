@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -52,6 +51,7 @@ export default function RootLayout({
         />
         <link rel="icon" href="https://i.ibb.co/Nbhqk4f/36465.png?v=2" />
         <link rel="apple-touch-icon" href="https://i.ibb.co/Nbhqk4f/36465.png?v=2" />
+        <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="الحضور" />

@@ -145,7 +145,9 @@ export default function Home() {
                       className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl transition-all border border-white/10 hover:scale-110 active:scale-95 group/apk"
                       title="تحميل تطبيق الأندرويد APK"
                     >
-                      <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-300" />
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 sm:h-5 sm:w-5 fill-emerald-300" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.523 15.3414c-.551 0-.999-.448-.999-.999s.448-.999.999-.999.999.448.999.999-.448.999-.999.999m-11.046 0c-.551 0-.999-.448-.999-.999s.448-.999.999-.999.999.448.999.999-.448.999-.999.999m11.4045-6.02l1.9973-3.4592a.416.416 0 10-.7205-.416l-2.0223 3.5028C14.0045 8.3514 13.0374 8.0163 12 8.0163c-1.0374 0-2.0045.3351-2.856 1.009L7.1217 5.5225a.416.416 0 10-.7205.416L8.3985 9.3214C6.0125 10.514 4.3983 12.8716 4.3983 15.656h15.2034c0-2.7844-1.6142-5.142-3.9997-6.3346"/>
+                      </svg>
                     </button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="rounded-[2.5rem]">
@@ -403,3 +405,4 @@ export default function Home() {
     </div>
   );
 }
+

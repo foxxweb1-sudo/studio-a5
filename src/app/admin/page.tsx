@@ -26,7 +26,8 @@ import {
   Star,
   ShieldAlert,
   BadgeCheck,
-  Info
+  Info,
+  Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

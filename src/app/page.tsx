@@ -132,7 +132,7 @@ export default function Home() {
                 </a>
 
                 <button 
-                  onClick={() => router.push('/offline-sync')}
+                  onClick={(e) => handleProtectedClick(e, '/offline-sync')}
                   className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl transition-all border border-white/10 hover:scale-110 active:scale-95 group/sync"
                   title="العمل بدون إنترنت ومزامنة البيانات"
                 >

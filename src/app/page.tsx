@@ -11,27 +11,20 @@ import {
   LogIn,
   UserPlus,
   ShieldCheck,
-  Calendar as CalendarIcon,
-  UserX,
-  CheckCircle2,
-  School,
-  Building2,
-  GraduationCap,
   CalendarCheck,
   History,
   ArrowRight,
   Sparkles,
-  Zap,
-  TrendingUp,
-  LayoutDashboard,
-  Bell,
+  DownloadCloud,
+  AppWindow,
+  School,
+  Building2,
+  GraduationCap,
   Coffee,
   Heart,
   UserCheck,
   Star,
-  DownloadCloud,
-  Smartphone,
-  AppWindow
+  Bell
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -51,10 +44,8 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import Link from 'next/link';
-import placeholderImages from '@/app/lib/placeholder-images.json';
-import Image from 'next/image';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const { user } = useUser();
@@ -70,15 +61,27 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
+    // فحص إذا كان التطبيق يعمل بالفعل كـ Standalone
+    const checkStandalone = () => {
+      if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+        setIsStandalone(true);
+      }
+    };
+    checkStandalone();
+
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setIsInstallable(true);
+      // لا تظهر الزر إذا كان المستخدم يستخدم التطبيق بالفعل
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        setIsInstallable(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -135,7 +138,7 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24 px-4">
       
-      {isInstallable && (
+      {isInstallable && !isStandalone && (
         <div className="animate-in slide-in-from-top-4 duration-700">
            <Card className="border-0 shadow-2xl rounded-[2rem] bg-indigo-900 text-white overflow-hidden relative group">
               <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] bg-[length:250%_250%] animate-[shimmer_5s_infinite]" />
@@ -145,8 +148,8 @@ export default function Home() {
                         <AppWindow className="h-8 w-8 text-primary-foreground" />
                       </div>
                       <div>
-                        <h4 className="text-xl font-black">تثبيت التطبيق على جهازك</h4>
-                        <p className="text-xs font-medium text-white/70">استخدم المنصة كأنه تطبيق أصلي، أسرع وبدون إنترنت.</p>
+                        <h4 className="text-xl font-black">تثبيت تطبيق الحضور</h4>
+                        <p className="text-xs font-medium text-white/70">احصل على تجربة أسرع وإمكانية العمل بدون إنترنت عند تثبيت التطبيق على جهازك.</p>
                       </div>
                   </div>
                   <Button 
@@ -260,7 +263,7 @@ export default function Home() {
                             </span>
                         </h1>
                         <p className="text-slate-400 text-base md:text-xl font-medium max-w-2xl xl:ml-0 xl:mr-auto leading-relaxed">
-                          تابع حضور طلابك ومدفوعاتهم بدقة متناهية وسهولة تامة عبر تطبيق {config.appName}.
+                          تابع حضور طلابك ومدفوعاتهم بدقة متناهية وسهولة تامة عبر تطبيق الحضور.
                         </p>
                     </div>
 
@@ -297,7 +300,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-2 gap-4 w-full xl:w-[420px] shrink-0 order-2">
                     {[
-                        { label: 'حضور اليوم', value: stats.attended, icon: CheckCircle2, color: 'text-emerald-500', shadow: 'shadow-emerald-500/20' },
+                        { label: 'حضور اليوم', value: stats.attended, icon: CalendarCheck, color: 'text-emerald-500', shadow: 'shadow-emerald-500/20' },
                         { label: 'إجمالي الطلاب', value: stats.total, icon: Users, color: 'text-blue-500', shadow: 'shadow-blue-500/20' },
                         { label: 'مدفوعات الشهر', value: stats.paid, icon: Wallet, color: 'text-amber-500', shadow: 'shadow-amber-500/20' },
                         { label: 'غياب اليوم', value: stats.absent, icon: Clock, color: 'text-rose-500', shadow: 'shadow-rose-500/20' },
@@ -354,17 +357,10 @@ export default function Home() {
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-2xl sm:text-3xl font-black">Buy Me a Coffee</h3>
-                            <p className="text-sm font-bold opacity-90">ادعم تطوير تطبيق {config.appName} واستمرارية فريق TECH</p>
+                            <p className="text-sm font-bold opacity-90">ادعم تطوير تطبيق الحضور واستمرارية فريق TECH</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="hidden lg:flex -space-x-4 space-x-reverse">
-                           {[1, 2, 3].map(i => (
-                               <div key={i} className="w-10 h-10 rounded-full border-2 border-amber-500 bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                                   <Heart className="h-4 w-4 text-white fill-current" />
-                               </div>
-                           ))}
-                        </div>
                         <div className="rounded-2xl h-14 px-8 bg-white text-amber-600 font-black text-lg hover:bg-slate-50 gap-2 shadow-xl flex items-center">
                             ادعمنا الآن
                             <ArrowRight className="h-5 w-5 rotate-180" />
@@ -392,25 +388,15 @@ export default function Home() {
                                 <Badge className="bg-yellow-400 text-emerald-900 font-black px-2 py-0.5 rounded-lg text-[10px]">الأكثر مبيعاً</Badge>
                             </div>
                             <p className="text-sm font-bold opacity-90 leading-relaxed max-w-xl">
-                                احصل على مساعد متخصص مهمته إدارة حسابك بالكامل، تسجيل بيانات طلابك، ومتابعة حضورهم ومالياتهم، مع تواصل مباشر عبر WhatsApp على مدار الساعة.
+                                احصل على مساعد متخصص مهمته إدارة حسابك بالكامل، تسجيل بيانات طلابك، ومتابعة حضورهم ومالياتهم.
                             </p>
                         </div>
                     </div>
-                    
-                    <div className="flex flex-col items-center lg:items-end gap-4 shrink-0">
-                        <div className="text-center lg:text-right">
-                            <div className="flex items-baseline gap-1 justify-center lg:justify-end">
-                                <span className="text-5xl font-black tabular-nums tracking-tighter">100</span>
-                                <span className="text-xl font-bold opacity-80">ج.م</span>
-                            </div>
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">اشتراك شهري شامل</p>
-                        </div>
-                        <div 
-                            className="rounded-2xl h-16 px-12 bg-white text-emerald-700 font-black text-xl hover:bg-emerald-50 gap-3 shadow-xl transition-all active:scale-95 flex items-center"
-                        >
-                            <Star className="h-6 w-6 fill-emerald-700" />
-                            عرض التفاصيل
-                        </div>
+                    <div 
+                        className="rounded-2xl h-16 px-12 bg-white text-emerald-700 font-black text-xl hover:bg-emerald-50 gap-3 shadow-xl flex items-center"
+                    >
+                        <Star className="h-6 w-6 fill-emerald-700" />
+                        عرض التفاصيل
                     </div>
                 </div>
             </CardContent>

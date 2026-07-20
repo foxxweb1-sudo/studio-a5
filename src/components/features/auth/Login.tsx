@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -76,9 +77,6 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-      client_id: '24940764496-i6sn5lurj8q2pt4bsbaro5r1uqboovb4.apps.googleusercontent.com'
-    });
 
     try {
       await signInWithPopup(auth, provider);

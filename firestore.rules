@@ -48,5 +48,13 @@ service cloud.firestore {
     match /reviewPermissions/{id} { 
       allow read, write: if request.auth != null; 
     }
+
+    // 4. قواعد أكواد التفعيل (إلغاء الإعلانات)
+    match /activationCodes/{id} {
+      // المسؤول لديه صلاحية كاملة للقراءة والكتابة
+      allow read, write: if request.auth != null && request.auth.token.email.lower() == 'tech.support.app@gmail.com';
+      // المستخدمين يمكنهم القراءة فقط للتحقق من الأكواد المخصصة لهم
+      allow read: if request.auth != null && (resource.data.targetId == request.auth.uid || resource.data.targetId == request.auth.token.email);
+    }
   }
 }

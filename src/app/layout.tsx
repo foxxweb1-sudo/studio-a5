@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -8,7 +7,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import CookieConsent from '@/components/layout/CookieConsent';
 import FloatingSupport from '@/components/layout/FloatingSupport';
-import ExternalScripts from '@/components/layout/ExternalScripts';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
@@ -51,7 +49,6 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap"
           rel="stylesheet"
         />
-        {/* إجبار المتصفح على تحديث الأيقونة عبر إضافة query string */}
         <link rel="icon" href="https://i.ibb.co/Nbhqk4f/36465.png?v=2" />
         <link rel="apple-touch-icon" href="https://i.ibb.co/Nbhqk4f/36465.png?v=2" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -59,13 +56,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="الحضور" />
         <meta name="theme-color" content="#4F46E5" />
         
-        {/* Verification & Monetization Tags */}
         <meta name="yandex-verification" content="0faaccb6c44771f0" />
-        <meta name="monetag" content="c19798fcf2477911030e84ada43ae778" />
         <meta name="google-site-verification" content="-DbtwtLAsT3hmizJuQZ9XTSdTSRjJUEWIs-au398y3w" />
       </head>
       <body className="font-body antialiased">
-        {/* Google tag (gtag.js) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-9M1S40WVMH"
           strategy="afterInteractive"
@@ -90,7 +84,6 @@ export default function RootLayout({
                 {children}
                 <CookieConsent />
                 <FloatingSupport />
-                <ExternalScripts />
               </AppShell>
             </AuthGuard>
           </FirebaseClientProvider>

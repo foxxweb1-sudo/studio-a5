@@ -8,7 +8,6 @@ export type UserProfile = {
   photoURL?: string;
   isBlocked?: boolean;
   isVerified?: boolean;
-  isAdFree?: boolean;
   lastLogin?: FieldValue;
 };
 
@@ -59,14 +58,6 @@ export type Review = {
   userPhoto?: string;
   rating: number;
   comment: string;
-  createdAt: FieldValue | any;
-};
-
-export type ActivationCode = {
-  id: string;
-  code: string;
-  targetId: string; // email or uid
-  isUsed: boolean;
   createdAt: FieldValue | any;
 };
 

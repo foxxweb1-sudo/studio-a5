@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -18,21 +18,15 @@ import {
   Fingerprint,
   Settings,
   Database,
-  ChevronRight,
   Clock,
   CheckCircle2,
   XCircle,
   Trash2,
   CalendarClock,
-  GraduationCap,
-  MessageSquareQuote,
   Star,
-  Plus,
   ShieldAlert,
   BadgeCheck,
-  ZapOff,
-  Key,
-  Copy
+  Info
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,17 +38,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Info } from 'lucide-react';
-import { DeletionRequest, Review, ActivationCode } from '@/lib/definitions';
+import { DeletionRequest, Review } from '@/lib/definitions';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
@@ -75,11 +60,9 @@ export default function AdminPage() {
   const [manualUid, setManualUid] = useState('');
   const [verifyUid, setVerifyUid] = useState('');
   const [reviewUid, setReviewUid] = useState('');
-  const [activationTarget, setActivationTarget] = useState('');
   const [isProcessingManual, setIsProcessingManual] = useState(false);
   const [isProcessingVerify, setIsProcessingVerify] = useState(false);
   const [isGrantingReview, setIsProcessingReview] = useState(false);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
@@ -92,11 +75,6 @@ export default function AdminPage() {
     firestore ? query(collection(firestore, 'reviews'), orderBy('createdAt', 'desc')) : null,
   [firestore]);
   const { data: reviews, isLoading: reviewsLoading } = useCollection<Review>(reviewsQuery);
-
-  const activationCodesQuery = useMemoFirebase(() => 
-    firestore ? query(collection(firestore, 'activationCodes'), orderBy('createdAt', 'desc')) : null,
-  [firestore]);
-  const { data: activationCodes, isLoading: codesLoading } = useCollection<ActivationCode>(activationCodesQuery);
 
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
@@ -167,41 +145,6 @@ export default function AdminPage() {
     } finally {
       setIsProcessingVerify(false);
     }
-  };
-
-  const handleGenerateCode = async () => {
-    if (!activationTarget.trim() || !firestore) return;
-    setIsGeneratingCode(true);
-    try {
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      await addDoc(collection(firestore, 'activationCodes'), {
-        code,
-        targetId: activationTarget.trim(),
-        isUsed: false,
-        createdAt: serverTimestamp()
-      });
-      toast({ title: "تم توليد كود بنجاح", description: `الكود: ${code}` });
-      setActivationTarget('');
-    } catch (error) {
-      toast({ variant: "destructive", title: "فشل توليد الكود" });
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  };
-
-  const handleDeleteCode = async (id: string) => {
-    if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'activationCodes', id));
-      toast({ title: "تم حذف الكود بنجاح" });
-    } catch (error) {
-      toast({ variant: "destructive", title: "فشل الحذف" });
-    }
-  };
-
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast({ title: "تم نسخ الكود", description: code });
   };
 
   const handleGrantReview = async () => {
@@ -314,7 +257,6 @@ export default function AdminPage() {
        <Tabs defaultValue="users" className="w-full">
             <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 w-full flex overflow-x-auto justify-start h-auto">
                 <TabsTrigger value="users" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المستخدمين</TabsTrigger>
-                <TabsTrigger value="ads" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">أكواد التفعيل</TabsTrigger>
                 <TabsTrigger value="reviews" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">التقييمات</TabsTrigger>
                 <TabsTrigger value="deletions" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial relative">
                     طلبات الحذف
@@ -439,95 +381,6 @@ export default function AdminPage() {
                         )
                     })}
                   </div>
-                </div>
-            </TabsContent>
-
-            <TabsContent value="ads">
-                <div className="space-y-6">
-                    <Card className="border-2 border-indigo-500/10 shadow-none rounded-3xl overflow-hidden bg-indigo-500/5">
-                        <CardContent className="p-6">
-                            <div className="flex flex-col lg:flex-row gap-4 items-end">
-                                <div className="space-y-2 flex-grow w-full">
-                                    <label className="text-xs font-bold text-indigo-600 px-1 flex items-center gap-2">
-                                        <ZapOff className="h-4 w-4" />
-                                        توليد كود إلغاء إعلانات (UID أو بريد)
-                                    </label>
-                                    <Input 
-                                        placeholder="أدخل البريد أو الـ UID للمستلم..." 
-                                        className="h-12 bg-white rounded-xl border-indigo-100"
-                                        value={activationTarget}
-                                        onChange={(e) => setActivationTarget(e.target.value)}
-                                    />
-                                </div>
-                                <Button className="rounded-xl h-12 font-bold px-8 bg-indigo-600 hover:bg-indigo-700 w-full lg:w-auto" onClick={handleGenerateCode} disabled={isGeneratingCode || !activationTarget.trim()}>
-                                    {isGeneratingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                                    توليد كود
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-0 shadow-sm rounded-[2rem] overflow-hidden bg-white">
-                        <CardHeader className="bg-slate-50 p-6 border-b">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Key className="h-5 w-5 text-indigo-500" />
-                                سجل الأكواد المولدة
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-right px-6">الكود</TableHead>
-                                            <TableHead className="text-right">المستهدف</TableHead>
-                                            <TableHead className="text-center">الحالة</TableHead>
-                                            <TableHead className="text-right px-6">تاريخ الإنشاء</TableHead>
-                                            <TableHead className="text-center px-6">إجراءات</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {activationCodes?.map((c) => (
-                                            <TableRow key={c.id}>
-                                                <TableCell className="px-6 font-mono font-bold text-indigo-600 select-all">{c.code}</TableCell>
-                                                <TableCell className="text-xs text-slate-500">{c.targetId}</TableCell>
-                                                <TableCell className="text-center">
-                                                    {c.isUsed ? (
-                                                        <Badge className="bg-rose-50 text-rose-600 border-rose-100 rounded-lg">تم الاستخدام</Badge>
-                                                    ) : (
-                                                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 rounded-lg">نشط</Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="px-6 text-[10px] text-slate-400">
-                                                    {c.createdAt?.toDate ? new Date(c.createdAt.toDate()).toLocaleString('ar-EG') : '...'}
-                                                </TableCell>
-                                                <TableCell className="text-center px-6">
-                                                  <div className="flex items-center justify-center gap-1">
-                                                    <Button 
-                                                      variant="ghost" 
-                                                      size="icon" 
-                                                      className="h-8 w-8 text-indigo-600 hover:bg-indigo-50" 
-                                                      onClick={() => handleCopyCode(c.code)}
-                                                    >
-                                                      <Copy className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button 
-                                                      variant="ghost" 
-                                                      size="icon" 
-                                                      className="h-8 w-8 text-rose-500 hover:bg-rose-50" 
-                                                      onClick={() => handleDeleteCode(c.id)}
-                                                    >
-                                                      <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                  </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </CardContent>
-                    </Card>
                 </div>
             </TabsContent>
 

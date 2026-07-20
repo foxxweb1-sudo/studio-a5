@@ -11,8 +11,10 @@ import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'الحضور',
-  description: 'تطبيق لإدارة الطلاب والمدفوعات بكفاءة تامة أوفلاين وأونلاين',
+  description: 'تطبيق لإدارة الطلاب والمدفوعات بكفاءة تامة أوفلاين وأونلاين - منصة المعلم المتكاملة',
   manifest: '/manifest.json',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
   icons: {
     icon: [
       {

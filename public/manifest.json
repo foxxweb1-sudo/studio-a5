@@ -1,8 +1,7 @@
-
 {
-  "name": "الحضور - منصة المعلم",
+  "name": "الحضور",
   "short_name": "الحضور",
-  "description": "تطبيق لإدارة الطلاب والمدفوعات بكفاءة تامة أوفلاين وأونلاين",
+  "description": "تطبيق إدارة حضور الطلاب والمدفوعات - فريق TECH",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -18,7 +17,7 @@
       "src": "https://i.ibb.co/Nbhqk4f/36465.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

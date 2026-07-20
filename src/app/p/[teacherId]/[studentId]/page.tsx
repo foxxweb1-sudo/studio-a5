@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -120,7 +119,6 @@ export default function ParentPortalPage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 px-4 sm:px-6 font-body" dir="rtl">
       <div className="max-w-5xl mx-auto pt-8 space-y-8">
         
-        {/* Beta Notice Banner */}
         <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
             <Info className="h-5 w-5 text-amber-600 shrink-0" />
             <p className="text-xs font-bold text-amber-800">
@@ -128,7 +126,6 @@ export default function ParentPortalPage() {
             </p>
         </div>
 
-        {/* Header Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
             <div className="flex items-center gap-4">
                 <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
@@ -145,7 +142,6 @@ export default function ParentPortalPage() {
             </div>
         </div>
 
-        {/* Hero Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-indigo-600 text-white overflow-hidden relative group">
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700" />
@@ -214,9 +210,7 @@ export default function ParentPortalPage() {
             </Card>
         </div>
 
-        {/* Detailed Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Exams Section */}
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col lg:col-span-2">
                 <CardHeader className="p-8 border-b bg-indigo-50/30">
                     <div className="flex items-center gap-3">
@@ -279,7 +273,6 @@ export default function ParentPortalPage() {
                 </CardContent>
             </Card>
 
-            {/* Attendance Section */}
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col">
                 <CardHeader className="p-8 border-b">
                     <div className="flex items-center gap-3">
@@ -326,7 +319,6 @@ export default function ParentPortalPage() {
                 </CardContent>
             </Card>
 
-            {/* Payments Section */}
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col">
                 <CardHeader className="p-8 border-b">
                     <div className="flex items-center gap-3">
@@ -365,11 +357,10 @@ export default function ParentPortalPage() {
             </Card>
         </div>
 
-        {/* Branding Footer */}
         <div className="text-center pt-16 pb-8 space-y-4">
             <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Powered by</span>
-                <span className="text-sm font-black text-primary tracking-tighter">{config.appName} Smart Panel</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">المصدر</span>
+                <span className="text-sm font-black text-primary tracking-tighter">{config.appName}</span>
             </div>
             <p className="text-[9px] text-slate-400 font-medium opacity-60">تاريخ التقرير: {new Date().toLocaleDateString('ar-EG', { dateStyle: 'full' })}</p>
         </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -76,7 +75,6 @@ export default function Home() {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
-    // التعامل مع حدث تثبيت الـ PWA
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -137,7 +135,6 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24 px-4">
       
-      {/* PWA Install Banner */}
       {isInstallable && (
         <div className="animate-in slide-in-from-top-4 duration-700">
            <Card className="border-0 shadow-2xl rounded-[2rem] bg-indigo-900 text-white overflow-hidden relative group">
@@ -163,14 +160,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* Upper Row: Welcome & Time Compact Side-by-Side */}
       <div className="grid grid-cols-2 gap-4 items-stretch">
-        
-        {/* Right: Compact Welcome Card */}
         <Card className="border-0 shadow-xl rounded-[2rem] bg-gradient-to-br from-indigo-600 via-indigo-500 to-primary text-white overflow-hidden relative group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
             
-            {/* Action Buttons Column (Top Left) */}
             <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
                 <a 
                   href={config.updatesUrl || '#'} 
@@ -224,7 +217,7 @@ export default function Home() {
                 <div className="space-y-1 text-right">
                     <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider mb-1">
                         <Sparkles className="h-2.5 w-2.5" />
-                        Smart Panel
+                        نظام المتابعة
                     </div>
                     <h2 className="text-lg sm:text-2xl font-black leading-none">أهلاً بك،</h2>
                     <h3 className="text-sm sm:text-xl font-bold opacity-90 truncate max-w-full">
@@ -237,7 +230,6 @@ export default function Home() {
             </CardContent>
         </Card>
 
-        {/* Left: Compact Digital Clock */}
         <Card className="border-0 shadow-xl rounded-[2rem] bg-white dark:bg-slate-900 p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
             <div className="relative z-10 flex flex-col items-center text-center">
@@ -248,19 +240,17 @@ export default function Home() {
                     {currentTime ? format(currentTime, 'hh:mm:ss', { locale: ar }) : '--:--:--'}
                     <span className="text-xs sm:text-base text-primary font-bold">{currentTime ? format(currentTime, 'a', { locale: ar }) : ''}</span>
                 </div>
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">System Time</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">وقت النظام</p>
             </div>
         </Card>
       </div>
 
-      {/* Main Command Center (The Dark Platform) */}
       <Card className="border-0 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] rounded-[4rem] bg-[#0A0F1E] text-white overflow-hidden relative min-h-[450px] hover-glow">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(79,70,229,0.15),transparent_50%)]" />
         
         <CardContent className="p-8 md:p-16 relative z-10 flex flex-col justify-center h-full">
             <div className="flex flex-col xl:flex-row gap-12 items-center">
                 
-                {/* Hero Text & Premium Actions (Right Side in RTL) */}
                 <div className="flex-grow text-center xl:text-right space-y-10 order-1">
                     <div className="space-y-4">
                         <h1 className="text-4xl md:text-7xl font-black leading-[1.1] tracking-tighter">
@@ -270,12 +260,11 @@ export default function Home() {
                             </span>
                         </h1>
                         <p className="text-slate-400 text-base md:text-xl font-medium max-w-2xl xl:ml-0 xl:mr-auto leading-relaxed">
-                          تابع حضور طلابك ومدفوعاتهم بدقة متناهية وسهولة تامة.
+                          تابع حضور طلابك ومدفوعاتهم بدقة متناهية وسهولة تامة عبر تطبيق {config.appName}.
                         </p>
                     </div>
 
                     <div className="flex flex-col gap-5 items-center xl:items-end">
-                        {/* Upper Buttons Row */}
                         <div className="flex flex-wrap gap-4 justify-center xl:justify-start">
                             <button 
                                 onClick={(e) => handleProtectedClick(e, '/attendance')}
@@ -297,7 +286,6 @@ export default function Home() {
                             </button>
                         </div>
                         
-                        {/* Lower Button Row */}
                         <button 
                             onClick={(e) => handleProtectedClick(e, '/accounting-period')}
                             className="rounded-[1.5rem] h-16 px-12 font-black gap-2 bg-orange-600 hover:bg-orange-700 shadow-xl shadow-orange-600/20 text-white text-lg w-full sm:w-auto flex items-center justify-center"
@@ -307,7 +295,6 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* Visual Stats Grid (Left Side in RTL) */}
                 <div className="grid grid-cols-2 gap-4 w-full xl:w-[420px] shrink-0 order-2">
                     {[
                         { label: 'حضور اليوم', value: stats.attended, icon: CheckCircle2, color: 'text-emerald-500', shadow: 'shadow-emerald-500/20' },
@@ -329,7 +316,6 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {/* Modern Stage Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           { name: 'المرحلة الابتدائية', desc: 'تأسيس المستقبل من الأول للسادس', icon: School, href: '/stage/primary', color: 'text-indigo-500', bg: 'bg-indigo-500/5' },
@@ -355,7 +341,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Support Banner (Buy Me a Coffee) */}
       <Link href="/support" className="block group">
         <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 text-white relative transition-all duration-500 hover:scale-[1.01] hover:shadow-amber-500/20">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
@@ -369,7 +354,7 @@ export default function Home() {
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-2xl sm:text-3xl font-black">Buy Me a Coffee</h3>
-                            <p className="text-sm font-bold opacity-90">ادعم تطوير التطبيق واستمرارية فريق TECH</p>
+                            <p className="text-sm font-bold opacity-90">ادعم تطوير تطبيق {config.appName} واستمرارية فريق TECH</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -390,7 +375,6 @@ export default function Home() {
         </Card>
       </Link>
 
-      {/* Plans Banner (Personal Assistant) */}
       <Link href="/plans" className="block group">
         <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 text-white relative transition-all duration-500 hover:scale-[1.01] hover:shadow-emerald-500/20">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />

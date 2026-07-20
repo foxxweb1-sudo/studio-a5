@@ -252,6 +252,14 @@ export default function AdminPage() {
 
   const activeDeletionCount = deletionRequests?.length || 0;
 
+  const STATS_DATA = [
+    { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50', loading: loadingStudents },
+    { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50', loading: usersLoading },
+    { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50', loading: false },
+    { label: 'التقييمات', value: reviews?.length || 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-100', loading: reviewsLoading },
+    { label: 'طلبات الحذف', value: activeDeletionCount, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: deletionLoading },
+  ];
+
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-7xl mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -272,14 +280,8 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {[
-            { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50', loading: loadingStudents },
-            { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50', loading: usersLoading },
-            { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50', loading: false },
-            { label: 'التقييمات', value: reviews?.length || 0, icon: Star, color: 'text-amber-500', bg: 'bg-amber-100', loading: reviewsLoading },
-            { label: 'طلبات الحذف', value: activeDeletionCount, icon: Trash2, color: 'text-rose-500', bg: 'bg-rose-50', loading: deletionLoading },
-        ].map((stat, i) => (
-            <Card key={i} className={`border-0 shadow-sm hover:shadow-md transition-all`}>
+        {STATS_DATA.map((stat) => (
+            <Card key={stat.label} className={`border-0 shadow-sm hover:shadow-md transition-all`}>
                 <CardContent className="p-6 flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
                         {stat.loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <stat.icon className="w-6 h-6" />}
@@ -378,7 +380,7 @@ export default function AdminPage() {
                         const showBadgeBefore = isArabic(uDisplayName); 
                         
                         return (
-                          <Card key={u.uid} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'} ${isAccountAdmin ? 'border-2 border-primary/20' : ''}`}>
+                          <Card key={u.id} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'} ${isAccountAdmin ? 'border-2 border-primary/20' : ''}`}>
                             <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
                               <div className="relative">
                                 <Avatar className="h-16 w-16">
@@ -555,7 +557,7 @@ export default function AdminPage() {
                 <div className="space-y-4">
                   {deletionRequests && deletionRequests.length > 0 ? (
                     deletionRequests.map((req) => (
-                      <div key={req.uid} className="flex flex-col gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-rose-100 border-r-8 border-r-rose-500">
+                      <div key={req.id} className="flex flex-col gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-rose-100 border-r-8 border-r-rose-500">
                         <div className="flex flex-col lg:flex-row items-center gap-6">
                             <div className="flex items-center gap-4 flex-1 w-full">
                                 <Avatar className="h-14 w-14 border-2 border-rose-50">

@@ -7,6 +7,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import CookieConsent from '@/components/layout/CookieConsent';
 import FloatingSupport from '@/components/layout/FloatingSupport';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'الحضور',
@@ -57,8 +58,22 @@ export default function RootLayout({
         {/* Verification & Monetization Tags */}
         <meta name="yandex-verification" content="0faaccb6c44771f0" />
         <meta name="monetag" content="c19798fcf2477911030e84ada43ae778" />
+        <meta name="google-site-verification" content="-DbtwtLAsT3hmizJuQZ9XTSdTSRjJUEWIs-au398y3w" />
       </head>
       <body className="font-body antialiased">
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-9M1S40WVMH"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-9M1S40WVMH');
+          `}
+        </Script>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

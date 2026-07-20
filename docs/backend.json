@@ -11,6 +11,7 @@
         "displayName": { "type": "string" },
         "isBlocked": { "type": "boolean" },
         "isVerified": { "type": "boolean" },
+        "isAdFree": { "type": "boolean" },
         "photoURL": { "type": "string" },
         "lastLogin": { "type": "string", "format": "date-time" }
       },
@@ -54,6 +55,16 @@
         "date": { "type": "string" } 
       } 
     },
+    "ActivationCode": {
+      "title": "ActivationCode",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "targetId": { "type": "string" },
+        "isUsed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "WorkingSchedule": { "title": "WorkingSchedule", "type": "object", "properties": { "isActive": { "type": "boolean" }, "sessions": { "type": "array" } } },
     "ContactMessage": { "title": "ContactMessage", "type": "object", "properties": { "name": { "type": "string" }, "status": { "type": "string" } } },
     "Review": { "title": "Review", "type": "object", "properties": { "rating": { "type": "number" } } },
@@ -69,6 +80,7 @@
     "/users/{userId}/config/{id}": { "schema": { "type": "object" }, "description": "Teacher specific configurations" },
     "/contactMessages/{id}": { "schema": { "$ref": "#/entities/ContactMessage" }, "description": "Global support messages" },
     "/appConfig/{id}": { "schema": { "$ref": "#/entities/GlobalConfig" }, "description": "Global app settings" },
-    "/reviews/{id}": { "schema": { "$ref": "#/entities/Review" }, "description": "User reviews" }
+    "/reviews/{id}": { "schema": { "$ref": "#/entities/Review" }, "description": "User reviews" },
+    "/activationCodes/{id}": { "schema": { "$ref": "#/entities/ActivationCode" }, "description": "Ads removal activation codes" }
   }
 }

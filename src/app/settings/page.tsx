@@ -23,7 +23,8 @@ import {
   HelpCircle,
   Users,
   LogIn,
-  UserPlus
+  UserPlus,
+  ZapOff
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -31,9 +32,10 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { doc } from 'firebase/firestore';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -41,7 +43,11 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { config } = useAppConfig();
   const { user } = useUser();
+  const firestore = useFirestore();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: profile } = useDoc<any>(userRef);
 
   const handleProtectedClick = (e: React.MouseEvent, href: string) => {
     if (!user) {
@@ -74,6 +80,7 @@ export default function SettingsPage() {
   };
 
   const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
+  const showRemoveAds = (config.enableAds1 || config.enableAds2) && !profile?.isAdFree;
 
   return (
     <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-12 px-4">
@@ -93,7 +100,31 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* قسم الحساب (محمي بنظام تسجيل الدخول) */}
+        {/* قسم الاشتراك المميز (إلغاء الإعلانات) */}
+        {showRemoveAds && (
+            <Card className="border-2 border-indigo-500/20 shadow-xl shadow-indigo-500/5 rounded-[2.5rem] overflow-hidden bg-indigo-500/5 animate-in slide-in-from-top-4 duration-500">
+                <CardContent className="p-6">
+                    <Button 
+                        variant="ghost" 
+                        onClick={(e) => handleProtectedClick(e, '/remove-ads')}
+                        className="w-full justify-between h-auto py-4 px-4 rounded-2xl hover:bg-white font-bold group transition-all"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-600/20 group-hover:scale-110 transition-transform duration-300">
+                                <ZapOff className="h-6 w-6" />
+                            </div>
+                            <div className="flex flex-col items-start text-right">
+                                <span className="text-base font-black text-indigo-700">إلغاء الإعلانات 🚫</span>
+                                <span className="text-[10px] text-indigo-600/70 font-bold">تفعيل النسخة النظيفة مدى الحياة</span>
+                            </div>
+                        </div>
+                        <ChevronLeft className="h-5 w-5 text-indigo-400 group-hover:-translate-x-1 transition-all" />
+                    </Button>
+                </CardContent>
+            </Card>
+        )}
+
+        {/* قسم الحساب */}
         <div className="relative p-[2px] overflow-hidden rounded-[2.5rem] group">
           <div className="absolute inset-[-1000%] animate-spin-border bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,hsl(var(--primary))_50%,transparent_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
           

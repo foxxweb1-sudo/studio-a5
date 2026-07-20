@@ -21,8 +21,35 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound, Save, Copy, User as UserIcon, LogOut, Trash2, AlertTriangle, Clock, Fingerprint, BadgeCheck, ShieldCheck, CheckCircle2, UploadCloud } from 'lucide-react';
-import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
+import { 
+  Loader2, 
+  KeyRound, 
+  Save, 
+  Copy, 
+  User as UserIcon, 
+  LogOut, 
+  Trash2, 
+  AlertTriangle, 
+  Clock, 
+  Fingerprint, 
+  BadgeCheck, 
+  ShieldCheck, 
+  CheckCircle2, 
+  UploadCloud,
+  Mail,
+  Link as LinkIcon,
+  Unlink,
+  Lock
+} from 'lucide-react';
+import { 
+  updateProfile, 
+  sendPasswordResetEmail, 
+  signOut, 
+  linkWithCredential, 
+  EmailAuthProvider, 
+  GoogleAuthProvider, 
+  linkWithPopup 
+} from 'firebase/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState, useRef } from 'react';
 import { doc, setDoc, serverTimestamp, collection, getDocs } from 'firebase/firestore';
@@ -37,6 +64,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
@@ -60,12 +95,16 @@ export default function AccountManagement() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+  
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLinking, setIsLinking] = useState<string | null>(null);
   const [selectedReason, setSelectedReason] = useState<string>(DELETION_REASONS[0]);
   const [copied, setCopied] = useState(false);
+  const [showLinkPasswordDialog, setShowLinkPasswordDialog] = useState(false);
+  const [linkPassword, setLinkPassword] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,6 +121,45 @@ export default function AccountManagement() {
       photoURL: user?.photoURL ?? '',
     },
   });
+
+  // تحديد الوسائل المرتبطة
+  const isGoogleLinked = user?.providerData.some(p => p.providerId === 'google.com');
+  const isPasswordLinked = user?.providerData.some(p => p.providerId === 'password');
+
+  const handleLinkGoogle = async () => {
+    if (!user) return;
+    setIsLinking('google');
+    const provider = new GoogleAuthProvider();
+    try {
+      await linkWithPopup(user, provider);
+      await reloadUser();
+      toast({ title: "تم الربط بنجاح", description: "يمكنك الآن تسجيل الدخول عبر جوجل لهذا الحساب." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "فشل الربط", description: "هذا الحساب قد يكون مرتبطاً ببريد آخر بالفعل." });
+    } finally {
+      setIsLinking(null);
+    }
+  };
+
+  const handleLinkEmailPassword = async () => {
+    if (!user || !linkPassword || linkPassword.length < 6) {
+      toast({ variant: "destructive", title: "كلمة مرور ضعيفة", description: "يجب أن تكون 6 أحرف على الأقل." });
+      return;
+    }
+    setIsLinking('password');
+    try {
+      const credential = EmailAuthProvider.credential(user.email!, linkPassword);
+      await linkWithCredential(user, credential);
+      await reloadUser();
+      setShowLinkPasswordDialog(false);
+      setLinkPassword('');
+      toast({ title: "تم التفعيل", description: "تم ربط بريدك بكلمة مرور؛ يمكنك الآن الدخول يدوياً." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "فشل العملية", description: error.message });
+    } finally {
+      setIsLinking(null);
+    }
+  };
 
   const onProfileSubmit = async (values: z.infer<typeof profileFormSchema>) => {
     if (!user) return;
@@ -295,7 +373,6 @@ export default function AccountManagement() {
                         </div>
                     </div>
                 </div>
-                <p className="mt-3 text-[9px] text-slate-400 font-bold text-center italic opacity-60">هذا المعرف مخصص للعمليات الإدارية فقط</p>
             </div>
         </div>
       </div>
@@ -353,6 +430,59 @@ export default function AccountManagement() {
           </CardContent>
         </Card>
 
+        {/* قسم طرق تسجيل الدخول (الربط المتعدد) */}
+        <Card className="border-0 shadow-xl rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900">
+            <CardHeader className="bg-blue-500/5 border-b border-blue-500/10">
+                <CardTitle className="text-xl flex items-center gap-2">
+                    <LinkIcon className="h-5 w-5 text-blue-500" />
+                    طرق تسجيل الدخول المتعدد
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+                <div className="p-4 bg-muted/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isGoogleLinked ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                            <svg className="h-5 w-5" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" />
+                            </svg>
+                        </div>
+                        <div className="text-right">
+                            <h4 className="text-sm font-bold">حساب جوجل</h4>
+                            <p className="text-[10px] text-muted-foreground">{isGoogleLinked ? 'مرتبط حالياً' : 'غير مرتبط'}</p>
+                        </div>
+                    </div>
+                    {isGoogleLinked ? (
+                        <Badge className="bg-emerald-500 text-white rounded-lg">مفعل</Badge>
+                    ) : (
+                        <Button variant="outline" size="sm" className="rounded-xl font-bold gap-2" onClick={handleLinkGoogle} disabled={!!isLinking}>
+                            {isLinking === 'google' ? <Loader2 className="h-3 w-3 animate-spin" /> : <LinkIcon className="h-3 w-3" />}
+                            ربط حساب جوجل
+                        </Button>
+                    )}
+                </div>
+
+                <div className="p-4 bg-muted/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${isPasswordLinked ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                            <Lock className="h-5 w-5" />
+                        </div>
+                        <div className="text-right">
+                            <h4 className="text-sm font-bold">البريد وكلمة المرور</h4>
+                            <p className="text-[10px] text-muted-foreground">{isPasswordLinked ? 'مرتبط حالياً' : 'غير مفعل'}</p>
+                        </div>
+                    </div>
+                    {isPasswordLinked ? (
+                        <Badge className="bg-emerald-500 text-white rounded-lg">مفعل</Badge>
+                    ) : (
+                        <Button variant="outline" size="sm" className="rounded-xl font-bold gap-2" onClick={() => setShowLinkPasswordDialog(true)} disabled={!!isLinking}>
+                            {isLinking === 'password' ? <Loader2 className="h-3 w-3 animate-spin" /> : <KeyRound className="h-3 w-3" />}
+                            إعداد كلمة مرور
+                        </Button>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+
         <Card className="border-0 shadow-xl rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900">
           <CardHeader className="bg-emerald-500/5 border-b border-emerald-500/10">
             <CardTitle className="text-xl flex items-center gap-2">
@@ -363,14 +493,15 @@ export default function AccountManagement() {
           <CardContent className="pt-6 space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-muted/30 rounded-2xl gap-4">
               <div className="text-center sm:text-right">
-                <h4 className="font-bold">تغيير كلمة المرور</h4>
+                <h4 className="font-bold">إعادة تعيين كلمة المرور</h4>
                 <p className="text-xs text-muted-foreground">سيتم إرسال رابط آمن لبريدك.</p>
               </div>
-              <Button variant="outline" onClick={handlePasswordReset} disabled={isSendingEmail} className="rounded-xl font-bold">
+              <Button variant="outline" onClick={handlePasswordReset} disabled={isSendingEmail || !isPasswordLinked} className="rounded-xl font-bold">
                 {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="ms-2 h-4 w-4" />}
                 طلب رابط التغيير
               </Button>
             </div>
+            {!isPasswordLinked && <p className="text-[9px] text-amber-600 font-bold text-center px-4">* يجب ربط الحساب بكلمة مرور أولاً لتتمكن من إعادة تعيينها.</p>}
           </CardContent>
         </Card>
 
@@ -442,6 +573,37 @@ export default function AccountManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* نافذة ضبط كلمة المرور عند الربط */}
+      <Dialog open={showLinkPasswordDialog} onOpenChange={setShowLinkPasswordDialog}>
+        <DialogContent className="rounded-[2rem] border-0 shadow-2xl max-w-sm">
+            <DialogHeader className="text-right">
+                <DialogTitle className="text-xl font-black">إعداد كلمة مرور</DialogTitle>
+                <DialogDescription className="font-bold">
+                    أدخل كلمة مرور جديدة لتتمكن من الدخول إلى حسابك يدوياً دون الحاجة لجوجل.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                    <Label className="text-xs font-bold px-1">كلمة المرور الجديدة</Label>
+                    <Input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className="h-12 rounded-xl"
+                        value={linkPassword}
+                        onChange={(e) => setLinkPassword(e.target.value)}
+                    />
+                </div>
+            </div>
+            <DialogFooter className="flex-row-reverse gap-2">
+                <Button onClick={handleLinkEmailPassword} className="rounded-xl h-12 flex-1 font-bold" disabled={isLinking === 'password'}>
+                    {isLinking === 'password' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    تأكيد الربط
+                </Button>
+                <Button variant="ghost" onClick={() => setShowLinkPasswordDialog(false)} className="rounded-xl h-12 flex-1">إلغاء</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

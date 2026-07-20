@@ -6,11 +6,12 @@ import { ADMIN_EMAIL } from '@/lib/constants';
 import { doc } from 'firebase/firestore';
 
 /**
- * ExternalScripts - حقن الأكواد الخارجية برمجياً بشكل دائم لغير المشتركين
- * يتم إيقاف الإعلانات تلقائياً للمسؤول أو عند تفعيل حساب "بدون إعلانات".
+ * ExternalScripts - حقن الأكواد الخارجية برمجياً بشكل دائم
+ * يتم تفعيلها للجميع بما في ذلك الزوار (Anonymous) 
+ * ويتم إيقافها فقط للمسؤول أو عند تفعيل حساب "بدون إعلانات".
  */
 export default function ExternalScripts() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
@@ -20,21 +21,34 @@ export default function ExternalScripts() {
   const isAdFree = profile?.isAdFree === true;
 
   useEffect(() => {
+    // ننتظر حتى يتم تحديد هوية المستخدم لضمان عدم عرض الإعلانات للمسؤول بالخطأ أثناء التحميل
+    if (isUserLoading) return;
+
     // إذا كان المستخدم هو المسؤول أو مشترك في باقة إلغاء الإعلانات، لا نقوم بتحميل أي أكواد إعلانية
     if (isAdmin || isAdFree) return;
 
-    // حقن كود الإعلانات الدائم (Vignette Script)
+    // حقن الكود الأول: Vignette (11350285)
     try {
-      (function(s: any){
-        s.dataset.zone='11350285';
-        s.src='https://n6wxm.com/vignette.min.js';
-        const target = [document.documentElement, document.body].filter(Boolean).pop();
-        if (target) target.appendChild(s);
-      })(document.createElement('script'));
+      const s1 = document.createElement('script');
+      s1.dataset.zone = '11350285';
+      s1.src = 'https://n6wxm.com/vignette.min.js';
+      const target = [document.documentElement, document.body].filter(Boolean).pop();
+      if (target) target.appendChild(s1);
     } catch (e) {
-      console.error('Error injecting vignette script', e);
+      console.error('Error injecting script 1', e);
     }
-  }, [isAdmin, isAdFree]);
+
+    // حقن الكود الثاني: Tag (11350401)
+    try {
+      const s2 = document.createElement('script');
+      s2.dataset.zone = '11350401';
+      s2.src = 'https://nap5k.com/tag.min.js';
+      const target = [document.documentElement, document.body].filter(Boolean).pop();
+      if (target) target.appendChild(s2);
+    } catch (e) {
+      console.error('Error injecting script 2', e);
+    }
+  }, [isAdmin, isAdFree, isUserLoading]);
 
   return null;
 }

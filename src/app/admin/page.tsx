@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -47,6 +46,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Info } from 'lucide-react';
 import { DeletionRequest, Review, ActivationCode } from '@/lib/definitions';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },

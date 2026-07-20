@@ -51,6 +51,8 @@ export function useAppConfig() {
     apkDownloadUrl: config?.apkDownloadUrl || DEFAULT_APK_URL,
     cookiePolicyUrl: config?.cookiePolicyUrl || DEFAULT_COOKIE_POLICY_URL,
     updatesUrl: config?.updatesUrl || DEFAULT_UPDATES_URL,
+    enableAds1: config?.enableAds1 ?? false,
+    enableAds2: config?.enableAds2 ?? false,
   }), [
     config?.appName, 
     config?.appLogo, 
@@ -67,7 +69,9 @@ export function useAppConfig() {
     config?.techStoreUrl,
     config?.apkDownloadUrl,
     config?.cookiePolicyUrl,
-    config?.updatesUrl
+    config?.updatesUrl,
+    config?.enableAds1,
+    config?.enableAds2
   ]);
 
   return {

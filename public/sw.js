@@ -1,9 +1,15 @@
 
-const CACHE_NAME = 'attendance-app-v1';
+const CACHE_NAME = 'attendance-v1';
 const ASSETS_TO_CACHE = [
   '/',
-  '/manifest.json',
-  'https://i.ibb.co/Nbhqk4f/36465.png'
+  '/offline-sync',
+  '/attendance',
+  '/students',
+  '/schedule',
+  '/payments',
+  '/reports',
+  '/settings',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -12,14 +18,34 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // استراتيجية: الشبكة أولاً، ثم الكاش في حال الفشل (Network-First)
-  // هذا يضمن الحصول على أحدث نسخة لو النت موجود، وفتح التطبيق لو النت مقطوع
+  // استراتيجية Network First مع Fallback to Cache
   event.respondWith(
     fetch(event.request).catch(() => {
-      return caches.match(event.request);
+      return caches.match(event.request).then((response) => {
+        if (response) return response;
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+      });
     })
   );
 });

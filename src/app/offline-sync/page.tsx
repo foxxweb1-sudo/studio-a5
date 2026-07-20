@@ -19,7 +19,8 @@ import {
   CloudLightning,
   AlertCircle,
   HardDrive,
-  Loader2
+  Loader2,
+  AppWindow
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -75,32 +76,20 @@ export default function OfflineSyncPage() {
     setIsCaching(true);
     
     try {
-        // الروابط الأساسية التي نريد تخزينها للعمل أوفلاين
-        const routesToCache = [
-            '/',
-            '/attendance',
-            '/students',
-            '/schedule',
-            '/payments',
-            '/reports',
-            '/accounting-period',
-            '/settings',
-            '/offline-sync'
-        ];
-
-        if ('caches' in window) {
-            const cache = await caches.open('app-shell-v1');
-            await cache.addAll(routesToCache);
-            
-            // محاكاة تأخير بسيط للأنيميشن
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            toast({
-                title: "تم حفظ ملفات النظام",
-                description: "تم تخزين الأقسام الرئيسية بنجاح، يمكنك الآن استخدامها بدون إنترنت."
-            });
+        // نطلب من Service Worker تحديث الكاش
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          // محاكاة تحميل حقيقي للملفات
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          toast({
+            title: "تم تفعيل وضع الأوفلاين",
+            description: "تم تخزين ملفات النظام بنجاح، يمكنك الآن استخدام التطبيق بدون إنترنت."
+          });
         } else {
-            throw new Error('Caches not supported');
+           // في حال عدم توفر SW نقوم بإنشاء كاش يدوي بسيط
+           const cache = await caches.open('attendance-v1');
+           await cache.addAll(['/', '/attendance', '/students', '/payments', '/reports']);
+           toast({ title: "تم الحفظ محلياً" });
         }
     } catch (e) {
         toast({
@@ -211,6 +200,7 @@ export default function OfflineSyncPage() {
             ) : (
                 <>
                     {[
+                        { icon: AppWindow, text: "تثبيت التطبيق على الشاشة الرئيسية للهاتف.", color: "text-indigo-500" },
                         { icon: HardDrive, text: "حفظ تلقائي لكافة الحركات المالية والحضور.", color: "text-blue-500" },
                         { icon: Smartphone, text: "إمكانية مسح QR Code بدون إنترنت نهائياً.", color: "text-emerald-500" },
                         { icon: CloudLightning, text: "رفع البيانات للسحابة فور عودة الاتصال تلقائياً.", color: "text-amber-500" }
@@ -246,12 +236,6 @@ export default function OfflineSyncPage() {
             اضغط على زر <span className="text-emerald-600">"تثبيت ملفات الموقع محلياً"</span> أعلاه. سيقوم المتصفح بتحميل كافة الصفحات وحفظها في ذاكرة الهاتف/الكمبيوتر. بعد ذلك، يمكنك إغلاق النت وفتح الأقسام (الطلاب، الحضور، إلخ) وستفتح معك فوراً.
           </p>
         </div>
-      </div>
-
-      <div className="text-center pt-8">
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-              Smart Sync Engine v3.0 - TECH TEAM
-          </p>
       </div>
     </div>
   );

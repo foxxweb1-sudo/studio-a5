@@ -31,7 +31,8 @@ import {
   UserCheck,
   Star,
   DownloadCloud,
-  Smartphone
+  Smartphone,
+  AppWindow
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -54,11 +55,13 @@ import Link from 'next/link';
 import placeholderImages from '@/app/lib/placeholder-images.json';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const { user } = useUser();
   const { config } = useAppConfig();
   const router = useRouter();
+  const { toast } = useToast();
   
   const { students, isLoading: studentsLoading } = useStudents();
   const { attendance, isLoading: attendanceLoading } = useAttendance();
@@ -66,11 +69,26 @@ export default function Home() {
 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    
+    // التعامل مع حدث تثبيت الـ PWA
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const stats = useMemo(() => {
@@ -99,6 +117,17 @@ export default function Home() {
     }
   };
 
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+      toast({ title: "شكراً لك!", description: "يتم الآن تثبيت التطبيق على جهازك." });
+    }
+    setDeferredPrompt(null);
+  };
+
   const handleDownloadApk = () => {
     if (config.apkDownloadUrl && config.apkDownloadUrl !== '#') {
       window.open(config.apkDownloadUrl, '_blank');
@@ -108,6 +137,32 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24 px-4">
       
+      {/* PWA Install Banner */}
+      {isInstallable && (
+        <div className="animate-in slide-in-from-top-4 duration-700">
+           <Card className="border-0 shadow-2xl rounded-[2rem] bg-indigo-900 text-white overflow-hidden relative group">
+              <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] bg-[length:250%_250%] animate-[shimmer_5s_infinite]" />
+              <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                  <div className="flex items-center gap-4 text-center sm:text-right">
+                      <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                        <AppWindow className="h-8 w-8 text-primary-foreground" />
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-black">تثبيت التطبيق على جهازك</h4>
+                        <p className="text-xs font-medium text-white/70">استخدم المنصة كأنه تطبيق أصلي، أسرع وبدون إنترنت.</p>
+                      </div>
+                  </div>
+                  <Button 
+                    onClick={handleInstallApp}
+                    className="bg-white text-indigo-900 hover:bg-slate-100 rounded-2xl h-12 px-10 font-black text-base shadow-xl"
+                  >
+                    تثبيت الآن
+                  </Button>
+              </CardContent>
+           </Card>
+        </div>
+      )}
+
       {/* Upper Row: Welcome & Time Compact Side-by-Side */}
       <div className="grid grid-cols-2 gap-4 items-stretch">
         
@@ -402,7 +457,12 @@ export default function Home() {
           </div>
         </DialogContent>
       </Dialog>
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      `}</style>
     </div>
   );
 }
-

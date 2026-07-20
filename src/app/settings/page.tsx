@@ -21,7 +21,9 @@ import {
   ShieldCheck,
   FileText,
   HelpCircle,
-  Users
+  Users,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -29,12 +31,26 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAppConfig } from '@/hooks/use-app-config';
+import { useUser } from '@/firebase';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { config } = useAppConfig();
+  const { user } = useUser();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+
+  const handleProtectedClick = (e: React.MouseEvent, href: string) => {
+    if (!user) {
+      e.preventDefault();
+      setShowAuthDialog(true);
+    } else {
+      router.push(href);
+    }
+  };
 
   const handleShare = async () => {
     const appUrl = config.techStoreUrl;
@@ -77,7 +93,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* قسم الحساب (ثابت في الأعلى للضرورة التقنية) */}
+        {/* قسم الحساب (محمي بنظام تسجيل الدخول) */}
         <div className="relative p-[2px] overflow-hidden rounded-[2.5rem] group">
           <div className="absolute inset-[-1000%] animate-spin-border bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,hsl(var(--primary))_50%,transparent_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
           
@@ -91,8 +107,11 @@ export default function SettingsPage() {
               </div>
             </CardHeader>
             <CardContent>
-               <Button asChild variant="ghost" className="w-full justify-between h-auto py-5 px-4 rounded-2xl hover:bg-primary/5 font-bold group transition-all duration-300">
-                <Link href="/account" className="flex items-center w-full justify-between">
+               <Button 
+                variant="ghost" 
+                onClick={(e) => handleProtectedClick(e, '/account')}
+                className="w-full justify-between h-auto py-5 px-4 rounded-2xl hover:bg-primary/5 font-bold group transition-all duration-300"
+               >
                   <div className="flex items-center gap-4">
                       <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300 relative">
                           <UserCircle className="h-6 w-6 relative z-10" />
@@ -104,7 +123,6 @@ export default function SettingsPage() {
                       </div>
                   </div>
                   <ChevronLeft className="h-5 w-5 text-primary/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
-                </Link>
               </Button>
             </CardContent>
           </Card>
@@ -333,6 +351,31 @@ export default function SettingsPage() {
             </p>
         </div>
       </div>
+
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="rounded-[3rem] border-0 shadow-2xl max-w-md overflow-hidden p-0 bg-white">
+          <div className="bg-primary h-2 w-full" />
+          <div className="p-10 space-y-8 text-right">
+              <DialogHeader className="text-center">
+                <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                  <ShieldCheck className="h-10 w-10 text-primary" />
+                </div>
+                <DialogTitle className="text-3xl font-black text-slate-900">هوية المعلم</DialogTitle>
+                <DialogDescription className="font-bold pt-2 text-slate-400 leading-relaxed">
+                  هذا النطاق مخصص للمعلمين المسجلين فقط. يرجى إثبات هويتك للمتابعة.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-3">
+                 <Button onClick={() => router.push('/login')} className="h-14 rounded-2xl font-black text-lg gap-3 shadow-lg bg-primary hover:bg-indigo-700 transition-all">
+                   <LogIn className="h-5 w-5" /> تسجيل الدخول
+                 </Button>
+                 <Button onClick={() => router.push('/signup')} variant="outline" className="h-14 rounded-2xl font-black text-lg gap-3 border-slate-200 hover:bg-slate-50 text-slate-600 transition-all">
+                   <UserPlus className="h-5 w-5" /> إنشاء حساب جديد
+                 </Button>
+              </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

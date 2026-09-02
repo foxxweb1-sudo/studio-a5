@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Phone, ShieldCheck, Loader2, Save } from 'lucide-react';
+import { Phone, ShieldCheck, Loader2, Save, Wallet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
 
 export default function PhoneSetupPopup() {
   const { user, isUserLoading } = useUser();
@@ -23,16 +25,23 @@ export default function PhoneSetupPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [countryCode, setCountryCode] = useState('20');
   const [phone, setPhone] = useState('');
+  const [paymentTiming, setPaymentTiming] = useState<'start' | 'mid' | 'end'>('start');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    // إظهار النافذة فقط إذا كان المستخدم مسجلاً وليس لديه رقم هاتف في سجلاتنا
-    if (user && !isProfileLoading && userProfile && !userProfile.phone) {
+    if (user && !isProfileLoading && userProfile && (!userProfile.phone || !userProfile.paymentTiming)) {
       setIsOpen(true);
+      if (userProfile.phone) {
+          // استخراج الرقم بدون الرمز إذا وجد
+          setPhone(userProfile.phone.replace(/^\+\d{2,3}/, ''));
+      }
+      if (userProfile.paymentTiming) {
+          setPaymentTiming(userProfile.paymentTiming);
+      }
     }
   }, [user, userProfile, isProfileLoading]);
 
-  const handleSavePhone = async () => {
+  const handleSaveData = async () => {
     if (!phone.trim() || phone.length < 8) {
       toast({ variant: "destructive", title: "رقم غير صحيح", description: "يرجى إدخال رقم هاتف واتساب صالح." });
       return;
@@ -43,13 +52,14 @@ export default function PhoneSetupPopup() {
       const fullPhone = `+${countryCode}${phone.replace(/\D/g, '')}`;
       await updateDoc(doc(firestore, 'users', user!.uid), {
         phone: fullPhone,
+        paymentTiming: paymentTiming,
         updatedAt: serverTimestamp()
       });
       
-      toast({ title: "تم التحديث", description: "تم ربط رقم هاتفك بنجاح." });
+      toast({ title: "تم التحديث", description: "تم تحديث بياناتك بنجاح." });
       setIsOpen(false);
     } catch (error) {
-      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ الرقم، حاول مرة أخرى." });
+      toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ البيانات، حاول مرة أخرى." });
     } finally {
       setIsSaving(false);
     }
@@ -64,16 +74,16 @@ export default function PhoneSetupPopup() {
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
                     <ShieldCheck className="h-8 w-8 text-primary" />
                 </div>
-                <DialogTitle className="text-2xl font-black">إكمال بيانات الهوية</DialogTitle>
+                <DialogTitle className="text-2xl font-black">إكمال ملف المعلم</DialogTitle>
                 <DialogDescription className="font-bold pt-2 text-slate-500 leading-relaxed">
-                    من فضلك، قم بإدخال رقم الواتساب الخاص بك لإكمال تسجيلك. سيظهر هذا الرقم لأولياء الأمور في تقارير الطلاب.
+                    من فضلك، قم بتحديث معلوماتك الأساسية لتفعيل نظام الحضور والمتابعة بشكل كامل.
                 </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-2">
-                <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-1 space-y-2">
-                        <Label className="text-xs font-black text-slate-400 px-1">الرمز</Label>
+            <div className="space-y-6 py-2">
+                <div className="space-y-2">
+                    <Label className="text-xs font-black text-slate-400 px-1">رقم الواتساب</Label>
+                    <div className="grid grid-cols-3 gap-2">
                         <Select value={countryCode} onValueChange={setCountryCode}>
                             <SelectTrigger className="h-14 rounded-2xl bg-slate-50 border-0 font-mono shadow-inner">
                                 <SelectValue />
@@ -87,11 +97,8 @@ export default function PhoneSetupPopup() {
                                 <SelectItem value="213">+213</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-                    <div className="col-span-2 space-y-2">
-                        <Label className="text-xs font-black text-slate-400 px-1">رقم الواتساب</Label>
-                        <div className="relative">
-                            <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
+                        <div className="col-span-2 relative">
+                            <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary opacity-50" />
                             <Input 
                                 placeholder="112147..." 
                                 className="pr-12 h-14 rounded-2xl bg-slate-50 border-0 font-mono shadow-inner text-lg"
@@ -101,19 +108,40 @@ export default function PhoneSetupPopup() {
                         </div>
                     </div>
                 </div>
+
+                <div className="space-y-3">
+                    <Label className="text-xs font-black text-slate-400 px-1 flex items-center gap-2">
+                        <Wallet className="h-4 w-4" /> موعد تحصيل الرسوم (هام)
+                    </Label>
+                    <RadioGroup
+                        value={paymentTiming}
+                        onValueChange={(val: any) => setPaymentTiming(val)}
+                        className="grid grid-cols-3 gap-2"
+                    >
+                        <div className={cn("flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer", paymentTiming === 'start' ? 'border-primary bg-primary/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100')}>
+                           <RadioGroupItem value="start" id="p-start" className="sr-only" />
+                           <Label htmlFor="p-start" className="text-[10px] font-black cursor-pointer">أول 5 أيام</Label>
+                        </div>
+                        <div className={cn("flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer", paymentTiming === 'mid' ? 'border-primary bg-primary/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100')}>
+                           <RadioGroupItem value="mid" id="p-mid" className="sr-only" />
+                           <Label htmlFor="p-mid" className="text-[10px] font-black cursor-pointer">منتصف الشهر</Label>
+                        </div>
+                        <div className={cn("flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer", paymentTiming === 'end' ? 'border-primary bg-primary/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100')}>
+                           <RadioGroupItem value="end" id="p-end" className="sr-only" />
+                           <Label htmlFor="p-end" className="text-[10px] font-black cursor-pointer">آخر الشهر</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
             </div>
 
             <Button 
-                onClick={handleSavePhone} 
+                onClick={handleSaveData} 
                 disabled={isSaving || !phone.trim()}
                 className="w-full h-16 rounded-2xl font-black text-xl gap-3 shadow-xl shadow-primary/20"
             >
                 {isSaving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="h-6 w-6" />}
                 حفظ وإكمال الدخول
             </Button>
-            <p className="text-[10px] text-center text-slate-400 font-bold italic">
-                * يمكنك تعديل الرقم لاحقاً من صفحة "إدارة الحساب".
-            </p>
         </div>
       </DialogContent>
     </Dialog>

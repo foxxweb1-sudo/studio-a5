@@ -7,6 +7,7 @@ export type UserProfile = {
   displayName: string;
   photoURL?: string;
   phone?: string;
+  paymentTiming?: 'start' | 'mid' | 'end';
   isBlocked?: boolean;
   isVerified?: boolean;
   lastLogin?: FieldValue;

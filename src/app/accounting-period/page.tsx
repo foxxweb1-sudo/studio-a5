@@ -1,20 +1,24 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { usePaymentSettings } from '@/hooks/use-app-data';
+import { useState, useMemo, useEffect } from 'react';
+import { usePaymentSettings, useUser } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, Loader2, Calendar, Plus, Trash2, GraduationCap, History, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Calendar, Plus, Trash2, GraduationCap, History, Wallet, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 
 const GRADES = [
   'الصف الأول الابتدائي', 'الصف الثاني الابتدائي', 'الصف الثالث الابتدائي', 'الصف الرابع الابتدائي', 'الصف الخامس الابتدائي', 'الصف السادس الابتدائي',
@@ -30,11 +34,24 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => ({
 
 export default function AccountingPeriodPage() {
   const router = useRouter();
+  const { user } = useUser();
+  const firestore = useFirestore();
   const { settings, updateGradeSettings, isLoading: settingsLoading } = usePaymentSettings();
   const { toast } = useToast();
 
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<any>(userRef);
+
   const [isAdding, setIsAdding] = useState(false);
+  const [isSavingTiming, setIsSavingTiming] = useState(false);
   const [selectedGradeForAdd, setSelectedGradeForAdd] = useState<string | null>(null);
+  const [timing, setTiming] = useState<'start' | 'mid' | 'end'>('start');
+
+  useEffect(() => {
+    if (userProfile?.paymentTiming) {
+        setTiming(userProfile.paymentTiming);
+    }
+  }, [userProfile]);
 
   // نموذج إضافة فترة مؤقت
   const [tempPeriod, setTempPeriod] = useState({
@@ -43,6 +60,22 @@ export default function AccountingPeriodPage() {
     endYear: new Date().getFullYear().toString(),
     endMonth: '12'
   });
+
+  const handleUpdateTiming = async () => {
+    if (!user || !firestore) return;
+    setIsSavingTiming(true);
+    try {
+        await updateDoc(doc(firestore, 'users', user.uid), {
+            paymentTiming: timing,
+            updatedAt: serverTimestamp()
+        });
+        toast({ title: "تم التحديث", description: "تم تعديل نظام تحصيل الرسوم بنجاح." });
+    } catch (e) {
+        toast({ variant: "destructive", title: "فشل التحديث" });
+    } finally {
+        setIsSavingTiming(false);
+    }
+  };
 
   const handleAddPeriod = async () => {
     if (!selectedGradeForAdd) return;
@@ -59,7 +92,7 @@ export default function AccountingPeriodPage() {
       await updateGradeSettings(selectedGradeForAdd, { periods: updatedPeriods });
       
       toast({ title: "تمت الإضافة", description: `أضيفت فترة جديدة لـ ${selectedGradeForAdd}.` });
-      setSelectedGradeForAdd(null); // إغلاق النافذة
+      setSelectedGradeForAdd(null); 
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الحفظ" });
     } finally {
@@ -76,7 +109,7 @@ export default function AccountingPeriodPage() {
       await updateGradeSettings(grade, { periods: updatedPeriods });
       toast({ title: "تم الحذف", description: "تمت إزالة الفترة بنجاح." });
     } catch (e) {
-      toast({ variant: "destructive", title: "فشل الحذف" });
+      toast({ variant: "destructive", title: "فشل الحفظ" });
     }
   };
 
@@ -101,7 +134,7 @@ export default function AccountingPeriodPage() {
             <PageHeaderTitle className="text-3xl font-black">إدارة الفترات المحاسبية</PageHeaderTitle>
           </div>
           <PageHeaderDescription>
-            تحكم في شهور الاستحقاق لكل صف دراسي بشكل مستقل لضمان دقة كشوف المتأخرات.
+            تحكم في شهور الاستحقاق ونظام التحصيل لضمان دقة كشوف المتأخرات.
           </PageHeaderDescription>
         </PageHeader>
         <Button 
@@ -114,138 +147,204 @@ export default function AccountingPeriodPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {GRADES.map((grade) => {
-            const periods = settings?.grades?.[grade]?.periods || [];
-            return (
-                <Card key={grade} className="border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 flex flex-col overflow-hidden hover:shadow-md transition-all border-t-4 border-t-primary/20">
-                    <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 p-6 pb-4 border-b">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                                <GraduationCap className="h-5 w-5 text-primary" />
-                                <CardTitle className="text-sm font-black">{grade}</CardTitle>
-                            </div>
-                            <Badge variant="secondary" className="rounded-full px-2 h-6 text-[10px] font-bold">
-                                {periods.length} فترات
-                            </Badge>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        {/* إعدادات نظام التحصيل العام */}
+        <div className="lg:col-span-1 space-y-6">
+            <Card className="border-0 shadow-xl rounded-[2.5rem] bg-indigo-600 text-white overflow-hidden relative group">
+                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <CardHeader className="p-8 pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-xl">
+                            <Wallet className="h-5 w-5" />
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-6 flex-grow flex flex-col gap-4">
-                        {periods.length > 0 ? (
-                            <div className="space-y-3">
-                                {periods.map((p: any) => {
-                                    const dates = formatPeriodDates(p);
-                                    return (
-                                        <div key={p.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 group relative">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase">من</span>
-                                                    <span className="text-xs font-bold text-slate-700">{dates.start}</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase">إلى</span>
-                                                    <span className="text-xs font-bold text-slate-700">{dates.end}</span>
-                                                </div>
-                                            </div>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="absolute -top-2 -left-2 h-7 w-7 rounded-full bg-white border border-rose-100 text-rose-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() => handleDeletePeriod(grade, p.id)}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="flex-grow flex flex-col items-center justify-center py-6 text-center text-slate-300">
-                                <Calendar className="h-8 w-8 mb-2 opacity-20" />
-                                <p className="text-[10px] font-bold italic">لا توجد فترات مسجلة</p>
-                            </div>
-                        )}
+                        <CardTitle className="text-xl font-black">نظام التحصيل</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-6">
+                    <p className="text-xs font-bold text-white/70 leading-relaxed">
+                        اختر الموعد الذي تطلب فيه الرسوم من طلابك؛ سيتم استخدام هذا الخيار لتذكير الأهل لاحقاً.
+                    </p>
+                    
+                    <RadioGroup
+                        value={timing}
+                        onValueChange={(val: any) => setTiming(val)}
+                        className="grid grid-cols-1 gap-2"
+                    >
+                        <div className={cn("flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer", timing === 'start' ? 'border-white bg-white/10' : 'border-white/10 bg-black/10 hover:bg-black/20')}>
+                           <RadioGroupItem value="start" id="g-start" className="sr-only" />
+                           <Label htmlFor="g-start" className="text-sm font-black cursor-pointer">أول 5 أيام من الشهر</Label>
+                           {timing === 'start' && <CheckCircle2 className="h-4 w-4" />}
+                        </div>
+                        <div className={cn("flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer", timing === 'mid' ? 'border-white bg-white/10' : 'border-white/10 bg-black/10 hover:bg-black/20')}>
+                           <RadioGroupItem value="mid" id="g-mid" className="sr-only" />
+                           <Label htmlFor="g-mid" className="text-sm font-black cursor-pointer">منتصف الشهر (يوم 15)</Label>
+                           {timing === 'mid' && <CheckCircle2 className="h-4 w-4" />}
+                        </div>
+                        <div className={cn("flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer", timing === 'end' ? 'border-white bg-white/10' : 'border-white/10 bg-black/10 hover:bg-black/20')}>
+                           <RadioGroupItem value="end" id="g-end" className="sr-only" />
+                           <Label htmlFor="g-end" className="text-sm font-black cursor-pointer">آخر الشهر (يوم 25)</Label>
+                           {timing === 'end' && <CheckCircle2 className="h-4 w-4" />}
+                        </div>
+                    </RadioGroup>
 
-                        <Dialog open={selectedGradeForAdd === grade} onOpenChange={(open) => !open && setSelectedGradeForAdd(null)}>
-                            <DialogTrigger asChild>
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full h-11 rounded-xl font-bold gap-2 border-dashed border-2 hover:bg-primary/5 hover:border-primary/50 text-slate-500 hover:text-primary transition-all"
-                                    onClick={() => setSelectedGradeForAdd(grade)}
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    إضافة فترة
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="rounded-[2.5rem] border-0 shadow-2xl">
-                                <DialogHeader>
-                                    <DialogTitle className="text-right text-xl font-black flex items-center gap-3 mb-4">
-                                        <div className="p-2 bg-primary/10 rounded-xl">
-                                            <Plus className="h-5 w-5 text-primary" />
-                                        </div>
-                                        إضافة فترة لـ {grade.split(' ')[1]}
-                                    </DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-6 py-4">
-                                    <div className="grid grid-cols-1 gap-4 p-5 bg-slate-50 rounded-3xl border border-slate-100">
-                                        <div className="space-y-3">
-                                            <Label className="font-bold text-xs text-primary flex items-center gap-2">
-                                                <Calendar className="h-3 w-3" /> بداية الفترة
-                                            </Label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Select value={tempPeriod.startYear} onValueChange={(val) => setTempPeriod({...tempPeriod, startYear: val})}>
-                                                    <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="rounded-xl">
-                                                        {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                                <Select value={tempPeriod.startMonth} onValueChange={(val) => setTempPeriod({...tempPeriod, startMonth: val})}>
-                                                    <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="rounded-xl">
-                                                        {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
+                    <Button 
+                        onClick={handleUpdateTiming}
+                        disabled={isSavingTiming}
+                        className="w-full h-14 rounded-2xl bg-white text-indigo-600 hover:bg-slate-100 font-black gap-2 shadow-2xl"
+                    >
+                        {isSavingTiming ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                        حفظ نظام التحصيل
+                    </Button>
+                </CardContent>
+            </Card>
 
-                                        <div className="space-y-3">
-                                            <Label className="font-bold text-xs text-emerald-600 flex items-center gap-2">
-                                                <Calendar className="h-3 w-3" /> نهاية الفترة
-                                            </Label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Select value={tempPeriod.endYear} onValueChange={(val) => setTempPeriod({...tempPeriod, endYear: val})}>
-                                                    <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="rounded-xl">
-                                                        {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                                <Select value={tempPeriod.endMonth} onValueChange={(val) => setTempPeriod({...tempPeriod, endMonth: val})}>
-                                                    <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="rounded-xl">
-                                                        {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                    </div>
+            <div className="bg-amber-50 border border-amber-100 p-6 rounded-[2rem] flex items-start gap-4">
+                <div className="p-2 bg-amber-500 rounded-xl text-white">
+                    <Calendar className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                    <h4 className="font-black text-amber-900 text-sm">نصيحة للمحاسبة</h4>
+                    <p className="text-[10px] text-amber-700 leading-relaxed font-bold">
+                        أضف فترات استحقاق لكل صف لكي يعرف النظام متى يبدأ في رصد المتأخرات. يمكنك إضافة فترات منفصلة للمراجعات النهائية أو الفصول الصيفية.
+                    </p>
+                </div>
+            </div>
+        </div>
 
-                                    <Button 
-                                        onClick={handleAddPeriod} 
-                                        disabled={isAdding || settingsLoading}
-                                        className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-lg shadow-primary/20"
-                                    >
-                                        {isAdding ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                                        تأكيد الاعتماد
-                                    </Button>
+        {/* قائمة الصفوف الدراسية والفترات */}
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {GRADES.map((grade) => {
+                const periods = settings?.grades?.[grade]?.periods || [];
+                return (
+                    <Card key={grade} className="border-0 shadow-sm rounded-[2rem] bg-white dark:bg-slate-900 flex flex-col overflow-hidden hover:shadow-md transition-all border-t-4 border-t-primary/20">
+                        <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 p-6 pb-4 border-b">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                                    <GraduationCap className="h-5 w-5 text-primary" />
+                                    <CardTitle className="text-sm font-black">{grade}</CardTitle>
                                 </div>
-                            </DialogContent>
-                        </Dialog>
-                    </CardContent>
-                </Card>
-            );
-        })}
+                                <Badge variant="secondary" className="rounded-full px-2 h-6 text-[10px] font-bold">
+                                    {periods.length} فترات
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6 flex-grow flex flex-col gap-4">
+                            {periods.length > 0 ? (
+                                <div className="space-y-3">
+                                    {periods.map((p: any) => {
+                                        const dates = formatPeriodDates(p);
+                                        return (
+                                            <div key={p.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 group relative">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase">من</span>
+                                                        <span className="text-xs font-bold text-slate-700">{dates.start}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase">إلى</span>
+                                                        <span className="text-xs font-bold text-slate-700">{dates.end}</span>
+                                                    </div>
+                                                </div>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="absolute -top-2 -left-2 h-7 w-7 rounded-full bg-white border border-rose-100 text-rose-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => handleDeletePeriod(grade, p.id)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex-grow flex flex-col items-center justify-center py-6 text-center text-slate-300">
+                                    <Calendar className="h-8 w-8 mb-2 opacity-20" />
+                                    <p className="text-[10px] font-bold italic">لا توجد فترات مسجلة</p>
+                                </div>
+                            )}
+
+                            <Dialog open={selectedGradeForAdd === grade} onOpenChange={(open) => !open && setSelectedGradeForAdd(null)}>
+                                <DialogTrigger asChild>
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full h-11 rounded-xl font-bold gap-2 border-dashed border-2 hover:bg-primary/5 hover:border-primary/50 text-slate-500 hover:text-primary transition-all"
+                                        onClick={() => setSelectedGradeForAdd(grade)}
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        إضافة فترة استحقاق
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="rounded-[2.5rem] border-0 shadow-2xl">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-right text-xl font-black flex items-center gap-3 mb-4">
+                                            <div className="p-2 bg-primary/10 rounded-xl">
+                                                <Plus className="h-5 w-5 text-primary" />
+                                            </div>
+                                            إضافة فترة لـ {grade.split(' ')[1]}
+                                        </DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-6 py-4">
+                                        <div className="grid grid-cols-1 gap-4 p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                                            <div className="space-y-3">
+                                                <Label className="font-bold text-xs text-primary flex items-center gap-2">
+                                                    <Calendar className="h-3 w-3" /> بداية فترة الاستحقاق
+                                                </Label>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <Select value={tempPeriod.startYear} onValueChange={(val) => setTempPeriod({...tempPeriod, startYear: val})}>
+                                                        <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent className="rounded-xl">
+                                                            {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Select value={tempPeriod.startMonth} onValueChange={(val) => setTempPeriod({...tempPeriod, startMonth: val})}>
+                                                        <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent className="rounded-xl">
+                                                            {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <Label className="font-bold text-xs text-emerald-600 flex items-center gap-2">
+                                                    <Calendar className="h-3 w-3" /> نهاية فترة الاستحقاق
+                                                </Label>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <Select value={tempPeriod.endYear} onValueChange={(val) => setTempPeriod({...tempPeriod, endYear: val})}>
+                                                        <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent className="rounded-xl">
+                                                            {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Select value={tempPeriod.endMonth} onValueChange={(val) => setTempPeriod({...tempPeriod, endMonth: val})}>
+                                                        <SelectTrigger className="h-11 rounded-xl bg-white border-0 shadow-sm font-bold text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent className="rounded-xl">
+                                                            {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <Button 
+                                            onClick={handleAddPeriod} 
+                                            disabled={isAdding || settingsLoading}
+                                            className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-lg shadow-primary/20"
+                                        >
+                                            {isAdding ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                                            تأكيد الاعتماد
+                                        </Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </CardContent>
+                    </Card>
+                );
+            })}
+        </div>
       </div>
     </div>
   );
 }
-

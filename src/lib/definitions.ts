@@ -6,6 +6,7 @@ export type UserProfile = {
   email: string;
   displayName: string;
   photoURL?: string;
+  phone?: string;
   isBlocked?: boolean;
   isVerified?: boolean;
   lastLogin?: FieldValue;

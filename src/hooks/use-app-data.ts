@@ -3,32 +3,34 @@
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, useDatabase } from "@/firebase";
 import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule, PaymentConfig, GradePaymentConfig, ExamResult, NewExamResult } from "@/lib/definitions";
-import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc, getDocs, where, limit } from "firebase/firestore";
+import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc, getDocs, where, limit, getDoc } from "firebase/firestore";
 import { ref, set, serverTimestamp as rtdbTimestamp } from "firebase/database";
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 /**
  * دالة مزامنة بوابة ولي الأمر الأساسية لطالب واحد
- * تطلب البيانات من Firestore وترفعها لـ Realtime Database
- * تم تعديلها لتجنب الحاجة لـ Composite Indexes عبر الترتيب البرمجي
  */
 export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentId: string) {
   if (!db || !rtdb || !teacherId || !studentId) return false;
 
   try {
-    // 1. جلب بيانات الطالب الأساسية
+    // 1. جلب بيانات المعلم (للاسم والهاتف)
+    const teacherSnap = await getDoc(doc(db, 'users', teacherId));
+    const teacherData = teacherSnap.exists() ? teacherSnap.data() : null;
+
+    // 2. جلب بيانات الطالب الأساسية
     const studentsCol = collection(db, `users/${teacherId}/students`);
     const studentSnap = await getDocs(query(studentsCol, where('__name__', '==', studentId), limit(1)));
     if (studentSnap.empty) return false;
     const studentData = studentSnap.docs[0].data();
 
-    // 2. جلب السجلات المرتبطة (بدون orderBy لتجنب خطأ Index)
+    // 3. جلب السجلات المرتبطة
     const attendanceSnap = await getDocs(query(collection(db, `users/${teacherId}/attendance`), where('studentId', '==', studentId)));
     const paymentsSnap = await getDocs(query(collection(db, `users/${teacherId}/payments`), where('studentId', '==', studentId)));
     const examsSnap = await getDocs(query(collection(db, `users/${teacherId}/exams`), where('studentId', '==', studentId)));
 
-    // 3. ترتيب البيانات برمجياً (In-memory sorting) للحفاظ على السرعة وتجنب الفهارس
+    // 4. ترتيب البيانات برمجياً
     const sortedAttendance = attendanceSnap.docs.map(d => ({ id: d.id, ...d.data() as any }))
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 25);
@@ -41,13 +43,15 @@ export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, s
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 20);
 
-    // 4. دفع البيانات إلى Realtime Database
+    // 5. دفع البيانات إلى Realtime Database
     const portalRef = ref(rtdb, `portal/${teacherId}/${studentId}`);
     await set(portalRef, {
       info: {
         name: studentData.name,
         grade: studentData.grade,
-        teacherId: teacherId
+        teacherId: teacherId,
+        teacherName: teacherData?.displayName || 'المعلم',
+        teacherPhone: teacherData?.phone || ''
       },
       attendance: sortedAttendance,
       payments: sortedPayments,

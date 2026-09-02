@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -11,6 +12,7 @@ import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import SplashScreen from "./SplashScreen";
+import PhoneSetupPopup from "../features/account/PhoneSetupPopup";
 
 const publicRoutes = ["/login", "/signup", "/forgot-password", "/", "/blog", "/support", "/plans", "/privacy", "/terms"];
 
@@ -100,5 +102,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {user && <PhoneSetupPopup />}
+      {children}
+    </>
+  );
 }

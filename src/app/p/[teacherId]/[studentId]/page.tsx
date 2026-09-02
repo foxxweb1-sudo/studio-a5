@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -19,7 +20,9 @@ import {
   Calendar,
   Award,
   Sparkles,
-  Clock
+  Clock,
+  MessageCircle,
+  Phone
 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -28,6 +31,7 @@ import Image from 'next/image';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { useState, useEffect, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 
 export default function ParentPortalPage() {
   const params = useParams();
@@ -94,6 +98,7 @@ export default function ParentPortalPage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 px-4 sm:px-6 font-body" dir="rtl">
       <div className="max-w-5xl mx-auto pt-8 space-y-8">
         
+        {/* Header Section with Teacher Info */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
             <div className="flex items-center gap-4">
                 <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
@@ -104,15 +109,26 @@ export default function ParentPortalPage() {
                     <p className="text-xs text-muted-foreground font-bold">بوابة المتابعة المباشرة للأهل</p>
                 </div>
             </div>
-            <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-5 py-2.5 rounded-2xl">
-                <Sparkles className="h-4 w-4" />
-                <span className="text-sm font-black tracking-tight">محدث لحظياً (Live)</span>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="text-center sm:text-right">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">المعلم المسؤول</p>
+                    <h4 className="text-base font-black text-primary">{data.info.teacherName}</h4>
+                </div>
+                {data.info.teacherPhone && (
+                    <Button asChild variant="outline" className="rounded-2xl h-12 gap-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 font-bold">
+                        <a href={`https://wa.me/${data.info.teacherPhone.replace('+', '')}`} target="_blank" rel="noopener noreferrer">
+                            <MessageCircle className="h-4 w-4" />
+                            تواصل واتساب
+                        </a>
+                    </Button>
+                )}
             </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-indigo-600 text-white overflow-hidden relative group">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700" />
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
                 <CardContent className="p-8 flex flex-col items-center text-center justify-center h-full relative z-10">
                     <div className="p-4 bg-white/20 rounded-2xl mb-4 backdrop-blur-md">
                         <User className="h-10 w-10" />
@@ -182,7 +198,7 @@ export default function ParentPortalPage() {
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col lg:col-span-2">
                 <CardHeader className="p-8 border-b bg-indigo-50/30">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200">
+                        <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg">
                             <Trophy className="h-5 w-5" />
                         </div>
                         <CardTitle className="text-xl font-black text-slate-800">نتائج الإمتحانات</CardTitle>
@@ -289,10 +305,8 @@ export default function ParentPortalPage() {
 
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col">
                 <CardHeader className="p-8 border-b">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-lg">
-                            <Wallet className="h-5 w-5" />
-                        </div>
+                    <div className="flex items-center gap-3 text-amber-600">
+                        <Wallet className="h-5 w-5" />
                         <CardTitle className="text-xl font-black">المدفوعات</CardTitle>
                     </div>
                 </CardHeader>
@@ -317,7 +331,7 @@ export default function ParentPortalPage() {
                             </Table>
                         ) : (
                             <div className="py-20 text-center text-slate-300">
-                                <p className="font-black italic">لا توجد مدفوعات.</p>
+                                <p className="font-black italic">لا توجد مدفوعات مسجلة.</p>
                             </div>
                         )}
                     </div>
@@ -330,7 +344,7 @@ export default function ParentPortalPage() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">مصدر البيانات</span>
                 <span className="text-sm font-black text-primary tracking-tighter">{config.appName}</span>
             </div>
-            <p className="text-[9px] text-slate-400 font-medium opacity-60">تاريخ التقرير: {new Date().toLocaleDateString('ar-EG', { dateStyle: 'full' })}</p>
+            <p className="text-[9px] text-slate-400 font-medium opacity-60">تم التحديث: {data.lastUpdate ? new Date(data.lastUpdate).toLocaleString('ar-EG') : '...'}</p>
         </div>
       </div>
     </div>

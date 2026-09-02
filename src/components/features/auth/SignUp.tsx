@@ -22,25 +22,30 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import { useAppConfig } from "@/hooks/use-app-config";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2, ArrowRight } from "lucide-react";
+import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageIcon, UploadCloud, CheckCircle2, ArrowRight, Phone } from "lucide-react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   displayName: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل."),
   email: z.string().email("الرجاء إدخال بريد إلكتروني صالح."),
   password: z.string().min(6, "يجب أن تكون كلمة المرور 6 أحرف على الأقل."),
   photoURL: z.string().url("يجب رفع صورة شخصية لإكمال التسجيل.").min(1, "الصورة الشخصية مطلوبة."),
+  countryCode: z.string().min(1, "مطلوب"),
+  phone: z.string().min(8, "رقم الهاتف إلزامي وغير صحيح."),
 });
 
 export default function SignUp() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { config } = useAppConfig();
   const { toast } = useToast();
@@ -57,6 +62,8 @@ export default function SignUp() {
       email: "",
       password: "",
       photoURL: "",
+      countryCode: "20",
+      phone: "",
     },
   });
 
@@ -91,10 +98,22 @@ export default function SignUp() {
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const fullPhone = `+${values.countryCode}${values.phone.replace(/\D/g, '')}`;
       
       await updateProfile(userCredential.user, {
         displayName: values.displayName,
         photoURL: values.photoURL
+      });
+
+      // حفظ بيانات المستخدم في Firestore فوراً
+      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        email: values.email,
+        displayName: values.displayName,
+        photoURL: values.photoURL,
+        phone: fullPhone,
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
       });
 
       toast({
@@ -121,7 +140,7 @@ export default function SignUp() {
       await signInWithPopup(auth, provider);
       toast({
         title: "تم التسجيل بنجاح",
-        description: `مرحباً بك في نظام ${config.appName} عبر حساب جوجل.`,
+        description: `مرحباً بك في نظام ${config.appName} عبر حساب جوجل. يرجى إكمال بيانات هاتفك في الخطوة القادمة.`,
       });
       router.push('/');
     } catch (error: any) {
@@ -211,6 +230,50 @@ export default function SignUp() {
                     )}
                   />
               </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                    <FormField
+                      control={form.control}
+                      name="countryCode"
+                      render={({ field }) => (
+                        <FormItem className="col-span-1">
+                          <FormLabel className="font-black text-[10px] uppercase tracking-widest text-white/60 px-1">الرمز</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="rounded-2xl h-14 bg-white/5 border-white/10 font-mono">
+                                <SelectValue placeholder="+20" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="font-mono rounded-xl">
+                              <SelectItem value="20">+20 (مصر)</SelectItem>
+                              <SelectItem value="966">+966 (السعودية)</SelectItem>
+                              <SelectItem value="971">+971 (الإمارات)</SelectItem>
+                              <SelectItem value="965">+965 (الكويت)</SelectItem>
+                              <SelectItem value="212">+212 (المغرب)</SelectItem>
+                              <SelectItem value="213">+213 (الجزائر)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel className="font-black text-[10px] uppercase tracking-widest text-white/60 px-1">رقم هاتف المعلم (إلزامي)</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                               <Phone className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                               <Input placeholder="112147..." className="pr-12 rounded-2xl h-14 bg-white/5 border-white/10 text-white focus:bg-white/10 font-mono" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-[10px] font-bold" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
               <FormField
                 control={form.control}

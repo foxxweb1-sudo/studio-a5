@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -27,19 +27,35 @@ export default function PhoneSetupPopup() {
   const [phone, setPhone] = useState('');
   const [paymentTiming, setPaymentTiming] = useState<'start' | 'mid' | 'end'>('start');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // لمنع ظهور النافذة مرة أخرى بعد الحفظ مباشرة في نفس الجلسة
+  const hasSubmittedInSession = useRef(false);
 
   useEffect(() => {
-    if (user && !isProfileLoading && userProfile && (!userProfile.phone || !userProfile.paymentTiming)) {
-      setIsOpen(true);
-      if (userProfile.phone) {
-          // استخراج الرقم بدون الرمز إذا وجد
-          setPhone(userProfile.phone.replace(/^\+\d{2,3}/, ''));
-      }
-      if (userProfile.paymentTiming) {
-          setPaymentTiming(userProfile.paymentTiming);
-      }
+    // لا تظهر النافذة إذا كان المستخدم قيد التحميل أو إذا كان قد سجل بالفعل في هذه الجلسة
+    if (isUserLoading || isProfileLoading || !user || !userProfile || hasSubmittedInSession.current) {
+      return;
     }
-  }, [user, userProfile, isProfileLoading]);
+
+    // التحقق الفعلي من نقص البيانات
+    const isMissingData = !userProfile.phone || !userProfile.paymentTiming;
+    
+    if (isMissingData) {
+      // تأخير بسيط للتأكد من أن البيانات ليست في حالة تحديث مؤقتة
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+        if (userProfile.phone) {
+            setPhone(userProfile.phone.replace(/^\+\d{2,3}/, ''));
+        }
+        if (userProfile.paymentTiming) {
+            setPaymentTiming(userProfile.paymentTiming);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsOpen(false);
+    }
+  }, [user, userProfile, isProfileLoading, isUserLoading]);
 
   const handleSaveData = async () => {
     if (!phone.trim() || phone.length < 8) {
@@ -56,8 +72,9 @@ export default function PhoneSetupPopup() {
         updatedAt: serverTimestamp()
       });
       
-      toast({ title: "تم التحديث", description: "تم تحديث بياناتك بنجاح." });
+      hasSubmittedInSession.current = true; // منع الظهور مجدداً فوراً
       setIsOpen(false);
+      toast({ title: "تم التحديث", description: "تم تحديث بياناتك بنجاح." });
     } catch (error) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ البيانات، حاول مرة أخرى." });
     } finally {
@@ -66,8 +83,18 @@ export default function PhoneSetupPopup() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md rounded-[2.5rem] border-0 shadow-2xl overflow-hidden p-0" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        // نمنع إغلاق النافذة يدوياً إذا كانت البيانات ناقصة
+        if (!open && (!userProfile?.phone || !userProfile?.paymentTiming) && !hasSubmittedInSession.current) {
+            return;
+        }
+        setIsOpen(open);
+    }}>
+      <DialogContent 
+        className="sm:max-w-md rounded-[2.5rem] border-0 shadow-2xl overflow-hidden p-0" 
+        onPointerDownOutside={(e) => e.preventDefault()} 
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <div className="bg-primary h-2 w-full" />
         <div className="p-8 space-y-6 text-right">
             <DialogHeader className="text-right">

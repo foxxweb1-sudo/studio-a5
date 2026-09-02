@@ -27,7 +27,10 @@ import {
   Bell,
   Globe,
   ExternalLink,
-  Newspaper
+  Newspaper,
+  LifeBuoy,
+  ShieldAlert,
+  MessageSquare
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -72,7 +75,6 @@ export default function Home() {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
-    // فحص إذا كان التطبيق يعمل بالفعل كـ Standalone
     const checkStandalone = () => {
       if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
         setIsStandalone(true);
@@ -83,7 +85,6 @@ export default function Home() {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // إظهار الإشعار إذا لم يكن مثبتاً بالفعل
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setIsInstallable(true);
       }
@@ -256,7 +257,6 @@ export default function Home() {
         </Card>
       </div>
 
-      {/* إعلان بانر أول */}
       <BannerAd />
 
       <Card className="border-0 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] rounded-[4rem] bg-[#0A0F1E] text-white overflow-hidden relative min-h-[450px] hover-glow">
@@ -414,16 +414,91 @@ export default function Home() {
         </Card>
       </Link>
 
-      {/* قسم مدونة الحضور 3×3 */}
       <BlogFeed />
 
-      {/* إعلان Native تحت المقالات */}
       <NativeArticleAd />
 
-      {/* إعلان بانر ثاني */}
+      {/* CyberNode ecosystem links grid (2x2) */}
+      <div className="grid grid-cols-2 gap-4 sm:gap-6">
+        <a 
+          href="https://support.cybenode.site" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group"
+        >
+          <Card className="border-0 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 h-full">
+            <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-4">
+              <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <LifeBuoy className="h-8 w-8" />
+              </div>
+              <div>
+                <h4 className="text-base sm:text-xl font-black text-slate-800 dark:text-white">الدعم الفني</h4>
+                <p className="text-[10px] text-muted-foreground font-bold mt-1">support.cybenode.site</p>
+              </div>
+            </CardContent>
+          </Card>
+        </a>
+
+        <a 
+          href="https://cybenode.site" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group"
+        >
+          <Card className="border-0 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 h-full">
+            <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-4">
+              <div className="p-4 bg-primary/5 text-primary rounded-2xl group-hover:bg-primary group-hover:text-white transition-all">
+                <Globe className="h-8 w-8" />
+              </div>
+              <div>
+                <h4 className="text-base sm:text-xl font-black text-slate-800 dark:text-white">CybeNode Main</h4>
+                <p className="text-[10px] text-muted-foreground font-bold mt-1">cybenode.site</p>
+              </div>
+            </CardContent>
+          </Card>
+        </a>
+
+        <a 
+          href="https://ceo.cybenode.site" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group"
+        >
+          <Card className="border-0 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 h-full">
+            <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-4">
+              <div className="p-4 bg-amber-50 text-amber-600 rounded-2xl group-hover:bg-amber-600 group-hover:text-white transition-all">
+                <ShieldAlert className="h-8 w-8" />
+              </div>
+              <div>
+                <h4 className="text-base sm:text-xl font-black text-slate-800 dark:text-white">الأدمن CEO</h4>
+                <p className="text-[10px] text-muted-foreground font-bold mt-1">ceo.cybenode.site</p>
+              </div>
+            </CardContent>
+          </Card>
+        </a>
+
+        <a 
+          href="https://forum.cybenode.site" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group"
+        >
+          <Card className="border-0 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 h-full">
+            <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-4">
+              <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                <MessageSquare className="h-8 w-8" />
+              </div>
+              <div>
+                <h4 className="text-base sm:text-xl font-black text-slate-800 dark:text-white">المنتدى العام</h4>
+                <p className="text-[10px] text-muted-foreground font-bold mt-1">forum.cybenode.site</p>
+              </div>
+            </CardContent>
+          </Card>
+        </a>
+      </div>
+
       <BannerAd />
 
-      {/* روابط الموقع والمدونة */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Card className="border-0 shadow-lg rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 group">
           <CardContent className="p-0">

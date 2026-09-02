@@ -6,7 +6,6 @@ import AuthGuard from '@/components/layout/AuthGuard';
 import { AppShell } from '@/components/layout/AppShell';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import CookieConsent from '@/components/layout/CookieConsent';
-import FloatingSupport from '@/components/layout/FloatingSupport';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
@@ -97,7 +96,6 @@ export default function RootLayout({
               <AppShell>
                 {children}
                 <CookieConsent />
-                <FloatingSupport />
               </AppShell>
             </AuthGuard>
           </FirebaseClientProvider>

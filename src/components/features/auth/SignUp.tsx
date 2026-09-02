@@ -35,6 +35,7 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   displayName: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل."),

@@ -15,6 +15,7 @@ export type UserProfile = {
 
 export type ScheduleSession = {
   id: string;
+  name: string; // اسم المجموعة (مثلاً: مجموعة السبت صباحاً)
   grade: string;
   days: string[];
   startTime: string;
@@ -67,6 +68,7 @@ export type Student = {
   id: string;
   name: string;
   grade: string;
+  groupId?: string; // المعرف الفريد للمجموعة التي ينتمي إليها الطالب
   phone?: string;
   parentPhone?: string;
   createdAt: FieldValue;
@@ -78,6 +80,7 @@ export type NewStudent = Omit<Student, 'id' | 'createdAt'>;
 export type AttendanceRecord = {
   id: string;
   studentId: string;
+  groupId?: string; // تسجيل المجموعة وقت الحضور للتوثيق
   date: string;
   status: 'present' | 'absent';
   createdAt: FieldValue;

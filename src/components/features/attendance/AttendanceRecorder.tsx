@@ -13,8 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { CheckCircle, UserPlus, Loader2, PartyPopper, QrCode, BadgeCheck, Clock, UserX, AlertCircle, Calendar, MessageCircle } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle, Loader2, PartyPopper, QrCode, BadgeCheck, Clock, UserX, AlertCircle, Calendar, MessageCircle, Layers } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -46,11 +45,10 @@ export default function AttendanceRecorder() {
   const { attendance, addAttendance, markAbsentees, isLoading: attendanceLoading } = useAttendance();
   const { schedule, isLoading: scheduleLoading } = useSchedule();
   const { toast } = useToast();
-  const [lastAttended, setLastAttended] = useState<string | null>(null);
-  const [isMarkingAbsence, setIsMarkingAbsence] = useState(false);
+  const [lastAttended, setLastAttended] = useState<{name: string, group: string} | null>(null);
+  const [isMarkingAbsence, setIsMarkingAbsence] = useState<string | null>(null);
   const [liveTime, setLiveTime] = useState<Date | null>(null);
 
-  // تصفية الطلاب المؤرشفين من عملية تسجيل الحضور
   const activeStudents = useMemo(() => allStudents.filter(s => !s.isArchived), [allStudents]);
 
   useEffect(() => {
@@ -71,7 +69,7 @@ export default function AttendanceRecorder() {
   const currentDayName = format(todayDate, 'EEEE');
   const currentTimeStr = liveTime ? format(liveTime, 'HH:mm') : format(todayDate, 'HH:mm');
 
-  const activeSessionsNow = useMemo(() => {
+  const activeGroupsNow = useMemo(() => {
     if (!schedule?.isActive || !schedule.sessions) return [];
     return schedule.sessions.filter(s => 
       s.days.includes(currentDayName) && 
@@ -80,7 +78,7 @@ export default function AttendanceRecorder() {
     );
   }, [schedule, currentDayName, currentTimeStr]);
 
-  const finishedSessionsToday = useMemo(() => {
+  const finishedGroupsToday = useMemo(() => {
     if (!schedule?.isActive || !schedule.sessions) return [];
     return schedule.sessions.filter(s => 
       s.days.includes(currentDayName) && 
@@ -103,19 +101,28 @@ export default function AttendanceRecorder() {
       return;
     }
 
+    // التحقق من موعد المجموعة الخاص بالطالب
     if (schedule?.isActive && schedule.sessions) {
-        const hasSessionNow = schedule.sessions.some(s => 
-            s.grade === student!.grade && 
-            s.days.includes(currentDayName) && 
-            currentTimeStr >= s.startTime && 
-            currentTimeStr <= s.endTime
-        );
+        if (!student.groupId) {
+            toast({ variant: "destructive", title: "طالب بلا مجموعة", description: `يرجى تحديد مجموعة للطالب ${student.name} أولاً من صفحة إدارة الطلاب.` });
+            return;
+        }
 
-        if (!hasSessionNow) {
+        const myGroup = schedule.sessions.find(s => s.id === student!.groupId);
+        if (!myGroup) {
+            toast({ variant: "destructive", title: "مجموعة غير صالحة", description: "المجموعة المرتبطة بهذا الطالب لم تعد موجودة." });
+            return;
+        }
+
+        const isTimeOk = myGroup.days.includes(currentDayName) && 
+                         currentTimeStr >= myGroup.startTime && 
+                         currentTimeStr <= myGroup.endTime;
+
+        if (!isTimeOk) {
             toast({
                 variant: "destructive",
-                title: "خارج وقت الحصة",
-                description: `لا توجد حصة مسجلة لـ (${student.grade}) في هذا الوقت.`
+                title: "خارج وقت المجموعة",
+                description: `مجموعة الطالب (${myGroup.name}) موعدها ليس الآن.`
             });
             return;
         }
@@ -131,20 +138,23 @@ export default function AttendanceRecorder() {
     }
 
     addAttendance(student!.id);
-    setLastAttended(student!.name);
+    const groupName = schedule?.sessions?.find(s => s.id === student!.groupId)?.name || 'غير محدد';
+    setLastAttended({ name: student!.name, group: groupName });
     toast({ title: 'تم التسجيل', description: `تم تسجيل حضور الطالب ${student!.name} بنجاح.` });
     form.reset();
   }
 
-  const handleMarkAbsentees = async (grade: string) => {
-    setIsMarkingAbsence(true);
+  const handleMarkAbsentees = async (group: any) => {
+    setIsMarkingAbsence(group.id);
     try {
-        await markAbsentees(grade, activeStudents);
-        toast({ title: "تم تسجيل الغياب", description: `تم رصد الغائبين لصف (${grade}) بنجاح.` });
+        // تصفية الطلاب المنتمين لهذه المجموعة تحديداً
+        const studentsInGroup = activeStudents.filter(s => s.groupId === group.id);
+        await markAbsentees(group.grade, studentsInGroup); 
+        toast({ title: "تم تسجيل الغياب", description: `تم رصد الغائبين لمجموعة (${group.name}) بنجاح.` });
     } catch (e) {
         toast({ variant: "destructive", title: "فشل رصد الغياب" });
     } finally {
-        setIsMarkingAbsence(false);
+        setIsMarkingAbsence(null);
     }
   };
 
@@ -177,9 +187,9 @@ export default function AttendanceRecorder() {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div className={`lg:col-span-3 p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeSessionsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
+          <div className={`lg:col-span-3 p-5 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg ${activeGroupsNow.length > 0 ? 'bg-emerald-50 border-emerald-100 shadow-emerald-500/5' : 'bg-slate-50 border-slate-200 shadow-slate-500/5'}`}>
             <div className="flex items-center gap-4 w-full md:w-auto text-center md:text-right">
-                {activeSessionsNow.length > 0 ? (
+                {activeGroupsNow.length > 0 ? (
                     <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
                         <BadgeCheck className="h-6 w-6" />
                     </div>
@@ -189,27 +199,27 @@ export default function AttendanceRecorder() {
                     </div>
                 )}
                 <div>
-                    <h5 className={`font-black text-lg ${activeSessionsNow.length > 0 ? 'text-emerald-700' : 'text-slate-600'}`}>
-                        {activeSessionsNow.length > 0 ? 'وقت الحصص الجارية الآن' : 'لا توجد حصص جارية حالياً'}
+                    <h5 className={`font-black text-lg ${activeGroupsNow.length > 0 ? 'text-emerald-700' : 'text-slate-600'}`}>
+                        {activeGroupsNow.length > 0 ? 'المجموعات الجارية الآن' : 'لا توجد مجموعات جارية حالياً'}
                     </h5>
                     <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
-                        {activeSessionsNow.length > 0 ? activeSessionsNow.map(s => (
+                        {activeGroupsNow.length > 0 ? activeGroupsNow.map(s => (
                             <Badge key={s.id} variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold">
-                                {s.grade} ({s.startTime}-{s.endTime})
+                                {s.name} ({s.startTime}-{s.endTime})
                             </Badge>
                         )) : (
-                            <span className="text-xs font-bold text-slate-400 italic">بإمكانك إضافة حصص من صفحة "مواعيد العمل"</span>
+                            <span className="text-xs font-bold text-slate-400 italic">يمكنك إضافة مجموعات من صفحة "مواعيد العمل"</span>
                         )}
                     </div>
                 </div>
             </div>
             <div className="flex items-center gap-4">
                 <div className="hidden md:flex flex-col items-end">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{DAY_MAP[currentDayName]}</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{DAY_MAP[currentDayName] || currentDayName}</span>
                     <span className="text-xs font-bold text-slate-600">{liveTime ? format(liveTime, 'd MMMM', { locale: ar }) : ''}</span>
                 </div>
-                <Badge variant={activeSessionsNow.length > 0 ? "default" : "secondary"} className="rounded-xl px-4 py-1.5 font-black h-10">
-                    {activeSessionsNow.length > 0 ? 'الاستقبال متاح' : 'الاستقبال مغلق'}
+                <Badge variant={activeGroupsNow.length > 0 ? "default" : "secondary"} className="rounded-xl px-4 py-1.5 font-black h-10">
+                    {activeGroupsNow.length > 0 ? 'استقبال نشط' : 'الاستقبال مغلق'}
                 </Badge>
             </div>
           </div>
@@ -222,7 +232,7 @@ export default function AttendanceRecorder() {
           </Card>
       </div>
 
-      {schedule?.isActive && finishedSessionsToday.length > 0 && (
+      {schedule?.isActive && finishedGroupsToday.length > 0 && (
           <div className="bg-amber-50 border-2 border-amber-100 p-5 rounded-[2rem] shadow-sm animate-in zoom-in-95 duration-500">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -230,22 +240,22 @@ export default function AttendanceRecorder() {
                           <AlertCircle className="h-5 w-5" />
                       </div>
                       <div className="text-right">
-                          <h4 className="font-black text-amber-900 text-sm">حصص انتهى وقتها</h4>
-                          <p className="text-[10px] text-amber-700 font-bold">يمكنك الآن تسجيل "غائب" لمن لم يحضر.</p>
+                          <h4 className="font-black text-amber-900 text-sm">مجموعات انتهى وقتها</h4>
+                          <p className="text-[10px] text-amber-700 font-bold">يمكنك رصد الغائبين للمجموعات التي انتهى موعدها.</p>
                       </div>
                   </div>
                   <div className="flex flex-wrap gap-2 justify-center">
-                      {finishedSessionsToday.map(s => (
+                      {finishedGroupsToday.map(s => (
                           <Button 
                             key={s.id} 
                             size="sm" 
                             variant="outline" 
                             className="rounded-xl border-amber-200 bg-white text-amber-700 font-bold gap-2 hover:bg-amber-100"
-                            onClick={() => handleMarkAbsentees(s.grade)}
-                            disabled={isMarkingAbsence}
+                            onClick={() => handleMarkAbsentees(s)}
+                            disabled={!!isMarkingAbsence}
                           >
-                              {isMarkingAbsence ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
-                              غياب {s.grade}
+                              {isMarkingAbsence === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserX className="h-3 w-3" />}
+                              غياب {s.name}
                           </Button>
                       ))}
                   </div>
@@ -309,8 +319,8 @@ export default function AttendanceRecorder() {
                     <PartyPopper className="h-6 w-6" />
                 </div>
                 <div className="flex-grow">
-                    <p className="text-[10px] font-bold uppercase opacity-80 tracking-widest">آخر تسجيل ناجح</p>
-                    <h4 className="font-black text-xl">{lastAttended}</h4>
+                    <p className="text-[10px] font-bold uppercase opacity-80 tracking-widest">آخر تسجيل: {lastAttended.group}</p>
+                    <h4 className="font-black text-xl">{lastAttended.name}</h4>
                 </div>
             </div>
             )}
@@ -322,7 +332,7 @@ export default function AttendanceRecorder() {
                     <div className="flex justify-between items-center">
                         <div>
                             <CardTitle className="text-xl">سجل اليوم</CardTitle>
-                            <CardDescription>قائمة الطلاب النشطين المسجلين بتاريخ {todayStr}</CardDescription>
+                            <CardDescription>قائمة الطلاب المسجلين بتاريخ {todayStr}</CardDescription>
                         </div>
                         <div className="flex gap-2">
                             <Badge variant="default" className="bg-emerald-500 h-10 px-4 rounded-xl font-black text-xs sm:text-sm">
@@ -345,36 +355,44 @@ export default function AttendanceRecorder() {
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">
                             <TableHead className="text-right font-black px-6">الاسم</TableHead>
-                            <TableHead className="text-right font-black">الصف</TableHead>
+                            <TableHead className="text-right font-black">المجموعة</TableHead>
                             <TableHead className="text-center font-black">الحالة</TableHead>
                             <TableHead className="text-center font-black">تنبيه</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {[...attendedToday, ...absentToday].map((student, idx) => (
-                            student &&
-                            <TableRow key={student.id} className="group transition-colors">
-                                <TableCell className="font-black text-slate-700 dark:text-slate-200 px-6">{student.name}</TableCell>
-                                <TableCell className="text-slate-500 font-medium text-xs">{student.grade}</TableCell>
-                                <TableCell className="text-center">
-                                    {attendance.find(a => a.studentId === student.id && a.date === todayStr)?.status === 'present' ? (
-                                        <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-lg">حاضر</Badge>
-                                    ) : (
-                                        <Badge className="bg-rose-500 hover:bg-rose-600 rounded-lg">غائب</Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="text-emerald-600 hover:bg-emerald-50 rounded-full"
-                                        onClick={() => sendAttendanceWhatsapp(student)}
-                                    >
-                                        <MessageCircle className="h-4 w-4" />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                            ))}
+                            {[...attendedToday, ...absentToday].map((student, idx) => {
+                             if (!student) return null;
+                             const groupName = schedule?.sessions?.find(s => s.id === student.groupId)?.name || 'غير محدد';
+                             return (
+                                <TableRow key={student.id} className="group transition-colors">
+                                    <TableCell className="font-black text-slate-700 dark:text-slate-200 px-6">{student.name}</TableCell>
+                                    <TableCell className="text-slate-500 font-medium text-xs">
+                                        <div className="flex items-center gap-1">
+                                            <Layers className="h-3 w-3" />
+                                            {groupName}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        {attendance.find(a => a.studentId === student.id && a.date === todayStr)?.status === 'present' ? (
+                                            <Badge className="bg-emerald-500 hover:bg-emerald-600 rounded-lg">حاضر</Badge>
+                                        ) : (
+                                            <Badge className="bg-rose-500 hover:bg-rose-600 rounded-lg">غائب</Badge>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="text-emerald-600 hover:bg-emerald-50 rounded-full"
+                                            onClick={() => sendAttendanceWhatsapp(student)}
+                                        >
+                                            <MessageCircle className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                             );
+                            })}
                         </TableBody>
                         </Table>
                     </div>
@@ -383,8 +401,8 @@ export default function AttendanceRecorder() {
                         <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-slate-200">
                             <QrCode className="h-8 w-8 text-slate-300" />
                         </div>
-                        <h3 className="font-bold text-slate-400 mb-2">لا توجد سجلات بعد</h3>
-                        <p className="text-xs text-slate-400 mb-6">ابدأ بمسح كود الطالب لتسجيل الحضور</p>
+                        <h3 className="font-bold text-slate-400 mb-2">لا يوجد تسجيلات</h3>
+                        <p className="text-xs text-slate-400 mb-6">سيظهر الطلاب المسجلون هنا فور تسجيلهم</p>
                     </div>
                     )}
                 </CardContent>

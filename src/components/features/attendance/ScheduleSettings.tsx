@@ -8,11 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Clock, Calendar, Save, Loader2, Info, Plus, Trash2, GraduationCap } from 'lucide-react';
+import { Clock, Calendar, Save, Loader2, Info, Plus, Trash2, GraduationCap, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScheduleSession } from '@/lib/definitions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 
 const DAYS = [
   { id: 'Saturday', label: 'السبت' },
@@ -47,6 +46,7 @@ export default function ScheduleSettings() {
   const addSession = () => {
     const newSession: ScheduleSession = {
       id: Math.random().toString(36).substr(2, 9),
+      name: `مجموعة جديدة ${sessions.length + 1}`,
       grade: GRADES[0],
       days: ['Saturday'],
       startTime: '08:00',
@@ -80,8 +80,8 @@ export default function ScheduleSettings() {
       sessions
     });
     toast({
-      title: "تم حفظ المواعيد",
-      description: "تم تحديث جدول الحصص بنجاح."
+      title: "تم حفظ المجموعات",
+      description: "تم تحديث جدول المجموعات بنجاح."
     });
   };
 
@@ -99,11 +99,11 @@ export default function ScheduleSettings() {
         <CardHeader className="bg-primary/5 border-b">
             <div className="flex items-center justify-between">
                 <div>
-                    <CardTitle className="text-xl flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-primary" />
-                        ضبط حصص العمل
+                    <CardTitle className="text-xl flex items-center gap-2 text-primary">
+                        <Users className="h-6 w-6" />
+                        إدارة المجموعات الدراسية
                     </CardTitle>
-                    <CardDescription>أضف مواعيدك المخصصة لكل صف دراسي على حدة.</CardDescription>
+                    <CardDescription>قم بتعريف المجموعات وتحديد مواعيدها لربط الطلاب بها.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border shadow-sm">
                     <Label htmlFor="active-schedule" className="font-bold text-xs">تفعيل النظام</Label>
@@ -117,22 +117,32 @@ export default function ScheduleSettings() {
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             {sessions.map((session, index) => (
-              <div key={session.id} className="relative p-6 rounded-3xl border-2 border-slate-100 bg-slate-50/50 space-y-6 group animate-in fade-in slide-in-from-right-4 duration-300" style={{ animationDelay: `${index * 50}ms` }}>
+              <div key={session.id} className="relative p-6 rounded-[2rem] border-2 border-slate-100 bg-slate-50/50 space-y-6 group animate-in fade-in slide-in-from-right-4 duration-300">
                 <Button 
                     variant="ghost" 
                     size="icon" 
                     onClick={() => removeSession(session.id)}
-                    className="absolute -top-3 -left-3 bg-white shadow-md rounded-full text-rose-500 hover:bg-rose-50 border border-rose-100"
+                    className="absolute -top-3 -left-3 bg-white shadow-md rounded-full text-rose-500 hover:bg-rose-50 border border-rose-100 h-9 w-9"
                 >
                     <Trash2 className="h-4 w-4" />
                 </Button>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <Label className="font-bold text-xs text-slate-500">اسم المجموعة</Label>
+                        <Input 
+                            placeholder="مثال: مجموعة الأحد 10 ص"
+                            className="h-12 rounded-xl bg-white font-bold"
+                            value={session.name}
+                            onChange={(e) => updateSession(session.id, { name: e.target.value })}
+                        />
+                    </div>
+
                     <div className="space-y-2">
                         <Label className="font-bold text-xs flex items-center gap-2 text-slate-500">
-                            <GraduationCap className="h-3 w-3" /> الصف المستهدف
+                            <GraduationCap className="h-3 w-3" /> الصف الدراسي
                         </Label>
                         <Select value={session.grade} onValueChange={(val) => updateSession(session.id, { grade: val })}>
                             <SelectTrigger className="rounded-xl h-12 bg-white font-bold">
@@ -170,16 +180,16 @@ export default function ScheduleSettings() {
 
                 <div className="space-y-2">
                     <Label className="font-bold text-xs text-slate-500 flex items-center gap-2">
-                        <Calendar className="h-3 w-3" /> أيام العمل لهذه الحصة
+                        <Calendar className="h-3 w-3" /> أيام المحاضرات لهذه المجموعة
                     </Label>
                     <div className="flex flex-wrap gap-2">
                         {DAYS.map(day => (
                             <button
                                 key={day.id}
                                 onClick={() => toggleDayInSession(session.id, day.id)}
-                                className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all border ${
+                                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all border ${
                                     session.days.includes(day.id)
-                                    ? 'bg-primary text-white border-primary shadow-sm'
+                                    ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
                                     : 'bg-white text-slate-400 border-slate-100 hover:border-primary/30'
                                 }`}
                             >
@@ -194,31 +204,29 @@ export default function ScheduleSettings() {
             <Button 
                 variant="outline" 
                 onClick={addSession}
-                className="w-full h-16 rounded-[1.5rem] border-dashed border-2 text-slate-400 hover:text-primary hover:border-primary/50 transition-all bg-slate-50/30"
+                className="w-full h-16 rounded-[1.5rem] border-dashed border-2 text-slate-400 hover:text-primary hover:border-primary/50 transition-all bg-slate-50/30 font-black gap-2"
             >
-                <Plus className="ms-2 h-5 w-5" />
-                إضافة حصة دراسية جديدة
+                <Plus className="h-5 w-5" />
+                إضافة مجموعة دراسية جديدة
             </Button>
           </div>
 
-          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3">
-            <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="p-5 bg-blue-50 rounded-3xl border border-blue-100 flex items-start gap-4">
+            <Info className="h-6 w-6 text-blue-500 shrink-0 mt-0.5" />
             <div className="space-y-1">
-                <p className="text-xs text-amber-700 leading-relaxed font-bold">
-                    نصيحة: يمكنك تخصيص مواعيد مختلفة لنفس الصف في أيام مختلفة.
-                </p>
-                <p className="text-[10px] text-amber-600/70">
-                    النظام سيتحقق من وجود حصة للطالب بناءً على صفه المسجل في بياناته.
+                <h4 className="font-black text-blue-900 text-sm">كيفية العمل:</h4>
+                <p className="text-xs text-blue-700/80 leading-relaxed font-bold">
+                    بعد إضافة المجموعات، اذهب لصفحة "الطلاب" وقم بتعديل بيانات الطالب لتختار مجموعته. سيقوم النظام تلقائياً بمنع تسجيل حضوره إلا في موعد مجموعته المخصص.
                 </p>
             </div>
           </div>
 
           <Button 
             onClick={handleSave} 
-            className="w-full h-14 rounded-2xl font-black text-lg gap-2 shadow-lg shadow-primary/20"
+            className="w-full h-16 rounded-[1.5rem] font-black text-xl gap-3 shadow-xl shadow-primary/20 bg-primary hover:bg-indigo-700"
           >
-            <Save className="h-5 w-5" />
-            حفظ كافة التغييرات
+            <Save className="h-6 w-6" />
+            حفظ كافة المجموعات
           </Button>
         </CardContent>
       </Card>

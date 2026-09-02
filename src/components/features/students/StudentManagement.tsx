@@ -1,17 +1,18 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useStudents } from '@/hooks/use-app-data';
+import { useStudents, useSchedule } from '@/hooks/use-app-data';
 import { useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical, Share2 } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical, Share2, Layers } from 'lucide-react';
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
 import { useSearchParams } from 'next/navigation';
@@ -53,6 +54,7 @@ const GRADES = [
 const formSchema = z.object({
   name: z.string().min(2, 'الاسم مطلوب.'),
   grade: z.string().min(1, 'يرجى اختيار الصف الدراسي.'),
+  groupId: z.string().optional(),
   parentPhone: z.string().optional(),
 });
 
@@ -62,6 +64,7 @@ export default function StudentManagement() {
   const { user } = useUser();
   
   const { students, addStudent, isLoading, deleteStudent, updateStudent } = useStudents();
+  const { schedule } = useSchedule();
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,9 +76,16 @@ export default function StudentManagement() {
     defaultValues: {
       name: '',
       grade: gradeFromUrl || '',
+      groupId: '',
       parentPhone: '',
     },
   });
+
+  // تصفية المجموعات المتاحة بناءً على الصف المختار
+  const availableGroups = useMemo(() => {
+    const selectedGrade = form.watch('grade');
+    return schedule?.sessions?.filter(s => s.grade === selectedGrade) || [];
+  }, [schedule, form.watch('grade')]);
 
   useEffect(() => {
     if (gradeFromUrl && !editingStudent) {
@@ -88,12 +98,14 @@ export default function StudentManagement() {
       form.reset({
         name: editingStudent.name,
         grade: editingStudent.grade,
+        groupId: editingStudent.groupId || '',
         parentPhone: editingStudent.parentPhone || '',
       });
     } else {
       form.reset({
         name: '',
         grade: gradeFromUrl || '',
+        groupId: '',
         parentPhone: '',
       });
     }
@@ -111,7 +123,7 @@ export default function StudentManagement() {
         description: `تم إضافة الطالب ${values.name} بنجاح.`,
       });
     }
-    form.reset({ name: '', grade: gradeFromUrl || '', parentPhone: '' });
+    form.reset({ name: '', grade: gradeFromUrl || '', groupId: '', parentPhone: '' });
   };
   
   const handleDelete = (studentId: string) => {
@@ -148,77 +160,86 @@ export default function StudentManagement() {
             <Table>
                 <TableHeader className="bg-muted/30 sticky top-0 z-10">
                 <TableRow>
-                    <TableHead className="text-right font-black px-6">الاسم</TableHead>
+                    <TableHead className="text-right font-black px-6">الاسم والمجموعة</TableHead>
                     {!gradeFromUrl && <TableHead className="text-right font-black">الفصل</TableHead>}
                     <TableHead className="text-center font-black">إجراءات</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {filtered.length > 0 ? (
-                    filtered.map((student) => (
-                    <TableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
-                        <TableCell className="font-bold py-4 px-6">
-                            <div className="flex flex-col gap-1">
-                            <Link href={`/students/${student.id}`} className="hover:underline text-primary flex items-center gap-2">
-                                <GraduationCap className="h-4 w-4 opacity-50" />
-                                {student.name}
-                            </Link>
-                            </div>
-                        </TableCell>
-                        {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
-                        <TableCell className="flex justify-center gap-1">
-                        <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl h-8 w-8" onClick={() => setSelectedStudentForQR(student)}>
-                            <QrCode className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" title="مشاركة الرابط للأهل" className="rounded-xl h-8 w-8 text-emerald-600" onClick={() => handleShareLink(student)}>
-                            <Share2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500 h-8 w-8" onClick={() => setEditingStudent(student)}>
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
+                    filtered.map((student) => {
+                    const group = schedule?.sessions?.find(s => s.id === student.groupId);
+                    return (
+                        <TableRow key={student.id} className="group hover:bg-primary/5 transition-colors">
+                            <TableCell className="font-bold py-4 px-6">
+                                <div className="flex flex-col gap-1">
+                                    <Link href={`/students/${student.id}`} className="hover:underline text-primary flex items-center gap-2">
+                                        <GraduationCap className="h-4 w-4 opacity-50" />
+                                        {student.name}
+                                    </Link>
+                                    <div className="flex items-center gap-1.5">
+                                        <Layers className="h-3 w-3 text-slate-400" />
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                            {group ? group.name : 'لم يتم تحديد مجموعة'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </TableCell>
+                            {!gradeFromUrl && <TableCell className="text-[10px] font-bold text-slate-500">{student.grade}</TableCell>}
+                            <TableCell className="flex justify-center gap-1">
+                                <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl h-8 w-8" onClick={() => setSelectedStudentForQR(student)}>
+                                    <QrCode className="h-4 w-4" />
                                 </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="rounded-xl p-1 w-40">
-                                <DropdownMenuItem 
-                                    className="rounded-lg gap-2 font-bold text-amber-600 focus:bg-amber-50"
-                                    onClick={() => handleArchive(student)}
-                                >
-                                    <Archive className="h-4 w-4" />
-                                    أرشفة الطالب
-                                </DropdownMenuItem>
+                                <Button variant="ghost" size="icon" title="مشاركة الرابط للأهل" className="rounded-xl h-8 w-8 text-emerald-600" onClick={() => handleShareLink(student)}>
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500 h-8 w-8" onClick={() => setEditingStudent(student)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
                                 
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 font-bold text-destructive hover:bg-rose-50">
-                                            <Trash2 className="h-4 w-4" />
-                                            حذف نهائي
-                                        </div>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent className="rounded-[2rem]">
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
-                                            <AlertDialogDescription className="text-right">
-                                            هذا الإجراء سيحذف الطالب ({student.name}) نهائياً بكافة سجلاته. لا يمكن التراجع.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter className="flex-row-reverse gap-2">
-                                            <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
-                                            حذف
-                                            </AlertDialogAction>
-                                            <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                    ))
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="rounded-xl p-1 w-40">
+                                        <DropdownMenuItem 
+                                            className="rounded-lg gap-2 font-bold text-amber-600 focus:bg-amber-50"
+                                            onClick={() => handleArchive(student)}
+                                        >
+                                            <Archive className="h-4 w-4" />
+                                            أرشفة الطالب
+                                        </DropdownMenuItem>
+                                        
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 font-bold text-destructive hover:bg-rose-50">
+                                                    <Trash2 className="h-4 w-4" />
+                                                    حذف نهائي
+                                                </div>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="rounded-[2rem]">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
+                                                    <AlertDialogDescription className="text-right">
+                                                    هذا الإجراء سيحذف الطالب ({student.name}) نهائياً بكافة سجلاته. لا يمكن التراجع.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter className="flex-row-reverse gap-2">
+                                                    <AlertDialogAction onClick={() => handleDelete(student.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl">
+                                                    حذف
+                                                    </AlertDialogAction>
+                                                    <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                    );
+                    })
                 ) : (
                     <TableRow>
                     <TableCell colSpan={3} className="h-24 text-center text-muted-foreground font-bold italic">
@@ -235,7 +256,7 @@ export default function StudentManagement() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1">
-        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden sticky top-20">
+        <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden sticky top-24">
           <CardHeader className="bg-primary/5 border-b">
             <CardTitle className="flex items-center gap-2">
                 {editingStudent ? <Edit className="h-5 w-5 text-blue-500" /> : <UserPlus className="h-5 w-5 text-primary" />}
@@ -281,6 +302,34 @@ export default function StudentManagement() {
                         <SelectContent className="rounded-xl">
                           {GRADES.map(g => (
                             <SelectItem key={g} value={g} className="font-bold">{g}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="groupId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold flex items-center gap-2">
+                        المجموعة الدراسية
+                        <Badge variant="outline" className="text-[8px] h-4 rounded px-1">تلقائي</Badge>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-12 rounded-xl bg-white font-bold">
+                            <SelectValue placeholder={availableGroups.length > 0 ? "اختر مجموعة..." : "لا توجد مجموعات لهذا الصف"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl">
+                          {availableGroups.map(group => (
+                            <SelectItem key={group.id} value={group.id} className="font-bold">
+                                {group.name} ({group.startTime}-{group.endTime})
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

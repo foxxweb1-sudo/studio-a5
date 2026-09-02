@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -32,6 +31,7 @@ import { useAppConfig } from '@/hooks/use-app-config';
 import { useState, useEffect, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { BannerAd, NativeArticleAd } from '@/components/layout/AdSections';
 
 export default function ParentPortalPage() {
   const params = useParams();
@@ -126,6 +126,9 @@ export default function ParentPortalPage() {
             </div>
         </div>
 
+        {/* إعلان بانر أول */}
+        <BannerAd />
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-indigo-600 text-white overflow-hidden relative group">
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
@@ -193,6 +196,9 @@ export default function ParentPortalPage() {
                 </CardContent>
             </Card>
         </div>
+
+        {/* إعلان Native في منتصف التقرير */}
+        <NativeArticleAd />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="border-0 shadow-xl rounded-[3rem] bg-white overflow-hidden flex flex-col lg:col-span-2">
@@ -338,6 +344,9 @@ export default function ParentPortalPage() {
                 </CardContent>
             </Card>
         </div>
+
+        {/* إعلان بانر نهائي */}
+        <BannerAd />
 
         <div className="text-center pt-16 pb-8 space-y-4">
             <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">

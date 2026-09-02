@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -91,7 +92,6 @@ export default function OfflineSyncPage() {
     setUploadProgress(0);
     let successCount = 0;
     let failCount = 0;
-    let indexErrorDetected = false;
 
     for (let i = 0; i < students.length; i++) {
         const student = students[i];
@@ -102,27 +102,16 @@ export default function OfflineSyncPage() {
         } catch (e: any) {
             console.error(e);
             failCount++;
-            if (e.message?.includes('index') || e.code?.includes('failed-precondition')) {
-                indexErrorDetected = true;
-            }
         }
         setUploadProgress(Math.round(((i + 1) / students.length) * 100));
     }
 
     setIsUploadingAll(false);
     
-    if (indexErrorDetected) {
-        toast({ 
-            variant: "destructive", 
-            title: "مطلوب إنشاء Index", 
-            description: "لقد توقف الرفع بسبب نقص في فهارس السيرفر. يرجى الضغط على الرابط في رسالة الخطأ بـ Console لتفعيل الترتيب." 
-        });
-    } else {
-        toast({
-            title: "اكتمل الرفع الشامل",
-            description: `تم تحديث ${successCount} سجل طالب بنجاح. ${failCount > 0 ? `(فشل ${failCount})` : ''}`
-        });
-    }
+    toast({
+        title: "اكتمل الرفع الشامل",
+        description: `تم تحديث ${successCount} سجل طالب بنجاح. ${failCount > 0 ? `(فشل ${failCount})` : ''}`
+    });
   };
 
   const handleCacheAssets = async () => {
@@ -178,7 +167,6 @@ export default function OfflineSyncPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* بطاقة الرفع السحابي الشامل - هذا هو الزر المطلوب */}
         <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-indigo-600 text-white md:col-span-2">
             <CardContent className="p-8">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">

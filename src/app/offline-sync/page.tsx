@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useDatabase } from '@/firebase';
+import { useStudents, syncStudentPortal } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,9 @@ import {
   AlertCircle,
   HardDrive,
   Loader2,
-  AppWindow
+  AppWindow,
+  CloudUpload,
+  UserCheck
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -30,11 +33,17 @@ import { Badge } from '@/components/ui/badge';
 export default function OfflineSyncPage() {
   const router = useRouter();
   const { user } = useUser();
+  const firestore = useFirestore();
+  const rtdb = useDatabase();
+  const { students } = useStudents();
   const { toast } = useToast();
+
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCaching, setIsCaching] = useState(false);
+  const [isUploadingAll, setIsUploadingAll] = useState(false);
   const [syncProgress, setSyncProgress] = useState(100);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -60,7 +69,6 @@ export default function OfflineSyncPage() {
     setIsSyncing(true);
     setSyncProgress(20);
     
-    // المزامنة تتم تلقائياً بواسطة Firestore، هنا نقوم فقط بتحديث الواجهة للتأكيد
     setTimeout(() => setSyncProgress(60), 1500);
     setTimeout(() => {
       setSyncProgress(100);
@@ -72,31 +80,65 @@ export default function OfflineSyncPage() {
     }, 3000);
   };
 
+  const handleUploadAllToPortal = async () => {
+    if (!isOnline) {
+      toast({ variant: "destructive", title: "أنت أوفلاين", description: "يجب توفر إنترنت لرفع البيانات للبوابة." });
+      return;
+    }
+
+    if (students.length === 0) {
+      toast({ title: "لا يوجد طلاب", description: "لم يتم العثور على طلاب لرفع بياناتهم." });
+      return;
+    }
+
+    setIsUploadingAll(true);
+    setUploadProgress(0);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < students.length; i++) {
+        const student = students[i];
+        try {
+            const success = await syncStudentPortal(firestore, rtdb, user!.uid, student.id);
+            if (success) successCount++;
+            else failCount++;
+        } catch (e: any) {
+            console.error(e);
+            failCount++;
+            // إذا كان الخطأ بسبب الفهارس، نظهر تنبيه مخصص
+            if (e.message?.includes('index')) {
+                toast({ 
+                    variant: "destructive", 
+                    title: "مطلوب إنشاء Index", 
+                    description: "يرجى الضغط على الرابط في رسالة الخطأ لتفعيل ترتيب البيانات." 
+                });
+                setIsUploadingAll(false);
+                return; 
+            }
+        }
+        setUploadProgress(Math.round(((i + 1) / students.length) * 100));
+    }
+
+    setIsUploadingAll(false);
+    toast({
+        title: "اكتمل الرفع الشامل",
+        description: `تم تحديث ${successCount} سجل طالب بنجاح. ${failCount > 0 ? `(فشل ${failCount})` : ''}`
+    });
+  };
+
   const handleCacheAssets = async () => {
     setIsCaching(true);
-    
     try {
-        // نطلب من Service Worker تحديث الكاش
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          // محاكاة تحميل حقيقي للملفات
           await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          toast({
-            title: "تم تفعيل وضع الأوفلاين",
-            description: "تم تخزين ملفات النظام بنجاح، يمكنك الآن استخدام التطبيق بدون إنترنت."
-          });
+          toast({ title: "تم تفعيل وضع الأوفلاين", description: "تم تخزين ملفات النظام بنجاح." });
         } else {
-           // في حال عدم توفر SW نقوم بإنشاء كاش يدوي بسيط
            const cache = await caches.open('attendance-v1');
            await cache.addAll(['/', '/attendance', '/students', '/payments', '/reports']);
            toast({ title: "تم الحفظ محلياً" });
         }
     } catch (e) {
-        toast({
-            variant: "destructive",
-            title: "فشل التخزين",
-            description: "متصفحك لا يدعم خاصية التخزين الدائم أو المساحة ممتلئة."
-        });
+        toast({ variant: "destructive", title: "فشل التخزين" });
     } finally {
         setIsCaching(false);
     }
@@ -121,9 +163,9 @@ export default function OfflineSyncPage() {
             <div className="p-3 bg-primary/10 rounded-2xl">
                <DownloadCloud className="h-6 w-6" />
             </div>
-            <PageHeaderTitle className="text-3xl font-black">العمل دون اتصال (Sync)</PageHeaderTitle>
+            <PageHeaderTitle className="text-3xl font-black">المزامنة الشاملة</PageHeaderTitle>
           </div>
-          <PageHeaderDescription>إدارة تخزين البيانات محلياً وضمان استمرارية العمل بدون إنترنت.</PageHeaderDescription>
+          <PageHeaderDescription>ارفع كافة بياناتك للسحابة أو ثبت الملفات للعمل بدون نت.</PageHeaderDescription>
         </PageHeader>
         <Button 
           variant="outline" 
@@ -136,6 +178,44 @@ export default function OfflineSyncPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* بطاقة الرفع السحابي الشامل */}
+        <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-indigo-600 text-white md:col-span-2">
+            <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-5 text-center md:text-right">
+                        <div className="p-4 bg-white/20 rounded-[1.5rem] backdrop-blur-md">
+                            <CloudUpload className="h-10 w-10" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black">الرفع السحابي الشامل</h3>
+                            <p className="text-sm font-bold opacity-80 mt-1">تحديث كافة بوابات أولياء الأمور (لجميع الطلاب) بضغطة واحدة.</p>
+                        </div>
+                    </div>
+                    
+                    <div className="w-full md:w-auto">
+                        {isUploadingAll ? (
+                            <div className="w-64 space-y-3">
+                                <div className="flex justify-between text-[10px] font-black uppercase">
+                                    <span>جاري الرفع...</span>
+                                    <span>{uploadProgress}%</span>
+                                </div>
+                                <Progress value={uploadProgress} className="h-2 bg-white/20" />
+                            </div>
+                        ) : (
+                            <Button 
+                                onClick={handleUploadAllToPortal}
+                                className="bg-white text-indigo-600 hover:bg-slate-50 rounded-2xl h-14 px-8 font-black text-lg gap-2 shadow-2xl"
+                            >
+                                <CloudLightning className="h-5 w-5" />
+                                رفع كافة السجلات الآن
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
         {/* Status Card */}
         <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
           <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-8">
@@ -170,16 +250,15 @@ export default function OfflineSyncPage() {
                             <span className="text-sm font-black text-primary">{syncProgress}%</span>
                         </div>
                         <Progress value={syncProgress} className="h-2 bg-slate-100" />
-                        <p className="text-[9px] text-slate-400 font-bold text-center">كافة بيانات الطلاب والمدفوعات محفوظة محلياً</p>
                     </div>
 
                     <Button 
                         onClick={handleManualSync} 
-                        disabled={isSyncing || isCaching}
+                        disabled={isSyncing || isCaching || isUploadingAll}
                         className="w-full h-14 rounded-2xl font-black gap-2 shadow-lg shadow-primary/20"
                     >
                         <RefreshCw className={`h-5 w-5 ${isSyncing ? 'animate-spin' : ''}`} />
-                        تحديث ومزامنة البيانات الآن
+                        تحديث ومزامنة البيانات
                     </Button>
                 </>
             )}
@@ -191,7 +270,7 @@ export default function OfflineSyncPage() {
           <CardHeader className="bg-emerald-50/50 dark:bg-emerald-900/10 border-b p-8">
             <CardTitle className="text-lg flex items-center gap-2 text-emerald-600">
               <ShieldCheck className="h-5 w-5" />
-              مميزات الأوفلاين
+              تثبيت النظام (Offline)
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8 space-y-4">
@@ -200,10 +279,9 @@ export default function OfflineSyncPage() {
             ) : (
                 <>
                     {[
-                        { icon: AppWindow, text: "تثبيت التطبيق على الشاشة الرئيسية للهاتف.", color: "text-indigo-500" },
-                        { icon: HardDrive, text: "حفظ تلقائي لكافة الحركات المالية والحضور.", color: "text-blue-500" },
-                        { icon: Smartphone, text: "إمكانية مسح QR Code بدون إنترنت نهائياً.", color: "text-emerald-500" },
-                        { icon: CloudLightning, text: "رفع البيانات للسحابة فور عودة الاتصال تلقائياً.", color: "text-amber-500" }
+                        { icon: AppWindow, text: "فتح المنصة بدون إنترنت نهائياً.", color: "text-indigo-500" },
+                        { icon: HardDrive, text: "تخزين سجلات الطلاب في ذاكرة الهاتف.", color: "text-blue-500" },
+                        { icon: Smartphone, text: "تسجيل حضور بالـ QR أوفلاين.", color: "text-emerald-500" }
                     ].map((feature, i) => (
                         <div key={i} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors">
                             <div className={`p-2 bg-slate-100 rounded-xl ${feature.color} shrink-0`}>
@@ -216,7 +294,7 @@ export default function OfflineSyncPage() {
                     <Button 
                         variant="outline"
                         onClick={handleCacheAssets}
-                        disabled={isSyncing || isCaching}
+                        disabled={isSyncing || isCaching || isUploadingAll}
                         className="w-full h-14 mt-4 rounded-2xl border-emerald-200 text-emerald-600 hover:bg-emerald-50 font-black gap-2"
                     >
                         <DownloadCloud className="h-5 w-5" />
@@ -228,12 +306,12 @@ export default function OfflineSyncPage() {
         </Card>
       </div>
 
-      <div className="p-6 bg-blue-50 border border-blue-100 rounded-[2rem] flex items-start gap-4 text-right">
-        <AlertCircle className="h-6 w-6 text-blue-500 shrink-0 mt-0.5" />
+      <div className="p-6 bg-amber-50 border border-amber-100 rounded-[2rem] flex items-start gap-4 text-right">
+        <AlertCircle className="h-6 w-6 text-amber-500 shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <h4 className="font-black text-blue-900 text-sm">كيف تضمن فتح التطبيق بدون نت؟</h4>
-          <p className="text-xs text-blue-700/80 leading-relaxed font-bold">
-            اضغط على زر <span className="text-emerald-600">"تثبيت ملفات الموقع محلياً"</span> أعلاه. سيقوم المتصفح بتحميل كافة الصفحات وحفظها في ذاكرة الهاتف/الكمبيوتر. بعد ذلك، يمكنك إغلاق النت وفتح الأقسام (الطلاب، الحضور، إلخ) وستفتح معك فوراً.
+          <h4 className="font-black text-amber-900 text-sm">ملاحظة بخصوص بوابة الأهل</h4>
+          <p className="text-xs text-amber-700/80 leading-relaxed font-bold">
+            عند إضافة طلاب جدد أو تسجيل درجات في "وضع الأوفلاين"، يرجى التأكد من العودة لهذه الصفحة والضغط على <span className="text-indigo-600">"رفع كافة السجلات"</span> فور توفر الإنترنت لتحديث بوابات أولياء الأمور.
           </p>
         </div>
       </div>

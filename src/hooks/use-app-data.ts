@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 /**
- * دالة مزامنة بوابة ولي الأمر الأساسية
+ * دالة مزامنة بوابة ولي الأمر الأساسية لطالب واحد
  */
 export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentId: string) {
   if (!db || !rtdb || !teacherId || !studentId) return false;
@@ -22,6 +22,7 @@ export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, s
     const studentData = studentSnap.docs[0].data();
 
     // 2. جلب السجلات المرتبطة (آخر 20 سجل لضمان السرعة)
+    // ملاحظة: قد يتطلب هذا الاستعلام إنشاء Index في Firebase Console
     const attendanceSnap = await getDocs(query(collection(db, `users/${teacherId}/attendance`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(20)));
     const paymentsSnap = await getDocs(query(collection(db, `users/${teacherId}/payments`), where('studentId', '==', studentId), orderBy('month', 'desc'), limit(10)));
     const examsSnap = await getDocs(query(collection(db, `users/${teacherId}/exams`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(15)));
@@ -41,8 +42,8 @@ export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, s
     });
     return true;
   } catch (error) {
-    console.error("Portal Sync Error:", error);
-    throw error; // نمرر الخطأ ليتم معالجته في الواجهة
+    console.error("Portal Sync Error for student " + studentId, error);
+    throw error;
   }
 }
 
@@ -106,13 +107,17 @@ export function useStudents() {
   const addStudent = async (studentData: NewStudent) => {
     if (!user || !firestore) return;
     const docRef = await addDoc(collection(firestore, `users/${user.uid}/students`), { ...studentData, createdAt: serverTimestamp() });
-    syncStudentPortal(firestore, rtdb, user.uid, docRef.id);
+    try {
+        await syncStudentPortal(firestore, rtdb, user.uid, docRef.id);
+    } catch (e) {}
   };
 
   const updateStudent = async (studentId: string, studentData: Partial<Student>) => {
     if (!user || !firestore) return;
     await updateDoc(doc(firestore, `users/${user.uid}/students`, studentId), studentData);
-    syncStudentPortal(firestore, rtdb, user.uid, studentId);
+    try {
+        await syncStudentPortal(firestore, rtdb, user.uid, studentId);
+    } catch (e) {}
   };
   
   const deleteStudent = (studentId: string) => {
@@ -139,7 +144,9 @@ export function useAttendance() {
     if (!user || !firestore) return;
     const today = format(new Date(), 'yyyy-MM-dd');
     await addDoc(collection(firestore, `users/${user.uid}/attendance`), { studentId, date: today, status, createdAt: serverTimestamp() });
-    syncStudentPortal(firestore, rtdb, user.uid, studentId);
+    try {
+        await syncStudentPortal(firestore, rtdb, user.uid, studentId);
+    } catch (e) {}
   };
 
   const markAbsentees = async (grade: string, studentsList: Student[]) => {
@@ -167,7 +174,9 @@ export function usePayments() {
     const addPayment = async (paymentData: NewPayment) => {
         if (!user || !firestore) return;
         await addDoc(collection(firestore, `users/${user.uid}/payments`), { ...paymentData, date: format(new Date(), 'yyyy-MM-dd'), createdAt: serverTimestamp() });
-        syncStudentPortal(firestore, rtdb, user.uid, paymentData.studentId);
+        try {
+            await syncStudentPortal(firestore, rtdb, user.uid, paymentData.studentId);
+        } catch (e) {}
     };
 
     return { payments: payments || [], isLoading, addPayment };
@@ -183,7 +192,9 @@ export function useExams() {
   const addExamResult = async (examData: NewExamResult) => {
     if (!user || !firestore) return;
     await addDoc(collection(firestore, `users/${user.uid}/exams`), { ...examData, createdAt: serverTimestamp() });
-    syncStudentPortal(firestore, rtdb, user.uid, examData.studentId);
+    try {
+        await syncStudentPortal(firestore, rtdb, user.uid, examData.studentId);
+    } catch (e) {}
   };
 
   const deleteExamResult = (id: string) => {

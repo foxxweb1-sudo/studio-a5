@@ -231,7 +231,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="p-0">
              <div className="flex flex-col">
-                <Link href="/about" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                <Link href="https://blog.alhodoor.site/p/about-us.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                       <Users className="h-4 w-4" />
@@ -241,7 +241,7 @@ export default function SettingsPage() {
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </Link>
 
-                <Link href="/contact" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                <Link href="https://blog.alhodoor.site/p/contact-us.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                       <MessageCircle className="h-4 w-4" />
@@ -261,7 +261,7 @@ export default function SettingsPage() {
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </Link>
 
-                <Link href="/privacy" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                <Link href="https://blog.alhodoor.site/p/privacy-policy.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
                       <ShieldCheck className="h-4 w-4" />
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </Link>
 
-                <Link href="/terms" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                <Link href="https://blog.alhodoor.site/p/terms-conditions.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
                       <FileText className="h-4 w-4" />

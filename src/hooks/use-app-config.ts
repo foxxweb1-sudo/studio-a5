@@ -14,14 +14,14 @@ export const DEFAULT_SIGNUP_BG = "https://picsum.photos/seed/lake/1920/1080";
 
 export const DEFAULT_CONTACT_PHONE = "201121473424";
 export const DEFAULT_CONTACT_EMAIL = "techstore.eg.app@gmail.com";
-export const DEFAULT_SUPPORT_URL = "https://tech-support-team.vercel.app/support/new";
+export const DEFAULT_SUPPORT_URL = "https://blog.alhodoor.site/p/contact-us.html";
 export const DEFAULT_WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbCCufAGOj9nfuY9o93L";
 export const DEFAULT_FACEBOOK = "https://web.facebook.com/share/g/18Ky7vbzqF/";
 export const DEFAULT_TWITTER = "https://x.com/tqnyt170296";
 export const DEFAULT_TELEGRAM = "https://t.me/TqnyatStore";
 export const DEFAULT_TECH_STORE = "https://techstore-servers.vercel.app/";
 export const DEFAULT_APK_URL = "#";
-export const DEFAULT_COOKIE_POLICY_URL = "/privacy";
+export const DEFAULT_COOKIE_POLICY_URL = "https://blog.alhodoor.site/p/privacy-policy.html";
 export const DEFAULT_UPDATES_URL = "#";
 
 export function useAppConfig() {

@@ -50,6 +50,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import BlogFeed from '@/components/features/blog/BlogFeed';
+import { BannerAd, NativeArticleAd } from '@/components/layout/AdSections';
 
 export default function Home() {
   const { user } = useUser();
@@ -255,6 +256,9 @@ export default function Home() {
         </Card>
       </div>
 
+      {/* إعلان بانر أول */}
+      <BannerAd />
+
       <Card className="border-0 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] rounded-[4rem] bg-[#0A0F1E] text-white overflow-hidden relative min-h-[450px] hover-glow">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(79,70,229,0.15),transparent_50%)]" />
         
@@ -412,6 +416,12 @@ export default function Home() {
 
       {/* قسم مدونة الحضور 3×3 */}
       <BlogFeed />
+
+      {/* إعلان Native تحت المقالات */}
+      <NativeArticleAd />
+
+      {/* إعلان بانر ثاني */}
+      <BannerAd />
 
       {/* روابط الموقع والمدونة */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

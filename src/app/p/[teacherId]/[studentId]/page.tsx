@@ -1,8 +1,8 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { useDatabase } from '@/firebase';
+import { ref, onValue } from 'firebase/database';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
@@ -11,75 +11,52 @@ import {
   GraduationCap, 
   CalendarCheck, 
   Wallet, 
-  School, 
-  TrendingUp,
-  CheckCircle2,
-  XCircle,
-  Award,
+  CheckCircle2, 
+  XCircle, 
+  Trophy, 
+  Activity, 
+  Info,
   Calendar,
-  AlertCircle,
-  Clock,
+  Award,
   Sparkles,
-  Trophy,
-  Activity,
-  Info
+  Clock
 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 export default function ParentPortalPage() {
   const params = useParams();
   const teacherId = params.teacherId as string;
   const studentId = params.studentId as string;
-  const firestore = useFirestore();
+  const database = useDatabase();
   const { config } = useAppConfig();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const teacherRef = useMemoFirebase(() => 
-    firestore ? doc(firestore, 'users', teacherId) : null, 
-  [firestore, teacherId]);
-  const { data: teacher, isLoading: teacherLoading } = useDoc<any>(teacherRef);
+  useEffect(() => {
+    if (!database || !teacherId || !studentId) return;
 
-  const studentRef = useMemoFirebase(() => 
-    firestore ? doc(firestore, `users/${teacherId}/students`, studentId) : null, 
-  [firestore, teacherId, studentId]);
-  const { data: student, isLoading: studentLoading } = useDoc<any>(studentRef);
+    const portalRef = ref(database, `portal/${teacherId}/${studentId}`);
+    const unsubscribe = onValue(portalRef, (snapshot) => {
+      setData(snapshot.val());
+      setLoading(false);
+    }, (error) => {
+      console.error(error);
+      setLoading(false);
+    });
 
-  const attendanceQuery = useMemoFirebase(() => 
-    firestore ? query(
-      collection(firestore, `users/${teacherId}/attendance`), 
-      where('studentId', '==', studentId),
-      orderBy('date', 'desc'),
-      limit(10)
-    ) : null, [firestore, teacherId, studentId]);
-  const { data: attendance, isLoading: attendanceLoading } = useCollection<any>(attendanceQuery);
-
-  const paymentsQuery = useMemoFirebase(() => 
-    firestore ? query(
-      collection(firestore, `users/${teacherId}/payments`), 
-      where('studentId', '==', studentId),
-      orderBy('month', 'desc'),
-      limit(5)
-    ) : null, [firestore, teacherId, studentId]);
-  const { data: payments, isLoading: paymentsLoading } = useCollection<any>(paymentsQuery);
-
-  const examsQuery = useMemoFirebase(() => 
-    firestore ? query(
-      collection(firestore, `users/${teacherId}/exams`), 
-      where('studentId', '==', studentId),
-      orderBy('date', 'desc'),
-      limit(5)
-    ) : null, [firestore, teacherId, studentId]);
-  const { data: exams, isLoading: examsLoading } = useCollection<any>(examsQuery);
+    return () => unsubscribe();
+  }, [database, teacherId, studentId]);
 
   const stats = useMemo(() => {
-    if (!attendance || attendance.length === 0) return { rate: 0, present: 0, absent: 0, status: 'لا توجد بيانات' };
-    const presentCount = attendance.filter((a: any) => a.status === 'present').length;
-    const totalCount = attendance.length;
+    if (!data?.attendance || data.attendance.length === 0) return { rate: 0, present: 0, absent: 0, status: 'لا توجد بيانات' };
+    const presentCount = data.attendance.filter((a: any) => a.status === 'present').length;
+    const totalCount = data.attendance.length;
     const rate = Math.round((presentCount / totalCount) * 100);
     
     let status = 'ممتاز';
@@ -88,11 +65,9 @@ export default function ParentPortalPage() {
     if (rate < 50) status = 'يحتاج متابعة';
 
     return { rate, present: presentCount, absent: totalCount - presentCount, status };
-  }, [attendance]);
+  }, [data]);
 
-  const isLoading = teacherLoading || studentLoading || attendanceLoading || paymentsLoading || examsLoading;
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-6 bg-slate-50">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -101,15 +76,15 @@ export default function ParentPortalPage() {
     );
   }
 
-  if (!student) {
+  if (!data) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center px-4 bg-slate-50">
         <div className="p-10 bg-white rounded-[3rem] shadow-2xl border-2 border-dashed border-rose-100 max-w-sm">
             <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <AlertCircle className="h-10 w-10 text-rose-500" />
+                <Info className="h-10 w-10 text-rose-500" />
             </div>
-            <h1 className="text-2xl font-black text-slate-800">رابط غير صالح</h1>
-            <p className="text-slate-400 mt-3 font-bold leading-relaxed">عذراً، هذا الرابط منتهي الصلاحية أو غير صحيح.</p>
+            <h1 className="text-2xl font-black text-slate-800">التقرير غير جاهز</h1>
+            <p className="text-slate-400 mt-3 font-bold leading-relaxed">يرجى الطلب من المعلم تحديث سجل الطالب لتفعيل هذا الرابط.</p>
         </div>
       </div>
     );
@@ -119,26 +94,19 @@ export default function ParentPortalPage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-24 px-4 sm:px-6 font-body" dir="rtl">
       <div className="max-w-5xl mx-auto pt-8 space-y-8">
         
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
-            <Info className="h-5 w-5 text-amber-600 shrink-0" />
-            <p className="text-xs font-bold text-amber-800">
-                هذا النظام حالياً في وضع التجريب (Beta)، سيتم توفير كامل المميزات والتقارير التفصيلية قريباً جداً.
-            </p>
-        </div>
-
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
             <div className="flex items-center gap-4">
                 <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-slate-50">
                     <Image src={config.appLogo || ''} alt="Logo" fill className="object-contain p-2" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-black text-slate-900 leading-none mb-1">الأستاذ {teacher?.displayName || 'مدرس المادة'}</h1>
-                    <p className="text-xs text-muted-foreground font-bold">بوابة المتابعة الذكية للأهل</p>
+                    <h1 className="text-xl font-black text-slate-900 leading-none mb-1">تقرير الحضور الذكي</h1>
+                    <p className="text-xs text-muted-foreground font-bold">بوابة المتابعة المباشرة للأهل</p>
                 </div>
             </div>
             <div className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-5 py-2.5 rounded-2xl">
                 <Sparkles className="h-4 w-4" />
-                <span className="text-sm font-black tracking-tight">تقرير محدث لحظياً</span>
+                <span className="text-sm font-black tracking-tight">محدث لحظياً (Live)</span>
             </div>
         </div>
 
@@ -149,10 +117,10 @@ export default function ParentPortalPage() {
                     <div className="p-4 bg-white/20 rounded-2xl mb-4 backdrop-blur-md">
                         <User className="h-10 w-10" />
                     </div>
-                    <h2 className="text-2xl font-black mb-1 drop-shadow-sm">{student.name}</h2>
+                    <h2 className="text-2xl font-black mb-1 drop-shadow-sm">{data.info.name}</h2>
                     <div className="flex items-center gap-2 text-xs font-bold opacity-80">
                         <GraduationCap className="h-3.5 w-3.5" />
-                        {student.grade}
+                        {data.info.grade}
                     </div>
                 </CardContent>
             </Card>
@@ -194,15 +162,15 @@ export default function ParentPortalPage() {
                     </div>
                     <div>
                         <h4 className="text-2xl font-black text-slate-800">
-                            {payments?.[0] ? `${payments[0].amount} ج.م` : 'لا توجد دفعات'}
+                            {data.payments?.[0] ? `${data.payments[0].amount} ج.م` : 'لا توجد دفعات'}
                         </h4>
                         <p className="text-[10px] font-bold text-slate-400 mt-1">آخر دفعة مستلمة</p>
                     </div>
-                    {payments?.[0] && (
+                    {data.payments?.[0] && (
                         <div className="flex items-center gap-3 p-3 bg-amber-50/50 rounded-2xl border border-amber-100/50">
                             <Calendar className="h-4 w-4 text-amber-600" />
                             <span className="text-xs font-black text-amber-700">
-                                {format(parse(payments[0].month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}
+                                {format(parse(data.payments[0].month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}
                             </span>
                         </div>
                     )}
@@ -217,12 +185,12 @@ export default function ParentPortalPage() {
                         <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200">
                             <Trophy className="h-5 w-5" />
                         </div>
-                        <CardTitle className="text-xl font-black text-slate-800">نتائج الإمتحانات الأخيرة</CardTitle>
+                        <CardTitle className="text-xl font-black text-slate-800">نتائج الإمتحانات</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        {exams && exams.length > 0 ? (
+                        {data.exams && data.exams.length > 0 ? (
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
@@ -233,7 +201,7 @@ export default function ParentPortalPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {exams.map((exam: any) => {
+                                    {data.exams.map((exam: any) => {
                                         const percentage = Math.round((exam.score / exam.totalScore) * 100);
                                         return (
                                             <TableRow key={exam.id} className="hover:bg-slate-50/50 transition-colors border-b">
@@ -279,15 +247,15 @@ export default function ParentPortalPage() {
                         <div className="p-2.5 bg-emerald-500 text-white rounded-xl shadow-lg">
                             <CalendarCheck className="h-5 w-5" />
                         </div>
-                        <CardTitle className="text-xl font-black">سجل الحضور الأخير</CardTitle>
+                        <CardTitle className="text-xl font-black">سجل الحضور</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="max-h-[350px] overflow-auto">
-                        {attendance && attendance.length > 0 ? (
+                        {data.attendance && data.attendance.length > 0 ? (
                             <Table>
                                 <TableBody>
-                                    {attendance.map((record: any) => (
+                                    {data.attendance.map((record: any) => (
                                         <TableRow key={record.id} className="hover:bg-slate-50/50 transition-colors border-b">
                                             <TableCell className="px-8 py-5">
                                                 <span className="font-bold text-slate-700">
@@ -325,16 +293,16 @@ export default function ParentPortalPage() {
                         <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-lg">
                             <Wallet className="h-5 w-5" />
                         </div>
-                        <CardTitle className="text-xl font-black">المدفوعات المالية</CardTitle>
+                        <CardTitle className="text-xl font-black">المدفوعات</CardTitle>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="max-h-[350px] overflow-auto">
-                        {payments && payments.length > 0 ? (
+                        {data.payments && data.payments.length > 0 ? (
                             <Table>
                                 <TableBody>
-                                    {payments.map((payment: any) => (
-                                        <TableRow key={payment.id} className="hover:bg-slate-50/50 transition-colors border-b">
+                                    {data.payments.map((payment: any) => (
+                                        <TableRow key={payment.id} className="hover:bg-amber-50/30 transition-colors border-b">
                                             <TableCell className="px-8 py-6 font-black text-slate-800">
                                                 {format(parse(payment.month, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}
                                             </TableCell>
@@ -349,7 +317,7 @@ export default function ParentPortalPage() {
                             </Table>
                         ) : (
                             <div className="py-20 text-center text-slate-300">
-                                <p className="font-black italic">لم يتم تسجيل أي مدفوعات.</p>
+                                <p className="font-black italic">لا توجد مدفوعات.</p>
                             </div>
                         )}
                     </div>
@@ -359,7 +327,7 @@ export default function ParentPortalPage() {
 
         <div className="text-center pt-16 pb-8 space-y-4">
             <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">المصدر</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">مصدر البيانات</span>
                 <span className="text-sm font-black text-primary tracking-tighter">{config.appName}</span>
             </div>
             <p className="text-[9px] text-slate-400 font-medium opacity-60">تاريخ التقرير: {new Date().toLocaleDateString('ar-EG', { dateStyle: 'full' })}</p>

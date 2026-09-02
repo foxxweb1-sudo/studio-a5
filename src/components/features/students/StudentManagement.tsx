@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -12,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical, Share2, Info, Sparkles, Construction } from 'lucide-react';
+import { UserPlus, Search, QrCode, Loader2, Trash2, Edit, GraduationCap, Archive, Filter, MoreVertical, Share2 } from 'lucide-react';
 import { Student } from '@/lib/definitions';
 import StudentQRCodeDialog from './StudentQRCodeDialog';
 import { useSearchParams } from 'next/navigation';
@@ -27,14 +26,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -76,7 +67,6 @@ export default function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentForQR, setSelectedStudentForQR] = useState<Student | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [showBetaDialog, setShowBetaDialog] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -137,8 +127,11 @@ export default function StudentManagement() {
     });
   };
 
-  const handleShareLink = () => {
-    setShowBetaDialog(true);
+  const handleShareLink = (student: Student) => {
+    if (!user) return;
+    const portalUrl = `${window.location.origin}/p/${user.uid}/${student.id}`;
+    navigator.clipboard.writeText(portalUrl);
+    toast({ title: "تم نسخ الرابط", description: "يمكنك الآن إرسال رابط المتابعة لولي الأمر عبر الواتساب." });
   };
 
   const activeStudents = useMemo(() => students.filter(s => !s.isArchived), [students]);
@@ -177,7 +170,7 @@ export default function StudentManagement() {
                         <Button variant="ghost" size="icon" title="QR Code" className="rounded-xl h-8 w-8" onClick={() => setSelectedStudentForQR(student)}>
                             <QrCode className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" title="مشاركة الرابط للأهل" className="rounded-xl h-8 w-8 text-emerald-600" onClick={handleShareLink}>
+                        <Button variant="ghost" size="icon" title="مشاركة الرابط للأهل" className="rounded-xl h-8 w-8 text-emerald-600" onClick={() => handleShareLink(student)}>
                             <Share2 className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" title="تعديل" className="rounded-xl text-blue-500 h-8 w-8" onClick={() => setEditingStudent(student)}>
@@ -346,7 +339,7 @@ export default function StudentManagement() {
             <CardHeader className="bg-slate-50/50 border-b flex flex-row items-center justify-between">
                 <div>
                     <CardTitle className="text-xl">الطلاب النشطين</CardTitle>
-                    <CardDescription>اضغط على <Share2 className="inline h-3 w-3" /> لمشاركة رابط المتابعة مع الأهل.</CardDescription>
+                    <CardDescription>شارك رابط المتابعة المباشرة مع أولياء الأمور.</CardDescription>
                 </div>
                 <Badge className="bg-primary hover:bg-primary rounded-xl h-10 px-4 font-black">
                     {activeStudents.filter(s => !gradeFromUrl || s.grade === gradeFromUrl).length} طالب
@@ -367,29 +360,6 @@ export default function StudentManagement() {
           onOpenChange={(isOpen) => !isOpen && setSelectedStudentForQR(null)}
         />
       )}
-
-      <Dialog open={showBetaDialog} onOpenChange={setShowBetaDialog}>
-        <DialogContent className="rounded-[2.5rem] border-0 shadow-2xl overflow-hidden p-0 max-w-sm">
-            <div className="bg-indigo-600 h-2 w-full" />
-            <div className="p-8 text-center space-y-6">
-                <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center mx-auto relative">
-                    <Sparkles className="h-10 w-10 text-indigo-600" />
-                    <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-xl shadow-md border">
-                        <Construction className="h-4 w-4 text-amber-500" />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <DialogTitle className="text-2xl font-black text-slate-900">نظام المتابعة (Beta)</DialogTitle>
-                    <DialogDescription className="text-sm font-bold text-slate-500 leading-relaxed px-2">
-                        نحن نعمل حالياً على تطوير نظام متابعة الطلاب للأهل. سيتم إطلاق الروابط التفاعلية والتقارير الذكية قريباً جداً لتزويدكم بتجربة أفضل.
-                    </DialogDescription>
-                </div>
-                <Button onClick={() => setShowBetaDialog(false)} className="w-full h-12 rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
-                    فهمت ذلك
-                </Button>
-            </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

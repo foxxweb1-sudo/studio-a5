@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
@@ -7,20 +6,13 @@ import { useUser } from '@/firebase';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, User, GraduationCap, Phone, ArrowLeft, Share2, Award, CheckCircle2, XCircle, Trophy, Sparkles, Construction, Wallet } from 'lucide-react';
+import { Loader2, User, GraduationCap, Phone, ArrowLeft, Share2, Award, CheckCircle2, XCircle, Trophy, Wallet, Copy } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
 export default function StudentProfilePage() {
   const params = useParams();
@@ -28,7 +20,6 @@ export default function StudentProfilePage() {
   const studentId = params.studentId as string;
   const { user } = useUser();
   const { toast } = useToast();
-  const [showBetaDialog, setShowBetaDialog] = useState(false);
 
   const { students, isLoading: studentsLoading } = useStudents();
   const { attendance, isLoading: attendanceLoading } = useAttendance();
@@ -41,7 +32,10 @@ export default function StudentProfilePage() {
   const studentExams = exams.filter((e) => e.studentId === studentId);
 
   const handleShareLink = () => {
-    setShowBetaDialog(true);
+    if (!user || !student) return;
+    const portalUrl = `${window.location.origin}/p/${user.uid}/${student.id}`;
+    navigator.clipboard.writeText(portalUrl);
+    toast({ title: "تم نسخ الرابط", description: "رابط متابعة ولي الأمر جاهز للمشاركة الآن." });
   };
 
   const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading;
@@ -124,13 +118,12 @@ export default function StudentProfilePage() {
                 </div>
                 <div>
                     <h4 className="font-black text-indigo-900">تقرير الأداء</h4>
-                    <p className="text-xs text-indigo-700/70 font-bold">إجمالي الامتحانات المسجلة: {studentExams.length}</p>
+                    <p className="text-xs text-indigo-700/70 font-bold">إجمالي الامتحانات: {studentExams.length}</p>
                 </div>
           </div>
         </div>
 
         <div className="lg:col-span-2 space-y-8">
-          {/* Exams History for Teacher */}
           <Card className="rounded-[2.5rem] border-0 shadow-xl overflow-hidden bg-white">
             <CardHeader className="bg-indigo-50 border-b flex flex-row items-center justify-between p-6">
                 <div className="flex items-center gap-3">
@@ -139,7 +132,6 @@ export default function StudentProfilePage() {
                     </div>
                     <CardTitle className="text-lg font-black">سجل الامتحانات</CardTitle>
                 </div>
-                <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 rounded-lg">{studentExams.length} امتحان</Badge>
             </CardHeader>
             <CardContent className="p-0">
                 {studentExams.length > 0 ? (
@@ -242,29 +234,6 @@ export default function StudentProfilePage() {
           </Card>
         </div>
       </div>
-
-      <Dialog open={showBetaDialog} onOpenChange={setShowBetaDialog}>
-        <DialogContent className="rounded-[2.5rem] border-0 shadow-2xl overflow-hidden p-0 max-w-sm">
-            <div className="bg-indigo-600 h-2 w-full" />
-            <div className="p-8 text-center space-y-6">
-                <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center mx-auto relative">
-                    <Sparkles className="h-10 w-10 text-indigo-600" />
-                    <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-xl shadow-md border">
-                        <Construction className="h-4 w-4 text-amber-500" />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <DialogTitle className="text-2xl font-black text-slate-900">نظام المتابعة (Beta)</DialogTitle>
-                    <DialogDescription className="text-sm font-bold text-slate-500 leading-relaxed px-2">
-                        نحن نعمل حالياً على تطوير نظام متابعة الطلاب للأهل. سيتم إطلاق الروابط التفاعلية والتقارير الذكية قريباً جداً لتزويدكم بتجربة أفضل.
-                    </DialogDescription>
-                </div>
-                <Button onClick={() => setShowBetaDialog(false)} className="w-full h-12 rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
-                    فهمت ذلك
-                </Button>
-            </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

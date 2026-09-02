@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { usePaymentSettings, useUser } from '@/hooks/use-app-data';
+import { usePaymentSettings } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 
 const GRADES = [
   'الصف الأول الابتدائي', 'الصف الثاني الابتدائي', 'الصف الثالث الابتدائي', 'الصف الرابع الابتدائي', 'الصف الخامس الابتدائي', 'الصف السادس الابتدائي',
@@ -238,11 +237,11 @@ export default function AccountingPeriodPage() {
                                             <div key={p.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 group relative">
                                                 <div className="flex flex-col gap-1">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase">من</span>
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">من</span>
                                                         <span className="text-xs font-bold text-slate-700">{dates.start}</span>
                                                     </div>
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase">إلى</span>
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">إلى</span>
                                                         <span className="text-xs font-bold text-slate-700">{dates.end}</span>
                                                     </div>
                                                 </div>

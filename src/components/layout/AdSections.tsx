@@ -30,7 +30,8 @@ export function BannerAd() {
   }, []);
 
   return (
-    <div className="flex justify-center w-full my-8 overflow-hidden">
+    <div className="flex flex-col items-center w-full my-8 overflow-hidden">
+      <span className="text-[9px] text-muted-foreground font-black mb-1.5 uppercase tracking-[0.2em] opacity-60">مادة إعلانية</span>
       <div ref={adRef} className="max-w-full rounded-xl overflow-hidden shadow-sm" />
     </div>
   );
@@ -40,8 +41,6 @@ export function BannerAd() {
  * مكون الإعلان المخصص (Native) أسفل المقالات
  */
 export function NativeArticleAd() {
-  const adRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     // تحميل السكربت الخارجي في الـ Head
     const scriptId = 'profitablerate-script';
@@ -56,8 +55,11 @@ export function NativeArticleAd() {
   }, []);
 
   return (
-    <div className="w-full my-12 bg-white/5 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-inner">
-      <div id="container-e4a3dd200a382fdfe17a5ede528a2491"></div>
+    <div className="w-full my-12 flex flex-col items-center">
+      <span className="text-[9px] text-muted-foreground font-black mb-2 uppercase tracking-[0.2em] opacity-60">مادة إعلانية</span>
+      <div className="w-full bg-white/5 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-inner">
+        <div id="container-e4a3dd200a382fdfe17a5ede528a2491"></div>
+      </div>
     </div>
   );
 }

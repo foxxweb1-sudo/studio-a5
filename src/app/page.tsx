@@ -24,7 +24,9 @@ import {
   Heart,
   UserCheck,
   Star,
-  Bell
+  Bell,
+  Globe,
+  ExternalLink
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,7 @@ import { ar } from 'date-fns/locale';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import BlogFeed from '@/components/features/blog/BlogFeed';
 
 export default function Home() {
   const { user } = useUser();
@@ -139,7 +142,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-24 px-4">
+    <div className="flex flex-col gap-12 max-w-7xl mx-auto pb-24 px-4">
       
       {isInstallable && !isStandalone && (
         <div className="animate-in slide-in-from-top-4 duration-700">
@@ -288,7 +291,7 @@ export default function Home() {
                                 onClick={(e) => handleProtectedClick(e, '/schedule')}
                                 className="rounded-[1.5rem] h-16 px-8 font-black gap-2 border border-white/10 bg-white/5 hover:bg-white/10 text-white text-base flex items-center"
                             >
-                                <Clock className="h-5 w-5" /> مواعيد العمل
+                                <Clock className="h-5 w-5" /> مواعيد المجموعات
                             </button>
                         </div>
                         
@@ -360,7 +363,7 @@ export default function Home() {
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-2xl sm:text-3xl font-black">Buy Me a Coffee</h3>
-                            <p className="text-sm font-bold opacity-90">ادعم تطوير تطبيق الحضور واستمرارية فريق TECH</p>
+                            <p className="text-sm font-bold opacity-90">ادعم تطوير تطبيق الحضور واستمرارية فريق CyberNode</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -405,6 +408,61 @@ export default function Home() {
             </CardContent>
         </Card>
       </Link>
+
+      {/* قسم مدونة الحضور 3×3 */}
+      <BlogFeed />
+
+      {/* روابط الموقع والمدونة */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Card className="border-0 shadow-lg rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 group">
+          <CardContent className="p-0">
+            <a 
+              href="https://alhodoor.site" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-8 group-hover:bg-primary/5 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-primary/10 text-primary rounded-[1.5rem] group-hover:scale-110 transition-transform">
+                  <Globe className="h-8 w-8" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-black text-slate-800 dark:text-white">الموقع الرسمي</h4>
+                  <p className="text-xs text-slate-400 font-bold">alhodoor.site</p>
+                </div>
+              </div>
+              <ExternalLink className="h-6 w-6 text-slate-300 group-hover:text-primary transition-colors" />
+            </a>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900 group">
+          <CardContent className="p-0">
+            <a 
+              href="https://blog.alhodoor.site" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-8 group-hover:bg-indigo-500/5 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-indigo-500/10 text-indigo-600 rounded-[1.5rem] group-hover:scale-110 transition-transform">
+                  <Newspaper className="h-8 w-8" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-black text-slate-800 dark:text-white">المدونة التعليمية</h4>
+                  <p className="text-xs text-slate-400 font-bold">blog.alhodoor.site</p>
+                </div>
+              </div>
+              <ExternalLink className="h-6 w-6 text-slate-300 group-hover:text-indigo-600 transition-colors" />
+            </a>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="text-center space-y-2">
+         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Powered by</p>
+         <div className="text-2xl font-black text-primary tracking-tighter">CyberNode</div>
+      </div>
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="rounded-[3rem] border-0 shadow-2xl max-w-md overflow-hidden p-0 bg-white">

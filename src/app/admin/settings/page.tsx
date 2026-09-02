@@ -161,7 +161,7 @@ export default function AdminAppSettingsPage() {
       });
       toast({
         title: "تزامن القواعد",
-        description: "جاري نشر قواعد الأمان الجديدة إلى خوادم TECH."
+        description: "جاري نشر قواعد الأمان الجديدة إلى خوادم CyberNode."
       });
     } catch (error) {
       toast({
@@ -266,7 +266,7 @@ export default function AdminAppSettingsPage() {
               <CardHeader className="bg-slate-50 p-6 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Wallpaper className="h-5 w-5 text-emerald-500" />
-                  صور الخلفية
+                  صور القاعدة
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
@@ -378,7 +378,7 @@ export default function AdminAppSettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-bold flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary" /> رابط "لمعرفة المزيد"
+                      <ShieldCheck className="h-4 w-4 text-primary" /> رابط السياسات
                     </Label>
                     <Input 
                       value={formData.cookiePolicyUrl}
@@ -389,7 +389,7 @@ export default function AdminAppSettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="font-bold flex items-center gap-2">
-                      <Bell className="h-4 w-4 text-amber-500" /> رابط جرس التحديثات
+                      <Bell className="h-4 w-4 text-amber-500" /> رابط الإشعارات
                     </Label>
                     <Input 
                       value={formData.updatesUrl}
@@ -422,7 +422,7 @@ export default function AdminAppSettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2 pt-2">
-                  <Label className="font-bold">رابط TECH STORE</Label>
+                  <Label className="font-bold">رابط CyberNode STORE</Label>
                   <Input 
                     value={formData.techStoreUrl}
                     onChange={(e) => setFormData({...formData, techStoreUrl: e.target.value})}
@@ -450,7 +450,7 @@ export default function AdminAppSettingsPage() {
                   <Badge variant="outline" className="text-[10px] rounded-lg">مستحسن</Badge>
                 </h4>
                 <p className="text-xs text-slate-500 max-w-xl">
-                  استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم TECH لضمان حماية بيانات الطلاب وخصوصية المعلمين.
+                  استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم CyberNode لضمان حماية بيانات الطلاب وخصوصية المعلمين.
                 </p>
               </div>
               <div className="flex flex-col gap-2 w-full md:w-auto">
@@ -463,7 +463,7 @@ export default function AdminAppSettingsPage() {
                     {isUpdatingRules ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     تزامن القواعد
                   </Button>
-                  <p className="text-[9px] text-center text-slate-400 font-bold">نظام الإعلانات يعمل الآن بشكل تلقائي ومحمي بالأكواد.</p>
+                  <p className="text-[9px] text-center text-slate-400 font-bold">نظام الأمان يعمل الآن بشكل تلقائي ومحمي بالأكواد.</p>
               </div>
             </CardContent>
           </Card>
@@ -475,14 +475,14 @@ export default function AdminAppSettingsPage() {
         <div className="space-y-1">
           <h4 className="font-bold text-amber-900 text-sm">ملاحظة هامة</h4>
           <p className="text-xs text-amber-700/80">
-            يمكنك الآن رفع الصور مباشرة من جهازك بالضغط على زر "رفع" بجانب كل حقل. سيتم حفظ الصور بشكل آمن على خوادمنا وتحديث الروابط تلقائياً.
+            يمكنك الآن رفع الصور مباشرة من جهازك بالضغط على زر "رفع" بجانب كل حقل. سيتم حفظ الصور بشكل آمن على خوادمنا وتحديث الروابط تلقائياً عبر فريق CyberNode.
           </p>
         </div>
       </div>
 
       <div className="text-center pt-8">
           <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-              Made with ❤️ by TECH TEAM
+              Made with ❤️ by <span className="text-primary font-black">CyberNode</span>
           </p>
       </div>
     </div>

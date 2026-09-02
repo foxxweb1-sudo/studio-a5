@@ -22,7 +22,8 @@ import {
   HelpCircle,
   Users,
   LogIn,
-  UserPlus
+  UserPlus,
+  Globe
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -249,6 +250,16 @@ export default function SettingsPage() {
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </Link>
 
+                <Link href="https://blog.alhodoor.site" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                      <Globe className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold text-sm">مدونة الحضور</span>
+                  </div>
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
                 <Link href="/privacy" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
@@ -338,7 +349,7 @@ export default function SettingsPage() {
             >
               <a href={`https://wa.me/${config.contactPhone}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-5 w-5" />
-                التواصل مع فريق TECH
+                التواصل مع فريق CyberNode
               </a>
             </Button>
           </CardContent>
@@ -346,7 +357,7 @@ export default function SettingsPage() {
 
         <div className="text-center pt-8">
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                Made with ❤️ by TECH TEAM
+                Made with ❤️ by <span className="text-primary font-black">CyberNode</span>
             </p>
         </div>
       </div>

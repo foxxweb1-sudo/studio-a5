@@ -26,7 +26,8 @@ import {
   Star,
   Bell,
   Globe,
-  ExternalLink
+  ExternalLink,
+  Newspaper
 } from 'lucide-react';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { Button } from '@/components/ui/button';

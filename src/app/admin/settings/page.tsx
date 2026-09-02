@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
@@ -161,7 +162,7 @@ export default function AdminAppSettingsPage() {
       });
       toast({
         title: "تزامن القواعد",
-        description: "جاري نشر قواعد الأمان الجديدة إلى خوادم CyberNode."
+        description: "جاري نشر قواعد الأمان الجديدة إلى خوادم CybeNode."
       });
     } catch (error) {
       toast({
@@ -422,7 +423,7 @@ export default function AdminAppSettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2 pt-2">
-                  <Label className="font-bold">رابط CyberNode STORE</Label>
+                  <Label className="font-bold">رابط CybeNode STORE</Label>
                   <Input 
                     value={formData.techStoreUrl}
                     onChange={(e) => setFormData({...formData, techStoreUrl: e.target.value})}
@@ -450,7 +451,7 @@ export default function AdminAppSettingsPage() {
                   <Badge variant="outline" className="text-[10px] rounded-lg">مستحسن</Badge>
                 </h4>
                 <p className="text-xs text-slate-500 max-w-xl">
-                  استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم CyberNode لضمان حماية بيانات الطلاب وخصوصية المعلمين.
+                  استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم CybeNode لضمان حماية بيانات الطلاب وخصوصية المعلمين.
                 </p>
               </div>
               <div className="flex flex-col gap-2 w-full md:w-auto">
@@ -475,14 +476,14 @@ export default function AdminAppSettingsPage() {
         <div className="space-y-1">
           <h4 className="font-bold text-amber-900 text-sm">ملاحظة هامة</h4>
           <p className="text-xs text-amber-700/80">
-            يمكنك الآن رفع الصور مباشرة من جهازك بالضغط على زر "رفع" بجانب كل حقل. سيتم حفظ الصور بشكل آمن على خوادمنا وتحديث الروابط تلقائياً عبر فريق CyberNode.
+            يمكنك الآن رفع الصور مباشرة من جهازك بالضغط على زر "رفع" بجانب كل حقل. سيتم حفظ الصور بشكل آمن على خوادمنا وتحديث الروابط تلقائياً عبر فريق CybeNode.
           </p>
         </div>
       </div>
 
       <div className="text-center pt-8">
           <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-              Made with ❤️ by <span className="text-primary font-black">CyberNode</span>
+              Made with ❤️ by <span className="text-primary font-black">CybeNode</span>
           </p>
       </div>
     </div>

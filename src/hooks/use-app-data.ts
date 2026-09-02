@@ -5,8 +5,35 @@ import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmi
 import { Student, AttendanceRecord, PaymentRecord, NewStudent, NewPayment, UserProfile, WorkingSchedule, PaymentConfig, GradePaymentConfig, ExamResult, NewExamResult } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc, getDocs, where, limit, getDoc } from "firebase/firestore";
 import { ref, set, serverTimestamp as rtdbTimestamp } from "firebase/database";
-import { format } from 'date-fns';
+import { format, parse, startOfMonth, addMonths, isBefore, isSameMonth } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
+
+/**
+ * دالة ذكية لحساب كافة الشهور المطلوبة من مجموعة فترات زمنية
+ */
+function getAllRequiredMonths(periods: any[] | undefined): string[] {
+  if (!periods || !Array.isArray(periods) || periods.length === 0) return [];
+  
+  const allMonths = new Set<string>();
+  const today = new Date();
+  const currentMonthStart = startOfMonth(today);
+
+  periods.forEach(period => {
+    try {
+      let startDate = parse(period.startMonth, 'yyyy-MM', new Date());
+      let endDate = parse(period.endMonth, 'yyyy-MM', new Date());
+      let limitDate = isBefore(endDate, currentMonthStart) ? endDate : currentMonthStart;
+
+      let checkDate = startDate;
+      while (isBefore(checkDate, limitDate) || isSameMonth(checkDate, limitDate)) {
+        allMonths.add(format(checkDate, 'yyyy-MM'));
+        checkDate = addMonths(checkDate, 1);
+      }
+    } catch (e) {}
+  });
+  
+  return Array.from(allMonths).sort();
+}
 
 /**
  * دالة مزامنة بوابة ولي الأمر الأساسية لطالب واحد
@@ -15,22 +42,19 @@ export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, s
   if (!db || !rtdb || !teacherId || !studentId) return false;
 
   try {
-    // 1. جلب بيانات المعلم (للاسم والهاتف)
     const teacherSnap = await getDoc(doc(db, 'users', teacherId));
     const teacherData = teacherSnap.exists() ? teacherSnap.data() : null;
 
-    // 2. جلب بيانات الطالب الأساسية
-    const studentsCol = collection(db, `users/${teacherId}/students`);
-    const studentSnap = await getDocs(query(studentsCol, where('__name__', '==', studentId), limit(1)));
-    if (studentSnap.empty) return false;
-    const studentData = studentSnap.docs[0].data();
+    const studentSnap = await getDoc(doc(db, `users/${teacherId}/students`, studentId));
+    if (!studentSnap.exists()) return false;
+    const studentData = studentSnap.data();
 
-    // 3. جلب السجلات المرتبطة
     const attendanceSnap = await getDocs(query(collection(db, `users/${teacherId}/attendance`), where('studentId', '==', studentId)));
     const paymentsSnap = await getDocs(query(collection(db, `users/${teacherId}/payments`), where('studentId', '==', studentId)));
     const examsSnap = await getDocs(query(collection(db, `users/${teacherId}/exams`), where('studentId', '==', studentId)));
+    const configSnap = await getDoc(doc(db, `users/${teacherId}/config`, 'payments'));
+    const paymentConfig = configSnap.exists() ? configSnap.data() as PaymentConfig : null;
 
-    // 4. ترتيب البيانات برمجياً
     const sortedAttendance = attendanceSnap.docs.map(d => ({ id: d.id, ...d.data() as any }))
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 25);
@@ -43,7 +67,14 @@ export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, s
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 20);
 
-    // 5. دفع البيانات إلى Realtime Database
+    // حساب المتأخرات
+    let outstandingMonths: string[] = [];
+    if (paymentConfig?.grades?.[studentData.grade]) {
+        const requiredMonths = getAllRequiredMonths(paymentConfig.grades[studentData.grade].periods);
+        const paidMonths = sortedPayments.map(p => p.month);
+        outstandingMonths = requiredMonths.filter(m => !paidMonths.includes(m));
+    }
+
     const portalRef = ref(rtdb, `portal/${teacherId}/${studentId}`);
     await set(portalRef, {
       info: {
@@ -56,11 +87,12 @@ export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, s
       attendance: sortedAttendance,
       payments: sortedPayments,
       exams: sortedExams,
+      outstandingMonths,
       lastUpdate: rtdbTimestamp()
     });
     return true;
   } catch (error) {
-    console.error("Portal Sync Error for student " + studentId, error);
+    console.error("Portal Sync Error", error);
     throw error;
   }
 }

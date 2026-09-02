@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -160,14 +161,14 @@ export default function SettingsPage() {
                         <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-800">
                             <Image 
                                 src={techStoreLogo}
-                                alt="TECH STORE"
+                                alt="CybeNode STORE"
                                 fill
                                 className="object-cover"
                             />
                         </div>
                         <div className="flex flex-col">
                             <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">المصدر الرسمي</span>
-                            <span className="font-bold text-sm">TECH STORE</span>
+                            <span className="font-bold text-sm">CybeNode STORE</span>
                         </div>
                     </div>
                     <Button asChild variant="outline" size="sm" className="rounded-xl border-primary/20 hover:bg-primary hover:text-white transition-all">
@@ -349,7 +350,7 @@ export default function SettingsPage() {
             >
               <a href={`https://wa.me/${config.contactPhone}`} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-5 w-5" />
-                التواصل مع فريق CyberNode
+                التواصل مع فريق CybeNode
               </a>
             </Button>
           </CardContent>
@@ -357,7 +358,7 @@ export default function SettingsPage() {
 
         <div className="text-center pt-8">
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                Made with ❤️ by <span className="text-primary font-black">CyberNode</span>
+                Made with ❤️ by <span className="text-primary font-black">CybeNode</span>
             </p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -18,10 +19,9 @@ import {
   Info,
   Calendar,
   Award,
-  Sparkles,
   Clock,
   MessageCircle,
-  Phone
+  AlertTriangle
 } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -128,6 +128,30 @@ export default function ParentPortalPage() {
 
         {/* إعلان بانر أول */}
         <BannerAd />
+
+        {/* قسم المتأخرات المالية - يظهر فقط إذا وجدت */}
+        {data.outstandingMonths && data.outstandingMonths.length > 0 && (
+            <Card className="border-0 shadow-xl rounded-[2.5rem] bg-rose-50 border-r-8 border-rose-500 overflow-hidden animate-in slide-in-from-top-4 duration-500">
+                <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-5 text-center md:text-right">
+                        <div className="p-4 bg-rose-500 text-white rounded-2xl shadow-lg shadow-rose-500/20">
+                            <AlertTriangle className="h-8 w-8" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-rose-900">تنبيه بالمتأخرات المالية</h3>
+                            <p className="text-sm font-bold text-rose-700/70 mt-1">يرجى العلم بوجود مستحقات لم يتم تسديدها عن الشهور التالية:</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center md:justify-end max-w-sm">
+                        {data.outstandingMonths.map((m: string) => (
+                            <Badge key={m} className="bg-rose-500 hover:bg-rose-600 text-white rounded-xl px-4 py-2 text-xs font-black border-0">
+                                {format(parse(m, 'yyyy-MM', new Date()), 'MMMM yyyy', { locale: ar })}
+                            </Badge>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-0 shadow-xl rounded-[2.5rem] bg-indigo-600 text-white overflow-hidden relative group">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -368,7 +369,7 @@ export default function Home() {
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-2xl sm:text-3xl font-black">Buy Me a Coffee</h3>
-                            <p className="text-sm font-bold opacity-90">ادعم تطوير تطبيق الحضور واستمرارية فريق CyberNode</p>
+                            <p className="text-sm font-bold opacity-90">ادعم تطوير تطبيق الحضور واستمرارية فريق CybeNode</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -418,7 +419,7 @@ export default function Home() {
 
       <NativeArticleAd />
 
-      {/* CyberNode ecosystem links grid (2x2) */}
+      {/* CybeNode ecosystem links grid (2x2) */}
       <div className="grid grid-cols-2 gap-4 sm:gap-6">
         <a 
           href="https://support.cybenode.site" 
@@ -547,7 +548,7 @@ export default function Home() {
 
       <div className="text-center space-y-2">
          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Powered by</p>
-         <div className="text-2xl font-black text-primary tracking-tighter">CyberNode</div>
+         <div className="text-2xl font-black text-primary tracking-tighter">CybeNode</div>
       </div>
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>

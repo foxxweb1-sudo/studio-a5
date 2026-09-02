@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ export default function Footer() {
 
         {/* المنتصف: حقوق الملكية */}
         <p className="text-sm font-bold text-slate-500 dark:text-slate-400 text-center">
-          جميع الحقوق محفوظة © 2026 لـ <span className="text-primary font-black">CyberNode</span>.
+          جميع الحقوق محفوظة © 2026 لـ <span className="text-primary font-black">CybeNode</span>.
         </p>
 
         {/* الجهة اليسرى: المساعد الذكي */}

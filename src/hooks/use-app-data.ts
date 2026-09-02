@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, useDatabase } from "@/firebase";
@@ -10,19 +9,20 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 
 /**
  * دالة مزامنة بوابة ولي الأمر الأساسية لطالب واحد
+ * تطلب البيانات من Firestore وترفعها لـ Realtime Database
  */
 export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentId: string) {
   if (!db || !rtdb || !teacherId || !studentId) return false;
 
   try {
-    // 1. جلب بيانات الطالب الأساسية من Firestore
-    const studentsRef = collection(db, `users/${teacherId}/students`);
-    const studentSnap = await getDocs(query(studentsRef, where('__name__', '==', studentId), limit(1)));
+    // 1. جلب بيانات الطالب الأساسية
+    const studentRef = doc(db, `users/${teacherId}/students`, studentId);
+    const studentSnap = await getDocs(query(collection(db, `users/${teacherId}/students`), where('__name__', '==', studentId), limit(1)));
     if (studentSnap.empty) return false;
     const studentData = studentSnap.docs[0].data();
 
-    // 2. جلب السجلات المرتبطة (آخر 20 سجل لضمان السرعة)
-    // ملاحظة: قد يتطلب هذا الاستعلام إنشاء Index في Firebase Console
+    // 2. جلب السجلات المرتبطة (آخر 20 سجل)
+    // ملاحظة: هذه الاستعلامات تتطلب إنشاء Index في صفحة الـ Console لتعمل مع الـ OrderBy
     const attendanceSnap = await getDocs(query(collection(db, `users/${teacherId}/attendance`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(20)));
     const paymentsSnap = await getDocs(query(collection(db, `users/${teacherId}/payments`), where('studentId', '==', studentId), orderBy('month', 'desc'), limit(10)));
     const examsSnap = await getDocs(query(collection(db, `users/${teacherId}/exams`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(15)));
@@ -43,7 +43,7 @@ export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, s
     return true;
   } catch (error) {
     console.error("Portal Sync Error for student " + studentId, error);
-    throw error;
+    throw error; // نمرر الخطأ ليتم التعامل معه في الواجهة (مثل طلب إنشاء Index)
   }
 }
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,7 +11,6 @@ import {
   DownloadCloud, 
   Wifi, 
   WifiOff, 
-  CheckCircle2, 
   Database, 
   RefreshCw, 
   ShieldCheck, 
@@ -20,10 +18,8 @@ import {
   CloudLightning,
   AlertCircle,
   HardDrive,
-  Loader2,
-  AppWindow,
   CloudUpload,
-  UserCheck
+  AppWindow
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -95,6 +91,7 @@ export default function OfflineSyncPage() {
     setUploadProgress(0);
     let successCount = 0;
     let failCount = 0;
+    let indexErrorDetected = false;
 
     for (let i = 0; i < students.length; i++) {
         const student = students[i];
@@ -105,25 +102,27 @@ export default function OfflineSyncPage() {
         } catch (e: any) {
             console.error(e);
             failCount++;
-            // إذا كان الخطأ بسبب الفهارس، نظهر تنبيه مخصص
-            if (e.message?.includes('index')) {
-                toast({ 
-                    variant: "destructive", 
-                    title: "مطلوب إنشاء Index", 
-                    description: "يرجى الضغط على الرابط في رسالة الخطأ لتفعيل ترتيب البيانات." 
-                });
-                setIsUploadingAll(false);
-                return; 
+            if (e.message?.includes('index') || e.code?.includes('failed-precondition')) {
+                indexErrorDetected = true;
             }
         }
         setUploadProgress(Math.round(((i + 1) / students.length) * 100));
     }
 
     setIsUploadingAll(false);
-    toast({
-        title: "اكتمل الرفع الشامل",
-        description: `تم تحديث ${successCount} سجل طالب بنجاح. ${failCount > 0 ? `(فشل ${failCount})` : ''}`
-    });
+    
+    if (indexErrorDetected) {
+        toast({ 
+            variant: "destructive", 
+            title: "مطلوب إنشاء Index", 
+            description: "لقد توقف الرفع بسبب نقص في فهارس السيرفر. يرجى الضغط على الرابط في رسالة الخطأ بـ Console لتفعيل الترتيب." 
+        });
+    } else {
+        toast({
+            title: "اكتمل الرفع الشامل",
+            description: `تم تحديث ${successCount} سجل طالب بنجاح. ${failCount > 0 ? `(فشل ${failCount})` : ''}`
+        });
+    }
   };
 
   const handleCacheAssets = async () => {
@@ -179,7 +178,7 @@ export default function OfflineSyncPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* بطاقة الرفع السحابي الشامل */}
+        {/* بطاقة الرفع السحابي الشامل - هذا هو الزر المطلوب */}
         <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-indigo-600 text-white md:col-span-2">
             <CardContent className="p-8">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -205,7 +204,7 @@ export default function OfflineSyncPage() {
                         ) : (
                             <Button 
                                 onClick={handleUploadAllToPortal}
-                                className="bg-white text-indigo-600 hover:bg-slate-50 rounded-2xl h-14 px-8 font-black text-lg gap-2 shadow-2xl"
+                                className="bg-white text-indigo-600 hover:bg-slate-50 rounded-2xl h-14 px-8 font-black text-lg gap-2 shadow-2xl w-full sm:w-auto"
                             >
                                 <CloudLightning className="h-5 w-5" />
                                 رفع كافة السجلات الآن
@@ -216,7 +215,6 @@ export default function OfflineSyncPage() {
             </CardContent>
         </Card>
 
-        {/* Status Card */}
         <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
           <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b p-8">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -265,7 +263,6 @@ export default function OfflineSyncPage() {
           </CardContent>
         </Card>
 
-        {/* Offline Features Card */}
         <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-900">
           <CardHeader className="bg-emerald-50/50 dark:bg-emerald-900/10 border-b p-8">
             <CardTitle className="text-lg flex items-center gap-2 text-emerald-600">
@@ -278,18 +275,24 @@ export default function OfflineSyncPage() {
                 <LiquidLoader text="جاري حفظ الأقسام" />
             ) : (
                 <>
-                    {[
-                        { icon: AppWindow, text: "فتح المنصة بدون إنترنت نهائياً.", color: "text-indigo-500" },
-                        { icon: HardDrive, text: "تخزين سجلات الطلاب في ذاكرة الهاتف.", color: "text-blue-500" },
-                        { icon: Smartphone, text: "تسجيل حضور بالـ QR أوفلاين.", color: "text-emerald-500" }
-                    ].map((feature, i) => (
-                        <div key={i} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors">
-                            <div className={`p-2 bg-slate-100 rounded-xl ${feature.color} shrink-0`}>
-                                <feature.icon className="h-4 w-4" />
-                            </div>
-                            <p className="text-xs font-bold text-slate-600 leading-relaxed">{feature.text}</p>
+                    <div className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors">
+                        <div className="p-2 bg-slate-100 rounded-xl text-indigo-500 shrink-0">
+                            <AppWindow className="h-4 w-4" />
                         </div>
-                    ))}
+                        <p className="text-xs font-bold text-slate-600 leading-relaxed">فتح المنصة بدون إنترنت نهائياً.</p>
+                    </div>
+                    <div className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors">
+                        <div className="p-2 bg-slate-100 rounded-xl text-blue-500 shrink-0">
+                            <HardDrive className="h-4 w-4" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-600 leading-relaxed">تخزين سجلات الطلاب في ذاكرة الهاتف.</p>
+                    </div>
+                    <div className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors">
+                        <div className="p-2 bg-slate-100 rounded-xl text-emerald-500 shrink-0">
+                            <Smartphone className="h-4 w-4" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-600 leading-relaxed">تسجيل حضور بالـ QR أوفلاين.</p>
+                    </div>
                     
                     <Button 
                         variant="outline"

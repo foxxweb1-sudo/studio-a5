@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
@@ -6,7 +7,21 @@ import { useUser } from '@/firebase';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, User, GraduationCap, Phone, ArrowLeft, Share2, Award, CheckCircle2, XCircle, Trophy, Wallet, Copy } from 'lucide-react';
+import { 
+  Loader2, 
+  User, 
+  GraduationCap, 
+  Phone, 
+  ArrowLeft, 
+  Share2, 
+  Award, 
+  CheckCircle2, 
+  XCircle, 
+  Trophy, 
+  Wallet, 
+  RefreshCw,
+  CloudUpload
+} from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -21,10 +36,12 @@ export default function StudentProfilePage() {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const { students, isLoading: studentsLoading } = useStudents();
+  const { students, forceSync, isLoading: studentsLoading } = useStudents();
   const { attendance, isLoading: attendanceLoading } = useAttendance();
   const { payments, isLoading: paymentsLoading } = usePayments();
   const { exams, isLoading: examsLoading } = useExams();
+
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const student = students.find((s) => s.id === studentId);
   const studentAttendance = attendance.filter((a) => a.studentId === studentId);
@@ -36,6 +53,29 @@ export default function StudentProfilePage() {
     const portalUrl = `${window.location.origin}/p/${user.uid}/${student.id}`;
     navigator.clipboard.writeText(portalUrl);
     toast({ title: "تم نسخ الرابط", description: "رابط متابعة ولي الأمر جاهز للمشاركة الآن." });
+  };
+
+  const handleManualSync = async () => {
+    if (!student) return;
+    setIsSyncing(true);
+    try {
+        const success = await forceSync(studentId);
+        if (success) {
+            toast({ title: "تم التحديث بنجاح", description: "بوابة ولي الأمر الآن تعرض أحدث البيانات." });
+        }
+    } catch (error: any) {
+        if (error.message?.includes('permission_denied')) {
+            toast({ 
+                variant: "destructive", 
+                title: "خطأ في الصلاحيات", 
+                description: "يرجى التأكد من ضبط قواعد Realtime Database في Firebase Console." 
+            });
+        } else {
+            toast({ variant: "destructive", title: "فشلت المزامنة", description: "حدث خطأ أثناء رفع البيانات للسيرفر." });
+        }
+    } finally {
+        setIsSyncing(false);
+    }
   };
 
   const isLoading = studentsLoading || attendanceLoading || paymentsLoading || examsLoading;
@@ -64,13 +104,22 @@ export default function StudentProfilePage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-20">
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-20 px-4">
        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
          <PageHeader className="border-0 pb-0">
             <PageHeaderTitle className="text-3xl font-black">ملف الطالب: {student.name}</PageHeaderTitle>
             <PageHeaderDescription>عرض كافة السجلات الأكاديمية والمالية.</PageHeaderDescription>
          </PageHeader>
-         <div className="flex gap-2 w-full md:w-auto">
+         <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <Button 
+                onClick={handleManualSync} 
+                disabled={isSyncing}
+                variant="outline" 
+                className="rounded-xl font-bold gap-2 border-primary/20 hover:bg-primary/5 text-primary flex-1 md:flex-none"
+            >
+                {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
+                تحديث البوابة يدوياً
+            </Button>
             <Button onClick={handleShareLink} className="rounded-xl font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 flex-1 md:flex-none">
                 <Share2 className="h-4 w-4" />
                 رابط المتابعة للأهل

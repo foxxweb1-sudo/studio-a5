@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError, useDatabase } from "@/firebase";
@@ -8,23 +9,24 @@ import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 /**
- * دالة مزامنة بوابة ولي الأمر
- * تعمل بشكل منفصل لضمان عدم تعليق العمليات الأساسية في حال فشل RTDB
+ * دالة مزامنة بوابة ولي الأمر الأساسية
  */
-async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentId: string) {
-  if (!db || !rtdb || !teacherId || !studentId) return;
+export async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentId: string) {
+  if (!db || !rtdb || !teacherId || !studentId) return false;
 
   try {
-    // جلب بيانات الطالب الأساسية
-    const studentSnap = await getDocs(query(collection(db, `users/${teacherId}/students`), where('__name__', '==', studentId), limit(1)));
-    if (studentSnap.empty) return;
+    // 1. جلب بيانات الطالب الأساسية من Firestore
+    const studentsRef = collection(db, `users/${teacherId}/students`);
+    const studentSnap = await getDocs(query(studentsRef, where('__name__', '==', studentId), limit(1)));
+    if (studentSnap.empty) return false;
     const studentData = studentSnap.docs[0].data();
 
-    // جلب آخر السجلات للمزامنة
-    const attendanceSnap = await getDocs(query(collection(db, `users/${teacherId}/attendance`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(15)));
-    const paymentsSnap = await getDocs(query(collection(db, `users/${teacherId}/payments`), where('studentId', '==', studentId), orderBy('month', 'desc'), limit(5)));
-    const examsSnap = await getDocs(query(collection(db, `users/${teacherId}/exams`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(10)));
+    // 2. جلب السجلات المرتبطة (آخر 20 سجل لضمان السرعة)
+    const attendanceSnap = await getDocs(query(collection(db, `users/${teacherId}/attendance`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(20)));
+    const paymentsSnap = await getDocs(query(collection(db, `users/${teacherId}/payments`), where('studentId', '==', studentId), orderBy('month', 'desc'), limit(10)));
+    const examsSnap = await getDocs(query(collection(db, `users/${teacherId}/exams`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(15)));
 
+    // 3. دفع البيانات إلى Realtime Database
     const portalRef = ref(rtdb, `portal/${teacherId}/${studentId}`);
     await set(portalRef, {
       info: {
@@ -37,8 +39,10 @@ async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentI
       exams: examsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
       lastUpdate: rtdbTimestamp()
     });
+    return true;
   } catch (error) {
-    console.error("Portal Sync Background Error:", error);
+    console.error("Portal Sync Error:", error);
+    throw error; // نمرر الخطأ ليتم معالجته في الواجهة
   }
 }
 
@@ -99,14 +103,15 @@ export function useStudents() {
   const studentsQuery = useMemoFirebase(() => (firestore && user) ? query(collection(firestore, `users/${user.uid}/students`), orderBy("createdAt", "asc")) : null, [user, firestore]);
   const { data: students, isLoading } = useCollection<Student>(studentsQuery);
 
-  const addStudent = (studentData: NewStudent) => {
+  const addStudent = async (studentData: NewStudent) => {
     if (!user || !firestore) return;
-    addDoc(collection(firestore, `users/${user.uid}/students`), { ...studentData, createdAt: serverTimestamp() });
+    const docRef = await addDoc(collection(firestore, `users/${user.uid}/students`), { ...studentData, createdAt: serverTimestamp() });
+    syncStudentPortal(firestore, rtdb, user.uid, docRef.id);
   };
 
-  const updateStudent = (studentId: string, studentData: Partial<Student>) => {
+  const updateStudent = async (studentId: string, studentData: Partial<Student>) => {
     if (!user || !firestore) return;
-    updateDoc(doc(firestore, `users/${user.uid}/students`, studentId), studentData);
+    await updateDoc(doc(firestore, `users/${user.uid}/students`, studentId), studentData);
     syncStudentPortal(firestore, rtdb, user.uid, studentId);
   };
   
@@ -115,7 +120,12 @@ export function useStudents() {
     deleteDoc(doc(firestore, `users/${user.uid}/students`, studentId));
   };
 
-  return { students: students || [], isLoading, addStudent, updateStudent, deleteStudent };
+  const forceSync = async (studentId: string) => {
+    if (!user || !firestore || !rtdb) return;
+    return await syncStudentPortal(firestore, rtdb, user.uid, studentId);
+  };
+
+  return { students: students || [], isLoading, addStudent, updateStudent, deleteStudent, forceSync };
 }
 
 export function useAttendance() {
@@ -125,10 +135,10 @@ export function useAttendance() {
   const attendanceQuery = useMemoFirebase(() => (firestore && user) ? collection(firestore, `users/${user.uid}/attendance`) : null, [user, firestore]);
   const { data: attendance, isLoading } = useCollection<AttendanceRecord>(attendanceQuery);
 
-  const addAttendance = (studentId: string, status: 'present' | 'absent' = 'present') => {
+  const addAttendance = async (studentId: string, status: 'present' | 'absent' = 'present') => {
     if (!user || !firestore) return;
     const today = format(new Date(), 'yyyy-MM-dd');
-    addDoc(collection(firestore, `users/${user.uid}/attendance`), { studentId, date: today, status, createdAt: serverTimestamp() });
+    await addDoc(collection(firestore, `users/${user.uid}/attendance`), { studentId, date: today, status, createdAt: serverTimestamp() });
     syncStudentPortal(firestore, rtdb, user.uid, studentId);
   };
 
@@ -140,7 +150,7 @@ export function useAttendance() {
     const studentsWithRecordsIds = new Set(recordsToday.map(r => r.studentId));
     const absentees = studentsInGrade.filter(s => !studentsWithRecordsIds.has(s.id));
     for (const student of absentees) {
-      addAttendance(student.id, 'absent');
+      await addAttendance(student.id, 'absent');
     }
   };
   
@@ -154,9 +164,9 @@ export function usePayments() {
     const paymentsQuery = useMemoFirebase(() => (firestore && user) ? collection(firestore, `users/${user.uid}/payments`) : null, [user, firestore]);
     const { data: payments, isLoading } = useCollection<PaymentRecord>(paymentsQuery);
 
-    const addPayment = (paymentData: NewPayment) => {
+    const addPayment = async (paymentData: NewPayment) => {
         if (!user || !firestore) return;
-        addDoc(collection(firestore, `users/${user.uid}/payments`), { ...paymentData, date: format(new Date(), 'yyyy-MM-dd'), createdAt: serverTimestamp() });
+        await addDoc(collection(firestore, `users/${user.uid}/payments`), { ...paymentData, date: format(new Date(), 'yyyy-MM-dd'), createdAt: serverTimestamp() });
         syncStudentPortal(firestore, rtdb, user.uid, paymentData.studentId);
     };
 
@@ -170,9 +180,9 @@ export function useExams() {
   const examsQuery = useMemoFirebase(() => (firestore && user) ? query(collection(firestore, `users/${user.uid}/exams`), orderBy("createdAt", "desc")) : null, [user, firestore]);
   const { data: exams, isLoading } = useCollection<ExamResult>(examsQuery);
 
-  const addExamResult = (examData: NewExamResult) => {
+  const addExamResult = async (examData: NewExamResult) => {
     if (!user || !firestore) return;
-    addDoc(collection(firestore, `users/${user.uid}/exams`), { ...examData, createdAt: serverTimestamp() });
+    await addDoc(collection(firestore, `users/${user.uid}/exams`), { ...examData, createdAt: serverTimestamp() });
     syncStudentPortal(firestore, rtdb, user.uid, examData.studentId);
   };
 

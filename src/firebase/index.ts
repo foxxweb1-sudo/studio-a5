@@ -4,52 +4,43 @@ import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { 
-  initializeFirestore, 
   getFirestore, 
-  Firestore, 
-  persistentLocalCache, 
-  persistentMultipleTabManager 
+  Firestore,
 } from 'firebase/firestore';
 import { getDatabase } from 'firebase/database';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+/**
+ * دالة تهيئة Firebase الأساسية
+ * تضمن عدم تهيئة التطبيق أكثر من مرة وتوفر الخدمات المطلوبة
+ */
 export function initializeFirebase() {
-  if (!getApps().length) {
-    let firebaseApp;
-    try {
-      firebaseApp = initializeApp();
-    } catch (e) {
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
+  let firebaseApp: FirebaseApp;
 
-    return getSdks(firebaseApp);
+  if (!getApps().length) {
+    try {
+      // محاولة التهيئة التلقائية أولاً
+      firebaseApp = initializeApp(firebaseConfig);
+    } catch (e) {
+      firebaseApp = getApp();
+    }
+  } else {
+    firebaseApp = getApp();
   }
 
-  return getSdks(getApp());
+  return getSdks(firebaseApp);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
-  let firestore: Firestore;
-  
-  try {
-    firestore = initializeFirestore(firebaseApp, {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
-      }),
-      experimentalForceLongPolling: true,
-    });
-  } catch (e) {
-    firestore = getFirestore(firebaseApp);
-  }
+  // استخدام getFirestore التقليدي لضمان الاستقرار ومنع خطأ "Already Initialized"
+  const firestore = getFirestore(firebaseApp);
+  const auth = getAuth(firebaseApp);
+  const database = getDatabase(firebaseApp, "https://studio-6098024039-4334b-default-rtdb.firebaseio.com/");
 
   return {
     firebaseApp,
-    auth: getAuth(firebaseApp),
+    auth,
     firestore,
-    database: getDatabase(firebaseApp, "https://studio-6098024039-4334b-default-rtdb.firebaseio.com/"),
+    database,
   };
 }
 

@@ -7,16 +7,20 @@ import { ref, set, serverTimestamp as rtdbTimestamp } from "firebase/database";
 import { format } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
 
-// دالة لمزامنة بيانات الطالب مع Realtime Database لولي الأمر
+/**
+ * دالة مزامنة بوابة ولي الأمر
+ * تعمل بشكل منفصل لضمان عدم تعليق العمليات الأساسية في حال فشل RTDB
+ */
 async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentId: string) {
   if (!db || !rtdb || !teacherId || !studentId) return;
 
   try {
-    const studentRef = doc(db, `users/${teacherId}/students`, studentId);
+    // جلب بيانات الطالب الأساسية
     const studentSnap = await getDocs(query(collection(db, `users/${teacherId}/students`), where('__name__', '==', studentId), limit(1)));
     if (studentSnap.empty) return;
     const studentData = studentSnap.docs[0].data();
 
+    // جلب آخر السجلات للمزامنة
     const attendanceSnap = await getDocs(query(collection(db, `users/${teacherId}/attendance`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(15)));
     const paymentsSnap = await getDocs(query(collection(db, `users/${teacherId}/payments`), where('studentId', '==', studentId), orderBy('month', 'desc'), limit(5)));
     const examsSnap = await getDocs(query(collection(db, `users/${teacherId}/exams`), where('studentId', '==', studentId), orderBy('date', 'desc'), limit(10)));
@@ -34,7 +38,7 @@ async function syncStudentPortal(db: any, rtdb: any, teacherId: string, studentI
       lastUpdate: rtdbTimestamp()
     });
   } catch (error) {
-    console.error("Portal Sync Failed:", error);
+    console.error("Portal Sync Background Error:", error);
   }
 }
 

@@ -83,7 +83,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null });
+    // تعيين حالة التحميل عند تغيير خدمة الـ auth
+    setUserAuthState(prev => ({ ...prev, isUserLoading: true }));
 
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -126,14 +127,17 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   if (context === undefined) {
     throw new Error('useFirebase must be used within a FirebaseProvider.');
   }
-  if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth || !context.database) {
-    throw new Error('Firebase core services not available. Check FirebaseProvider props.');
+  
+  // التأكد من توفر الخدمات الأساسية فقط لعدم تعطيل التطبيق
+  if (!context.firebaseApp || !context.firestore || !context.auth) {
+    throw new Error('Core Firebase services not available.');
   }
+
   return {
     firebaseApp: context.firebaseApp,
     firestore: context.firestore,
     auth: context.auth,
-    database: context.database,
+    database: context.database!, // نفترض وجودها لأنها مهيأة في initializeFirebase
     user: context.user,
     isUserLoading: context.isUserLoading,
     userError: context.userError,

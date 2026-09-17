@@ -8,8 +8,12 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'cybenode.site@gmail.com';
     }
 
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     function isAssistantOf(teacherId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let userDoc = getUserData();
       return request.auth != null && 
              userDoc.isAssistant == true && 
              userDoc.assignedTeacherId == teacherId;
@@ -17,10 +21,19 @@ service cloud.firestore {
 
     // 1. قواعد المستخدمين والمعلمين
     match /users/{userId} {
-      allow read, write: if request.auth != null && (request.auth.uid == userId || isOwner());
+      // المساعد الموثق له صلاحية القراءة والكتابة على حساب المعلم المرتبط به
+      allow read, write: if request.auth != null && (
+        request.auth.uid == userId || 
+        isOwner() || 
+        isAssistantOf(userId)
+      );
       
       match /{allSub=**} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || isAssistantOf(userId) || isOwner());
+        allow read, write: if request.auth != null && (
+          request.auth.uid == userId || 
+          isAssistantOf(userId) || 
+          isOwner()
+        );
       }
     }
 
@@ -33,6 +46,8 @@ service cloud.firestore {
     // 2. الأكواد الترويجية
     match /promoCodes/{id} {
       allow read: if request.auth != null;
+      // السماح للمستخدم بتحديث الكود لاستخدامه فقط إذا كان غير مستخدم
+      allow update: if request.auth != null && resource.data.isUsed == false;
       allow write: if isOwner();
     }
 

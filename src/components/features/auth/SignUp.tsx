@@ -31,7 +31,7 @@ import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageI
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, getDocs, collection, query, where, updateDoc } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -102,35 +102,51 @@ export default function SignUp() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
+      // التحقق أولاً إذا كان هذا حساب مساعد مُنشأ مسبقاً في Firestore
+      const q = query(collection(firestore, 'users'), where('email', '==', values.email), where('isAssistant', '==', true));
+      const assistantSnap = await getDocs(q);
+      const preExistingAssistant = !assistantSnap.empty ? assistantSnap.docs[0].data() : null;
+
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const fullPhone = `+${values.countryCode}${values.phone.replace(/\D/g, '')}`;
       
       await updateProfile(userCredential.user, {
-        displayName: values.displayName,
+        displayName: preExistingAssistant ? preExistingAssistant.displayName : values.displayName,
         photoURL: values.photoURL
       });
 
-      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email: values.email,
-        displayName: values.displayName,
-        photoURL: values.photoURL,
-        phone: fullPhone,
-        paymentTiming: values.paymentTiming,
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp(),
-      });
+      // إذا كان مساعداً، نقوم بتحديث المستند الموجود بدلاً من إنشاء واحد جديد عشوائي
+      if (preExistingAssistant) {
+        await updateDoc(doc(firestore, 'users', assistantSnap.docs[0].id), {
+            uid: userCredential.user.uid, // ربط الـ Auth UID الفعلي
+            lastLogin: serverTimestamp(),
+            photoURL: values.photoURL,
+            phone: fullPhone
+        });
+      } else {
+        // حساب معلم عادي
+        await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+            uid: userCredential.user.uid,
+            email: values.email,
+            displayName: values.displayName,
+            photoURL: values.photoURL,
+            phone: fullPhone,
+            paymentTiming: values.paymentTiming,
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
+        });
+      }
 
       toast({
         title: "تم إنشاء الحساب بنجاح",
-        description: `مرحباً بك يا ${values.displayName} في نظام ${config.appName}، جاري توجيهك...`,
+        description: `مرحباً بك في نظام ${config.appName}، جاري توجيهك...`,
       });
       router.push('/');
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "خطأ في التسجيل",
-        description: "فشل إنشاء الحساب. قد يكون البريد مسجل مسبقاً.",
+        description: error.code === 'auth/email-already-in-use' ? "هذا البريد مسجل مسبقاً." : "فشل إنشاء الحساب، يرجى المحاولة لاحقاً.",
       });
     } finally {
       setIsLoading(false);
@@ -145,7 +161,7 @@ export default function SignUp() {
       await signInWithPopup(auth, provider);
       toast({
         title: "تم التسجيل بنجاح",
-        description: `مرحباً بك في نظام ${config.appName} عبر حساب جوجل. يرجى إكمال بياناتك في الخطوة القادمة.`,
+        description: `مرحباً بك في نظام ${config.appName} عبر حساب جوجل.`,
       });
       router.push('/');
     } catch (error: any) {
@@ -183,7 +199,7 @@ export default function SignUp() {
              <UserPlus className="h-10 w-10 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-4xl font-black tracking-tighter">انضم كمعلم</CardTitle>
+            <CardTitle className="text-4xl font-black tracking-tighter">انضم للمنظومة</CardTitle>
             <CardDescription className="text-white/40 font-bold mt-2">
               أنشئ حسابك لتبدأ إدارة فصولك بذكاء
             </CardDescription>

@@ -8,34 +8,20 @@ import { ref, set, serverTimestamp as rtdbTimestamp } from "firebase/database";
 import { format, parse, startOfMonth, addMonths, isBefore, isSameMonth } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
 
-function getAllRequiredMonths(periods: any[] | undefined): string[] {
-  if (!periods || !Array.isArray(periods) || periods.length === 0) return [];
-  const allMonths = new Set<string>();
-  const today = new Date();
-  const currentMonthStart = startOfMonth(today);
-  periods.forEach(period => {
-    try {
-      let startDate = parse(period.startMonth, 'yyyy-MM', new Date());
-      let endDate = parse(period.endMonth, 'yyyy-MM', new Date());
-      let limitDate = isBefore(endDate, currentMonthStart) ? endDate : currentMonthStart;
-      let checkDate = startDate;
-      while (isBefore(checkDate, limitDate) || isSameMonth(checkDate, limitDate)) {
-        allMonths.add(format(checkDate, 'yyyy-MM'));
-        checkDate = addMonths(checkDate, 1);
-      }
-    } catch (e) {}
-  });
-  return Array.from(allMonths).sort();
-}
-
 export function useTargetUid() {
     const { user } = useUser();
     const firestore = useFirestore();
+    
+    // نستخدم مستمعاً لحظياً لبيانات المستخدم للتأكد من حالة المساعد
     const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: profile } = useDoc<UserProfile>(userRef);
     
-    // إذا كان المستخدم مساعداً، نستهدف بيانات المعلم المسؤول عنه
-    return profile?.isAssistant ? profile.assignedTeacherId : user?.uid;
+    // إذا كان المستخدم مساعداً، نرجع الـ UID الخاص بالمعلم الذي يتبعه
+    if (profile?.isAssistant && profile.assignedTeacherId) {
+        return profile.assignedTeacherId;
+    }
+    
+    return user?.uid;
 }
 
 export function useAllUsers() {
@@ -105,7 +91,6 @@ export function useSchedule() {
 
 export function useStudents() {
   const firestore = useFirestore();
-  const rtdb = useDatabase();
   const targetUid = useTargetUid();
   const studentsQuery = useMemoFirebase(() => (firestore && targetUid) ? query(collection(firestore, `users/${targetUid}/students`), orderBy("createdAt", "asc")) : null, [targetUid, firestore]);
   const { data: students, isLoading } = useCollection<Student>(studentsQuery);

@@ -2,8 +2,8 @@
 
 import { useUser, useFirestore } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,8 +37,11 @@ import { useToast } from '@/hooks/use-toast';
 import { serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function AdminAppSettingsPage() {
+function SettingsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'identity';
+  
   const { user, isUserLoading } = useUser();
   const { config, updateConfig, isLoading: configLoading } = useAppConfig();
   const { toast } = useToast();
@@ -65,7 +68,6 @@ export default function AdminAppSettingsPage() {
   });
   
   const [isSaving, setIsSaving] = useState(false);
-  const [isUpdatingRules, setIsUpdatingRules] = useState(false);
   const [isUploading, setIsUploading] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -192,7 +194,7 @@ export default function AdminAppSettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="identity" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl mb-8 flex flex-wrap h-auto gap-1">
           <TabsTrigger value="identity" className="rounded-lg font-bold py-2.5">الهوية والصور</TabsTrigger>
           <TabsTrigger value="ads" className="rounded-lg font-bold py-2.5">إدارة الإعلانات</TabsTrigger>
@@ -479,5 +481,13 @@ export default function AdminAppSettingsPage() {
           </p>
       </div>
     </div>
+  );
+}
+
+export default function AdminAppSettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin text-primary" /></div>}>
+        <SettingsContent />
+    </Suspense>
   );
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDatabase } from '@/firebase';
@@ -111,7 +110,7 @@ export default function AdminPage() {
               <Ticket className="h-4 w-4" />
               إدارة الأكواد
           </Button>
-          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 h-11">
+          <Button variant="outline" onClick={() => router.push('/admin/settings?tab=ads')} className="rounded-xl font-bold gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 h-11">
               <Code className="h-4 w-4" />
               إدارة الإعلانات
           </Button>

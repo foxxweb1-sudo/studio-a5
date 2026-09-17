@@ -35,6 +35,7 @@ import {
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import SyncIndicator from './SyncIndicator';
 import { Button } from '@/components/ui/button';
+import { BannerAd, NativeArticleAd } from './AdSections';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
@@ -77,6 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FDFDFF] dark:bg-slate-950 text-right font-body" dir="rtl">
+      <NativeArticleAd />
       {!isAuthPage && (
         <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-xl dark:bg-slate-900/80">
           <div className="container flex h-20 items-center justify-between max-w-screen-2xl px-6">
@@ -221,6 +223,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       
       <main className="container flex-grow py-10 max-w-screen-2xl px-6">
         {children}
+        {!isAuthPage && <BannerAd />}
       </main>
 
       {!isAuthPage && <Footer />}

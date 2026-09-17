@@ -126,7 +126,23 @@ export type GlobalConfig = {
   apkDownloadUrl?: string;
   cookiePolicyUrl?: string;
   updatesUrl?: string;
-  bannerAdCode?: string; // كود إعلان البانر السحابي
-  popunderAdCode?: string; // كود إعلان البوب اندر السحابي
+  
+  // نظام الإعلانات المطور
+  nativeAdCode?: string;
+  popunderAdCode?: string;
+  socialBarCode?: string;
+  smartlinkCode?: string;
+  banner728x90Code?: string;
+  banner320x50Code?: string;
+  banner160x300Code?: string;
+  banner468x60Code?: string;
+  banner300x250Code?: string;
+  banner160x600Code?: string;
+  
+  // جوجل أدسنس
+  adsenseClientCode?: string; // كود التفعيل العام (Header)
+  adsenseInArticleCode?: string;
+  adsenseResponsiveCode?: string;
+  
   lastRulesUpdate?: FieldValue;
 };

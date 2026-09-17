@@ -50,28 +50,22 @@ export function useAppConfig() {
     apkDownloadUrl: config?.apkDownloadUrl || DEFAULT_APK_URL,
     cookiePolicyUrl: config?.cookiePolicyUrl || DEFAULT_COOKIE_POLICY_URL,
     updatesUrl: config?.updatesUrl || DEFAULT_UPDATES_URL,
-    bannerAdCode: config?.bannerAdCode || '',
+    
+    // الأكواد الإعلانية
+    nativeAdCode: config?.nativeAdCode || '',
     popunderAdCode: config?.popunderAdCode || '',
-  }), [
-    config?.appName, 
-    config?.appLogo, 
-    config?.appVersion,
-    config?.loginBg, 
-    config?.signupBg,
-    config?.contactPhone,
-    config?.contactEmail,
-    config?.supportUrl,
-    config?.whatsappChannel,
-    config?.facebook,
-    config?.twitter,
-    config?.telegram,
-    config?.techStoreUrl,
-    config?.apkDownloadUrl,
-    config?.cookiePolicyUrl,
-    config?.updatesUrl,
-    config?.bannerAdCode,
-    config?.popunderAdCode
-  ]);
+    socialBarCode: config?.socialBarCode || '',
+    smartlinkCode: config?.smartlinkCode || '',
+    banner728x90Code: config?.banner728x90Code || '',
+    banner320x50Code: config?.banner320x50Code || '',
+    banner160x300Code: config?.banner160x300Code || '',
+    banner468x60Code: config?.banner468x60Code || '',
+    banner300x250Code: config?.banner300x250Code || '',
+    banner160x600Code: config?.banner160x600Code || '',
+    adsenseClientCode: config?.adsenseClientCode || '',
+    adsenseInArticleCode: config?.adsenseInArticleCode || '',
+    adsenseResponsiveCode: config?.adsenseResponsiveCode || '',
+  }), [config]);
 
   return {
     config: memoizedConfig,

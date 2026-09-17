@@ -35,7 +35,7 @@ import {
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import SyncIndicator from './SyncIndicator';
 import { Button } from '@/components/ui/button';
-import { BannerAd, NativeArticleAd } from './AdSections';
+import { GlobalAdsInjector, AdSlot } from './AdSections';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
@@ -74,11 +74,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     navItems.push({ name: 'لوحة الإدارة', href: '/admin', icon: User });
   }
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname?.startsWith('/p/');
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FDFDFF] dark:bg-slate-950 text-right font-body" dir="rtl">
-      <NativeArticleAd />
+      <GlobalAdsInjector />
       {!isAuthPage && (
         <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-xl dark:bg-slate-900/80">
           <div className="container flex h-20 items-center justify-between max-w-screen-2xl px-6">
@@ -221,9 +221,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
       )}
       
-      <main className="container flex-grow py-10 max-w-screen-2xl px-6">
-        {children}
-        {!isAuthPage && <BannerAd />}
+      <main className="container flex-grow py-10 max-w-screen-2xl px-6 relative">
+        <div className="flex flex-col lg:flex-row gap-6">
+            {/* إعلان جانبي 160x600 - يظهر فقط على الكمبيوتر */}
+            <aside className="hidden xl:block w-40 shrink-0">
+                <AdSlot type="banner160x600" className="sticky top-24" />
+                <AdSlot type="banner160x300" className="mt-4" />
+            </aside>
+
+            <div className="flex-grow">
+                {/* إعلان علوي 728x90 */}
+                <AdSlot type="banner728x90" className="mb-8" />
+                <AdSlot type="banner468x60" className="mb-4 sm:hidden" />
+                <AdSlot type="banner320x50" className="mb-4 sm:hidden" />
+                
+                {children}
+
+                {/* إعلان Native في الأسفل */}
+                <AdSlot type="native" className="mt-12" />
+                <AdSlot type="adsenseResponsive" className="mt-4" />
+            </div>
+
+            {/* إعلان جانبي أيسر 160x600 */}
+            <aside className="hidden 2xl:block w-40 shrink-0">
+                <AdSlot type="banner160x600" className="sticky top-24" />
+            </aside>
+        </div>
       </main>
 
       {!isAuthPage && <Footer />}

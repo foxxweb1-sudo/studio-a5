@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -21,47 +20,27 @@
       },
       "required": ["uid", "email"]
     },
-    "PromoCode": {
-      "title": "PromoCode (Realtime DB)",
-      "description": "Unique codes to remove ads, managed in RTDB for performance.",
-      "type": "object",
-      "properties": {
-        "code": { "type": "string" },
-        "isUsed": { "type": "boolean" },
-        "usedBy": { "type": "string" },
-        "usedAt": { "type": "number" },
-        "createdAt": { "type": "number" }
-      },
-      "required": ["code"]
-    },
-    "Student": {
-      "title": "Student",
-      "description": "A student record under a specific teacher.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "grade": { "type": "string" },
-        "groupId": { "type": "string" },
-        "parentPhone": { "type": "string" },
-        "isArchived": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
+    "GlobalConfig": {
+        "title": "GlobalConfig",
+        "description": "System-wide settings and ad management.",
+        "type": "object",
+        "properties": {
+            "appName": { "type": "string" },
+            "appLogo": { "type": "string" },
+            "appVersion": { "type": "string" },
+            "banner728x90Code": { "type": "string" },
+            "banner300x250Code": { "type": "string" },
+            "popunderAdCode": { "type": "string" },
+            "nativeAdCode": { "type": "string" },
+            "socialBarCode": { "type": "string" },
+            "smartlinkCode": { "type": "string" },
+            "adsenseClientCode": { "type": "string" }
+        }
     }
   },
   "auth": { "providers": ["password", "google.com"] },
   "firestore": {
     "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Teacher profiles" },
-    "/appConfig/global": { "schema": "object", "description": "Global settings" },
-    "/deletionRequests/{id}": { "schema": "object", "description": "Account deletions" },
-    "/reviews/{id}": { "schema": "object", "description": "App reviews" },
-    "/users/{userId}/students/{studentId}": { "schema": { "$ref": "#/entities/Student" }, "description": "Students" },
-    "/users/{userId}/attendance/{id}": { "schema": "object", "description": "Attendance logs" },
-    "/users/{userId}/payments/{id}": { "schema": "object", "description": "Payments" },
-    "/users/{userId}/exams/{id}": { "schema": "object", "description": "Exam scores" }
-  },
-  "realtime_database": {
-    "/promoCodes/{code}": { "schema": { "$ref": "#/entities/PromoCode" }, "description": "Ad-free codes" },
-    "/portal/{teacherId}/{studentId}": { "schema": "object", "description": "Parent portal data" },
-    "/users/{userId}/isAdFree": { "type": "boolean", "description": "Real-time ad status" }
+    "/appConfig/global": { "schema": { "$ref": "#/entities/GlobalConfig" }, "description": "Global settings" }
   }
 }

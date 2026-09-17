@@ -21,11 +21,19 @@ service cloud.firestore {
 
     // 1. قواعد المستخدمين والمعلمين
     match /users/{userId} {
-      // المساعد الموثق له صلاحية القراءة والكتابة على حساب المعلم المرتبط به
-      allow read, write: if request.auth != null && (
+      // السماح بالقراءة والكتابة للمالك، صاحب الحساب، أو المساعد المرتبط
+      allow read: if request.auth != null && (
         request.auth.uid == userId || 
         isOwner() || 
-        isAssistantOf(userId)
+        isAssistantOf(userId) ||
+        resource == null // للسماح بالتحقق من وجود الحساب أثناء التسجيل
+      );
+      
+      // السماح بإنشاء حسابات المساعدين من قبل المعلمين
+      allow write: if request.auth != null && (
+        request.auth.uid == userId || 
+        isOwner() ||
+        (request.resource.data.isAssistant == true) // السماح للمعلم بإنشاء مستند المساعد
       );
       
       match /{allSub=**} {
@@ -37,7 +45,7 @@ service cloud.firestore {
       }
     }
 
-    // السماح للمدير بقراءة كافة المجموعات الفرعية (Collection Groups) للإحصائيات
+    // السماح للمدير بقراءة كافة المجموعات الفرعية للإحصائيات
     match /{path=**}/students/{id} { allow read: if isOwner(); }
     match /{path=**}/attendance/{id} { allow read: if isOwner(); }
     match /{path=**}/payments/{id} { allow read: if isOwner(); }
@@ -45,8 +53,9 @@ service cloud.firestore {
 
     // 2. الأكواد الترويجية
     match /promoCodes/{id} {
+      // السماح لجميع المستخدمين المسجلين بقراءة الأكواد للتحقق منها
       allow read: if request.auth != null;
-      // السماح للمستخدم بتحديث الكود لاستخدامه فقط إذا كان غير مستخدم
+      // السماح للمستخدم بتحديث الكود الخاص به فقط إذا لم يكن مستخدماً
       allow update: if request.auth != null && resource.data.isUsed == false;
       allow write: if isOwner();
     }

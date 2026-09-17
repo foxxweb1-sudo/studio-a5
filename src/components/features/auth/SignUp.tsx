@@ -31,7 +31,7 @@ import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageI
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { doc, setDoc, serverTimestamp, getDocs, collection, query, where, updateDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, getDoc, updateDoc } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -102,26 +102,31 @@ export default function SignUp() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      // التحقق أولاً إذا كان هذا حساب مساعد مُنشأ مسبقاً في Firestore
-      const q = query(collection(firestore, 'users'), where('email', '==', values.email), where('isAssistant', '==', true));
-      const assistantSnap = await getDocs(q);
-      const preExistingAssistant = !assistantSnap.empty ? assistantSnap.docs[0].data() : null;
+      // 1. التحقق الفوري من وجود مستند مساعد مسبق (Pre-registration)
+      const assistantDocRef = doc(firestore, 'users', values.email.toLowerCase());
+      const assistantSnap = await getDoc(assistantDocRef);
+      const preExistingAssistant = assistantSnap.exists() ? assistantSnap.data() : null;
 
+      // 2. إنشاء الحساب في Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const fullPhone = `+${values.countryCode}${values.phone.replace(/\D/g, '')}`;
       
+      const finalDisplayName = preExistingAssistant ? preExistingAssistant.displayName : values.displayName;
+
       await updateProfile(userCredential.user, {
-        displayName: preExistingAssistant ? preExistingAssistant.displayName : values.displayName,
+        displayName: finalDisplayName,
         photoURL: values.photoURL
       });
 
-      // إذا كان مساعداً، نقوم بتحديث المستند الموجود بدلاً من إنشاء واحد جديد عشوائي
+      // 3. تحديث أو إنشاء مستند المستخدم في Firestore
       if (preExistingAssistant) {
-        await updateDoc(doc(firestore, 'users', assistantSnap.docs[0].id), {
-            uid: userCredential.user.uid, // ربط الـ Auth UID الفعلي
+        // إذا كان مساعداً، نقوم بتحديث المستند الموجود وربطه بالـ Auth UID
+        await updateDoc(assistantDocRef, {
+            uid: userCredential.user.uid,
             lastLogin: serverTimestamp(),
             photoURL: values.photoURL,
-            phone: fullPhone
+            phone: fullPhone,
+            updatedAt: serverTimestamp()
         });
       } else {
         // حساب معلم عادي
@@ -143,10 +148,11 @@ export default function SignUp() {
       });
       router.push('/');
     } catch (error: any) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "خطأ في التسجيل",
-        description: error.code === 'auth/email-already-in-use' ? "هذا البريد مسجل مسبقاً." : "فشل إنشاء الحساب، يرجى المحاولة لاحقاً.",
+        description: error.code === 'auth/email-already-in-use' ? "هذا البريد مسجل مسبقاً." : "فشل إنشاء الحساب، يرجى مراجعة البيانات.",
       });
     } finally {
       setIsLoading(false);

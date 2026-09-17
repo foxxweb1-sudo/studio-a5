@@ -32,7 +32,7 @@ export default function AssistantActivation() {
     setIsActivating(true);
     try {
         // البحث عن الكود في Firestore
-        const q = query(collection(firestore, 'promoCodes'), where('code', '==', code.trim()), where('isUsed', '==', false));
+        const q = query(collection(firestore, 'promoCodes'), where('code', '==', code.trim().toUpperCase()), where('isUsed', '==', false));
         const snap = await getDocs(q);
 
         if (snap.empty) {
@@ -63,11 +63,11 @@ export default function AssistantActivation() {
             assistantExpiresAt: expiryDate,
         });
 
-        // 3. إنشاء مستند المساعد مسبقاً (Pre-registration) لكي يتعرف عليه النظام فور الـ Signup
-        await setDoc(doc(firestore, 'users', assistantEmail), { // نستخدم الإيميل كمفتاح بحث مؤقت
+        // 3. إنشاء مستند المساعد مسبقاً (Pre-registration) باستخدام الإيميل كـ ID لسرعة البحث
+        await setDoc(doc(firestore, 'users', assistantEmail), {
             uid: '', // سيتم تحديثه عند أول تسجيل دخول
             email: assistantEmail,
-            displayName: `مساعد لـ ${user.displayName}`,
+            displayName: `مساعد لـ ${user.displayName || 'معلم'}`,
             isAssistant: true,
             assignedTeacherId: user.uid,
             assistantPassword: assistantPassword,
@@ -77,9 +77,10 @@ export default function AssistantActivation() {
         });
 
         await reloadUser();
-        toast({ title: "تم التفعيل بنجاح!", description: "باقة المساعد الشخصي نشطة الآن. يرجى تزويد فريق الدعم بالبيانات الموضحة." });
+        toast({ title: "تم التفعيل بنجاح!", description: "باقة المساعد الشخصي نشطة الآن. انسخ البيانات وأرسلها للدعم." });
         setCode('');
     } catch (error: any) {
+        console.error(error);
         toast({ variant: "destructive", title: "خطأ في التفعيل", description: "تأكد من اتصالك بالإنترنت وصلاحية الكود." });
     } finally {
         setIsActivating(false);
@@ -102,7 +103,7 @@ export default function AssistantActivation() {
                       <div>
                           <CardTitle className="text-2xl font-black">باقة المساعد نشطة</CardTitle>
                           <CardDescription className="text-slate-400 font-bold">
-                              {isExpired ? 'انتهت صلاحية الباقة' : `صالحة حتى: ${profile.assistantExpiresAt.toDate().toLocaleDateString('ar-EG')}`}
+                              {isExpired ? 'انتهت صلاحية الباقة' : `صالحة حتى: ${profile.assistantExpiresAt.toDate ? profile.assistantExpiresAt.toDate().toLocaleDateString('ar-EG') : '...'}`}
                           </CardDescription>
                       </div>
                   </div>
@@ -117,7 +118,7 @@ export default function AssistantActivation() {
                           <div className="space-y-1">
                               <Label className="text-[10px] uppercase text-slate-500 font-black">البريد الإلكتروني</Label>
                               <div className="flex items-center justify-between bg-black/30 p-3 rounded-xl border border-white/5">
-                                  <code className="text-xs font-mono truncate mr-2">{profile.assistantEmail}</code>
+                                  <code className="text-[10px] font-mono truncate mr-2">{profile.assistantEmail}</code>
                                   <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => {navigator.clipboard.writeText(profile.assistantEmail!); toast({title: "تم نسخ البريد"});}}><Copy className="h-3 w-3" /></Button>
                               </div>
                           </div>
@@ -130,7 +131,7 @@ export default function AssistantActivation() {
                           </div>
                       </div>
                       <p className="text-[10px] text-rose-400 font-bold leading-relaxed italic">
-                        * ملاحظة: يجب على فريق المساعدين عمل "إنشاء حساب" بهذه البيانات في أول مرة لاستخدامها.
+                        * ملاحظة هامة: يجب على فريق المساعدين الضغط على "إنشاء حساب جديد" بهذه البيانات في المرة الأولى لتفعيلها على السيرفر.
                       </p>
                   </div>
                   
@@ -138,13 +139,13 @@ export default function AssistantActivation() {
                       <div className="flex items-start gap-3">
                           <AlertTriangle className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
                           <p className="text-xs text-slate-200 leading-relaxed font-bold">
-                              انسخ البيانات أعلاه وأرسلها مع "كود المعلم" (UID) الخاص بك عبر الزر أدناه لبدء العمل.
+                              انسخ البيانات أعلاه وأرسلها مع "كود المعلم" الخاص بك عبر زر الواتساب أدناه.
                           </p>
                       </div>
                       <Button asChild className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-black gap-2 shadow-xl">
                           <a href={`https://wa.me/${config.contactPhone}?text=${encodeURIComponent(`أهلاً، أريد تفعيل المساعد للـ UID: ${user?.uid}\nالبريد: ${profile.assistantEmail}\nالباسورد: ${profile.assistantPassword}`)}`} target="_blank" rel="noopener noreferrer">
                               <MessageCircle className="h-5 w-5" />
-                              إرسال البيانات لفريق الدعم
+                              إرسال البيانات لفريق المساعدين
                           </a>
                       </Button>
                   </div>

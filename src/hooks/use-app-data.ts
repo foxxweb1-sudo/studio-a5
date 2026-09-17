@@ -7,21 +7,33 @@ import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, 
 import { ref, set, serverTimestamp as rtdbTimestamp } from "firebase/database";
 import { format, parse, startOfMonth, addMonths, isBefore, isSameMonth } from 'date-fns';
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { useEffect, useState } from "react";
 
 export function useTargetUid() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const [targetUid, setTargetUid] = useState<string | undefined>(user?.uid);
     
-    // نستخدم مستمعاً لحظياً لبيانات المستخدم للتأكد من حالة المساعد
-    const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-    const { data: profile } = useDoc<UserProfile>(userRef);
+    // نستخدم مستمعاً لحظياً لبيانات المستخدم للتأكد من حالة المساعد وربطه بالمعلم فوراً
+    useEffect(() => {
+        if (!user || !firestore) return;
+        
+        const userRef = doc(firestore, 'users', user.uid);
+        const unsubscribe = onSnapshot(userRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                if (data.isAssistant && data.assignedTeacherId) {
+                    setTargetUid(data.assignedTeacherId);
+                } else {
+                    setTargetUid(user.uid);
+                }
+            }
+        });
+        
+        return () => unsubscribe();
+    }, [user, firestore]);
     
-    // إذا كان المستخدم مساعداً، نرجع الـ UID الخاص بالمعلم الذي يتبعه
-    if (profile?.isAssistant && profile.assignedTeacherId) {
-        return profile.assignedTeacherId;
-    }
-    
-    return user?.uid;
+    return targetUid;
 }
 
 export function useAllUsers() {
@@ -174,3 +186,5 @@ export function usePaymentSettings() {
   };
   return { settings, isLoading, updateGradeSettings };
 }
+
+import { onSnapshot } from "firebase/firestore";

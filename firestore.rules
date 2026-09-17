@@ -9,7 +9,7 @@ service cloud.firestore {
     function isOwner() {
       return request.auth != null && 
              request.auth.token.email != null && 
-             request.auth.token.email.lower() == 'cybenode.site@gmail.com';
+             request.auth.token.email == 'cybenode.site@gmail.com';
     }
 
     // 1. القراءة العامة لكافة سجلات الطلاب (الحضور، المدفوعات، الامتحانات، والبيانات)
@@ -54,13 +54,16 @@ service cloud.firestore {
     }
 
     // 4. نظام الأكواد الترويجية (Admin Only)
-    // تم إصلاح قواعد 'list' لضمان ظهور الأكواد للمدير
+    // تم الفصل بين 'list' للمدير و 'get' للمستخدم لضمان أعلى مستويات الأمان والأداء
     match /promoCodes/{codeId} {
-      allow read, write, list: if isOwner();
-      // السماح للمستخدم بالتحقق من كود واحد فقط عند التفعيل
+      // السماح للمدير بالعرض (List) والحذف والإنشاء
+      allow list, create, delete, update: if isOwner();
+      // السماح للمدير أيضاً بالقراءة الفردية
+      allow get: if isOwner();
+      // السماح للمستخدم العادي بجلب كود واحد فقط للتحقق منه عند التفعيل
       allow get: if request.auth != null;
     }
 
-    // تعليق إجباري لتحديث القواعد في السيرفر الآن: CybeNode Security Sync v2.5 - Admin Access Granted
+    // تعليق إجباري لتحديث القواعد في السيرفر الآن: CybeNode Security Sync v2.6 - Explicit List Permission Granted
   }
 }

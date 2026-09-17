@@ -1,9 +1,8 @@
-
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc, query, orderBy, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { useUser, useDatabase } from '@/firebase';
+import { ref, set, onValue, remove, serverTimestamp } from 'firebase/database';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,9 +15,7 @@ import {
   Loader2, 
   Ticket, 
   ArrowLeft, 
-  Copy,
-  Users,
-  ShieldCheck
+  Copy
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -36,38 +33,52 @@ import {
 export default function AdminPromoCodesPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const database = useDatabase();
   const { toast } = useToast();
   
   const [newCode, setNewCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-
-  const codesQuery = useMemoFirebase(() => 
-    firestore ? query(collection(firestore, 'promoCodes'), orderBy('createdAt', 'desc')) : null,
-  [firestore]);
-  const { data: codes, isLoading: codesLoading } = useCollection<any>(codesQuery);
+  const [codes, setCodes] = useState<any[]>([]);
+  const [isLoadingCodes, setIsLoadingCodes] = useState(true);
 
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
+  useEffect(() => {
+    if (!database || !isAdmin) return;
+
+    const codesRef = ref(database, 'promoCodes');
+    const unsubscribe = onValue(codesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.entries(data).map(([id, val]: [string, any]) => ({
+          id,
+          ...val
+        })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setCodes(list);
+      } else {
+        setCodes([]);
+      }
+      setIsLoadingCodes(false);
+    });
+
+    return () => unsubscribe();
+  }, [database, isAdmin]);
+
   const handleGenerateCode = async () => {
-    if (!newCode.trim()) {
-        const randomCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-        setNewCode(randomCode);
-        return;
-    }
+    const codeToUse = newCode.trim() || Math.random().toString(36).substring(2, 10).toUpperCase();
 
     setIsGenerating(true);
     try {
-      const codeRef = doc(firestore!, 'promoCodes', newCode.trim());
-      await setDoc(codeRef, {
-        code: newCode.trim(),
+      const codeRef = ref(database, `promoCodes/${codeToUse}`);
+      await set(codeRef, {
+        code: codeToUse,
         isUsed: false,
-        createdAt: serverTimestamp()
+        createdAt: Date.now()
       });
-      toast({ title: "تم إنشاء الكود بنجاح" });
+      toast({ title: "تم إنشاء الكود في قاعدة RTDB" });
       setNewCode('');
     } catch (error) {
-      toast({ variant: "destructive", title: "فشل الإنشاء" });
+      toast({ variant: "destructive", title: "فشل الإنشاء", description: "تأكد من اتصالك بالإنترنت." });
     } finally {
       setIsGenerating(false);
     }
@@ -75,7 +86,7 @@ export default function AdminPromoCodesPage() {
 
   const handleDeleteCode = async (id: string) => {
     try {
-      await deleteDoc(doc(firestore!, 'promoCodes', id));
+      await remove(ref(database, `promoCodes/${id}`));
       toast({ title: "تم حذف الكود" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الحذف" });
@@ -99,9 +110,9 @@ export default function AdminPromoCodesPage() {
             <div className="p-3 bg-indigo-500/10 rounded-2xl">
                <Ticket className="h-6 w-6" />
             </div>
-            <PageHeaderTitle className="text-3xl font-black">إدارة الأكواد الترويجية</PageHeaderTitle>
+            <PageHeaderTitle className="text-3xl font-black">إدارة الأكواد (RTDB)</PageHeaderTitle>
           </div>
-          <PageHeaderDescription>أنشئ أكواد إزالة الإعلانات وتابع حالة استخدامها.</PageHeaderDescription>
+          <PageHeaderDescription>توليد الأكواد اللحظية لإزالة الإعلانات.</PageHeaderDescription>
         </PageHeader>
         <Button variant="outline" onClick={() => router.push('/admin')} className="rounded-xl">
           <ArrowLeft className="ms-2 h-4 w-4" />
@@ -119,7 +130,7 @@ export default function AdminPromoCodesPage() {
             </CardHeader>
             <CardContent className="p-8 space-y-4">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">كود الخصم (أو اتركه فارغاً للعشوائي)</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">كود الخصم</label>
                     <Input 
                         placeholder="CYBE-XXXX" 
                         value={newCode} 
@@ -133,7 +144,7 @@ export default function AdminPromoCodesPage() {
                     className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 font-black text-lg gap-2"
                 >
                     {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Ticket className="h-5 w-5" />}
-                    اعتماد الكود في النظام
+                    اعتماد الكود فوراً
                 </Button>
             </CardContent>
         </Card>
@@ -141,14 +152,14 @@ export default function AdminPromoCodesPage() {
         <Card className="lg:col-span-2 border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-white">
             <CardHeader className="bg-slate-50 p-8 border-b">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-black">سجل الأكواد</CardTitle>
-                    <Badge variant="outline" className="rounded-full px-4 font-bold">{codes?.length || 0} كود</Badge>
+                    <CardTitle className="text-xl font-black">سجل الأكواد اللحظي</CardTitle>
+                    <Badge variant="outline" className="rounded-full px-4 font-bold">{codes.length} كود</Badge>
                 </div>
             </CardHeader>
             <CardContent className="p-0">
-                {codesLoading ? (
+                {isLoadingCodes ? (
                     <div className="py-20 text-center"><Loader2 className="animate-spin inline-block h-8 w-8 text-primary" /></div>
-                ) : codes && codes.length > 0 ? (
+                ) : codes.length > 0 ? (
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -189,7 +200,7 @@ export default function AdminPromoCodesPage() {
                         </TableBody>
                     </Table>
                 ) : (
-                    <div className="py-20 text-center text-slate-300 italic font-bold">لا توجد أكواد مسجلة بعد.</div>
+                    <div className="py-20 text-center text-slate-300 italic font-bold">لا توجد أكواد مسجلة في RTDB.</div>
                 )}
             </CardContent>
         </Card>

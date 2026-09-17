@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -22,14 +21,12 @@ import {
   ShieldCheck,
   FileText,
   HelpCircle,
-  Users,
-  LogIn,
-  UserPlus,
   Globe,
-  Ticket,
   Zap,
   CheckCircle2,
-  Loader2
+  Loader2,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -37,10 +34,11 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { useState } from 'react';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useDatabase } from '@/firebase';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, get, update, onValue } from 'firebase/database';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -49,13 +47,21 @@ export default function SettingsPage() {
   const { config } = useAppConfig();
   const { user } = useUser();
   const firestore = useFirestore();
+  const database = useDatabase();
 
-  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: userProfile } = useDoc<any>(userRef);
-
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [isActivating, setIsActivating] = useState(false);
+  const [isAdFreeRTDB, setIsAdFreeRTDB] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+
+  useEffect(() => {
+    if (!user || !database) return;
+    const adFreeRef = ref(database, `users/${user.uid}/isAdFree`);
+    const unsubscribe = onValue(adFreeRef, (snapshot) => {
+      setIsAdFreeRTDB(!!snapshot.val());
+    });
+    return () => unsubscribe();
+  }, [user, database]);
 
   const handleProtectedClick = (e: React.MouseEvent, href: string) => {
     if (!user) {
@@ -67,40 +73,49 @@ export default function SettingsPage() {
   };
 
   const handleActivateCode = async () => {
-    if (!user || !promoCode.trim()) return;
+    if (!user || !promoCode.trim() || !database) return;
     setIsActivating(true);
     try {
-        const codeRef = doc(firestore, 'promoCodes', promoCode.trim().toUpperCase());
-        const codeSnap = await getDoc(codeRef);
+        const codeInput = promoCode.trim().toUpperCase();
+        const codeRef = ref(database, `promoCodes/${codeInput}`);
+        const codeSnap = await get(codeRef);
         
         if (!codeSnap.exists()) {
             toast({ variant: "destructive", title: "كود غير صالح", description: "الكود الذي أدخلته غير موجود في النظام." });
             return;
         }
 
-        const codeData = codeSnap.data();
+        const codeData = codeSnap.val();
         if (codeData.isUsed) {
-            toast({ variant: "destructive", title: "كود مستخدم", description: "هذا الكود تم استخدامه مسبقاً من قبل مستخدم آخر." });
+            toast({ variant: "destructive", title: "كود مستخدم", description: "هذا الكود تم استخدامه مسبقاً." });
             return;
         }
 
-        // 1. تحديث الكود كـ مستخدم
-        await updateDoc(codeRef, {
+        // 1. تحديث الكود في RTDB
+        await update(codeRef, {
             isUsed: true,
             usedBy: user.uid,
-            usedAt: serverTimestamp()
+            usedAt: Date.now()
         });
 
-        // 2. تفعيل وضع Ad-Free للمستخدم
-        await updateDoc(doc(firestore, 'users', user.uid), {
+        // 2. تفعيل وضع Ad-Free في RTDB (لحظي للإعلانات)
+        await update(ref(database, `users/${user.uid}`), {
             isAdFree: true,
-            adFreeActivatedAt: serverTimestamp()
+            adFreeActivatedAt: Date.now()
         });
 
-        toast({ title: "تم التفعيل بنجاح!", description: "تمت إزالة كافة الإعلانات من حسابك مدى الحياة." });
+        // 3. تحديث Firestore (للتوثيق الدائم)
+        if (firestore) {
+            await updateDoc(doc(firestore, 'users', user.uid), {
+                isAdFree: true,
+                adFreeActivatedAt: serverTimestamp()
+            });
+        }
+
+        toast({ title: "تم التفعيل بنجاح!", description: "لقد أصبحت الآن مستخدماً احترافياً مدى الحياة." });
         setPromoCode('');
     } catch (e) {
-        toast({ variant: "destructive", title: "خطأ في التفعيل", description: "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً." });
+        toast({ variant: "destructive", title: "خطأ في التفعيل", description: "تأكد من جودة اتصالك بالإنترنت." });
     } finally {
         setIsActivating(false);
     }
@@ -149,7 +164,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         
         {/* قسم إزالة الإعلانات الترويجي */}
-        {user && !userProfile?.isAdFree && (
+        {user && !isAdFreeRTDB && (
             <Card className="border-0 shadow-2xl rounded-[2.5rem] bg-indigo-600 text-white overflow-hidden relative group">
                 <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] bg-[length:250%_250%] animate-[shimmer_5s_infinite]" />
                 <CardContent className="p-8 space-y-6 relative z-10">
@@ -158,8 +173,8 @@ export default function SettingsPage() {
                             <Zap className="h-8 w-8 text-yellow-300 fill-current" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black">نسخة احترافية بدون إعلانات</h3>
-                            <p className="text-sm font-bold opacity-80 mt-1">تخلص من كافة الإعلانات مدى الحياة بـ 50 ج.م فقط.</p>
+                            <h3 className="text-2xl font-black">باقة الـ PRO مدي الحياة</h3>
+                            <p className="text-sm font-bold opacity-80 mt-1">تخلص من كافة الإعلانات واحصل على ميزات حصرية بـ 50 ج.م فقط.</p>
                         </div>
                     </div>
 
@@ -176,7 +191,7 @@ export default function SettingsPage() {
                             className="bg-white text-indigo-600 hover:bg-slate-100 rounded-2xl h-14 px-8 font-black text-lg gap-2 shadow-2xl w-full sm:w-auto"
                         >
                             {isActivating ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                            تفعيل
+                            تفعيل الآن
                         </Button>
                     </div>
 
@@ -201,14 +216,14 @@ export default function SettingsPage() {
         )}
 
         {/* إذا كان مفعلاً بالفعل */}
-        {userProfile?.isAdFree && (
-            <div className="p-6 bg-emerald-50 border-2 border-emerald-100 rounded-[2.5rem] flex items-center gap-5">
+        {isAdFreeRTDB && (
+            <div className="p-6 bg-emerald-50 border-2 border-emerald-100 rounded-[2.5rem] flex items-center gap-5 animate-in zoom-in-95 duration-500">
                 <div className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20">
                     <ShieldCheck className="h-8 w-8" />
                 </div>
                 <div>
-                    <h4 className="text-lg font-black text-emerald-800">حساب احترافي مفعل</h4>
-                    <p className="text-xs text-emerald-600 font-bold">تهانينا! أنت تستخدم النسخة الخالية من الإعلانات مدى الحياة.</p>
+                    <h4 className="text-lg font-black text-emerald-800">حساب احترافي نشط (PRO)</h4>
+                    <p className="text-xs text-emerald-600 font-bold">تهانينا! أنت الآن في النسخة الخالية من الإعلانات تماماً.</p>
                 </div>
             </div>
         )}
@@ -233,13 +248,12 @@ export default function SettingsPage() {
                 className="w-full justify-between h-auto py-5 px-4 rounded-2xl hover:bg-primary/5 font-bold group transition-all duration-300"
                >
                   <div className="flex items-center gap-4">
-                      <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300 relative">
-                          <UserCircle className="h-6 w-6 relative z-10" />
-                          <div className="absolute inset-0 bg-white/20 rounded-2xl animate-ping group-hover:block hidden" />
+                      <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+                          <UserCircle className="h-6 w-6" />
                       </div>
                       <div className="flex flex-col items-start text-right">
                           <span className="text-base font-black text-slate-800 dark:text-white">إدارة الحساب</span>
-                          <span className="text-xs text-muted-foreground font-medium opacity-80">تحديث الاسم، الصورة، وكلمة المرور</span>
+                          <span className="text-xs text-muted-foreground font-medium opacity-80">تحديث الاسم، الصورة، والبيانات</span>
                       </div>
                   </div>
                   <ChevronLeft className="h-5 w-5 text-primary/40 group-hover:text-primary group-hover:-translate-x-1 transition-all" />
@@ -248,7 +262,7 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* 1. معلومات التطبيق */}
+        {/* معلومات التطبيق */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -278,12 +292,7 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md border-2 border-white dark:border-slate-800">
-                            <Image 
-                                src={techStoreLogo}
-                                alt="CybeNode STORE"
-                                fill
-                                className="object-cover"
-                            />
+                            <Image src={techStoreLogo} alt="CybeNode STORE" fill className="object-cover" />
                         </div>
                         <div className="flex flex-col">
                             <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">المصدر الرسمي</span>
@@ -301,7 +310,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* 2. المظهر */}
+        {/* المظهر */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -313,32 +322,14 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-              <Button 
-                variant={theme === 'light' ? 'default' : 'ghost'} 
-                onClick={() => setTheme('light')}
-                className={`rounded-xl font-bold transition-all ${theme === 'light' ? 'shadow-md' : ''}`}
-              >
-                فاتح
-              </Button>
-              <Button 
-                variant={theme === 'dark' ? 'default' : 'ghost'} 
-                onClick={() => setTheme('dark')}
-                className={`rounded-xl font-bold transition-all ${theme === 'dark' ? 'shadow-md' : ''}`}
-              >
-                داكن
-              </Button>
-              <Button 
-                variant={theme === 'system' ? 'default' : 'ghost'} 
-                onClick={() => setTheme('system')}
-                className={`rounded-xl font-bold transition-all ${theme === 'system' ? 'shadow-md' : ''}`}
-              >
-                النظام
-              </Button>
+              <Button variant={theme === 'light' ? 'default' : 'ghost'} onClick={() => setTheme('light')} className="rounded-xl font-bold">فاتح</Button>
+              <Button variant={theme === 'dark' ? 'default' : 'ghost'} onClick={() => setTheme('dark')} className="rounded-xl font-bold">داكن</Button>
+              <Button variant={theme === 'system' ? 'default' : 'ghost'} onClick={() => setTheme('system')} className="rounded-xl font-bold">النظام</Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* 3. المعلومات والدعم */}
+        {/* المعلومات والدعم */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -352,50 +343,22 @@ export default function SettingsPage() {
              <div className="flex flex-col">
                 <Link href="https://blog.alhodoor.site/p/about-us.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                      <Users className="h-4 w-4" />
-                    </div>
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><UserCircle className="h-4 w-4" /></div>
                     <span className="font-bold text-sm">من نحن</span>
                   </div>
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </Link>
-
                 <Link href="https://blog.alhodoor.site/p/contact-us.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                      <MessageCircle className="h-4 w-4" />
-                    </div>
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><MessageCircle className="h-4 w-4" /></div>
                     <span className="font-bold text-sm">تواصل معنا</span>
                   </div>
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </Link>
-
-                <Link href="https://blog.alhodoor.site" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
+                <Link href="https://blog.alhodoor.site" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                      <Globe className="h-4 w-4" />
-                    </div>
+                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Globe className="h-4 w-4" /></div>
                     <span className="font-bold text-sm">مدونة الحضور</span>
-                  </div>
-                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                </Link>
-
-                <Link href="https://blog.alhodoor.site/p/privacy-policy.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors border-b last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
-                      <ShieldCheck className="h-4 w-4" />
-                    </div>
-                    <span className="font-bold text-sm">سياسة الخصوصية</span>
-                  </div>
-                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                </Link>
-
-                <Link href="https://blog.alhodoor.site/p/terms-conditions.html" target="_blank" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                      <FileText className="h-4 w-4" />
-                    </div>
-                    <span className="font-bold text-sm">اتفاقية الاستخدام</span>
                   </div>
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </Link>
@@ -403,73 +366,23 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* 4. تابعونا */}
+        {/* مشاركة وتواصل */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
                 <Share2 className="h-5 w-5" />
               </div>
-              <CardTitle className="text-xl font-black">تابعونا</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-emerald-500/20 hover:bg-emerald-500/5 hover-lift">
-                <a href={config.whatsappChannel} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="h-6 w-6 text-emerald-600" />
-                  <span className="text-xs font-bold">واتساب</span>
-                </a>
-              </Button>
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-blue-600/20 hover:bg-blue-600/5 hover-lift">
-                <a href={config.facebook} target="_blank" rel="noopener noreferrer">
-                  <Facebook className="h-6 w-6 text-blue-600" />
-                  <span className="text-xs font-bold">فيسبوك</span>
-                </a>
-              </Button>
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-slate-900/20 hover:bg-slate-900/5 hover-lift">
-                <a href={config.twitter} target="_blank" rel="noopener noreferrer">
-                  <Twitter className="h-6 w-6 text-slate-900 dark:text-white" />
-                  <span className="text-xs font-bold">تويتر X</span>
-                </a>
-              </Button>
-              <Button asChild variant="outline" className="flex flex-col h-20 gap-2 rounded-2xl border-sky-500/20 hover:bg-sky-500/5 hover-lift">
-                <a href={config.telegram} target="_blank" rel="noopener noreferrer">
-                  <Send className="h-6 w-6 text-sky-500" />
-                  <span className="text-xs font-bold">تلجرام</span>
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 5. مشاركة وتواصل */}
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
-                <Share2 className="h-5 w-5" />
-              </div>
               <CardTitle className="text-xl font-black">مشاركة وتواصل</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button 
-              onClick={handleShare}
-              className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-lg shadow-primary/20"
-            >
-              <Share2 className="h-5 w-5" />
-              مشاركة التطبيق
+            <Button onClick={handleShare} className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-lg shadow-primary/20">
+              <Share2 className="h-5 w-5" /> مشاركة التطبيق
             </Button>
-            
-            <Button 
-              asChild
-              variant="outline"
-              className="w-full h-14 rounded-2xl border-2 border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 font-bold gap-3"
-            >
+            <Button asChild variant="outline" className="w-full h-14 rounded-2xl border-2 border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 font-bold gap-3">
               <a href={`https://wa.me/${config.contactPhone}`} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-5 w-5" />
-                التواصل مع فريق CybeNode
+                <MessageCircle className="h-5 w-5" /> التواصل مع CybeNode
               </a>
             </Button>
           </CardContent>
@@ -492,16 +405,12 @@ export default function SettingsPage() {
                 </div>
                 <DialogTitle className="text-3xl font-black text-slate-900">هوية المعلم</DialogTitle>
                 <DialogDescription className="font-bold pt-2 text-slate-400 leading-relaxed">
-                  هذا النطاق مخصص للمعلمين المسجلين فقط. يرجى إثبات هويتك للمتابعة.
+                  يرجى إثبات هويتك للمتابعة.
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-3">
-                 <Button onClick={() => router.push('/login')} className="h-14 rounded-2xl font-black text-lg gap-3 shadow-lg bg-primary hover:bg-indigo-700 transition-all">
-                   <LogIn className="h-5 w-5" /> تسجيل الدخول
-                 </Button>
-                 <Button onClick={() => router.push('/signup')} variant="outline" className="h-14 rounded-2xl font-black text-lg gap-3 border-slate-200 hover:bg-slate-50 text-slate-600 transition-all">
-                   <UserPlus className="h-5 w-5" /> إنشاء حساب جديد
-                 </Button>
+                 <Button onClick={() => router.push('/login')} className="h-14 rounded-2xl font-black text-lg gap-3 bg-primary">تسجيل الدخول</Button>
+                 <Button onClick={() => router.push('/signup')} variant="outline" className="h-14 rounded-2xl font-black text-lg">إنشاء حساب</Button>
               </div>
           </div>
         </DialogContent>

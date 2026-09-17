@@ -1,11 +1,11 @@
-
 "use client";
 
-import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useDatabase } from "@/firebase";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { Ban, LogOut } from "lucide-react";
+import { ref, update } from "firebase/database";
+import { Ban } from "lucide-react";
 import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
 import { useAuth } from "@/firebase";
@@ -14,17 +14,15 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 import SplashScreen from "./SplashScreen";
 import PhoneSetupPopup from "../features/account/PhoneSetupPopup";
 
-const publicRoutes = ["/login", "/signup", "/forgot-password", "/", "/blog", "/support", "/plans", "/privacy", "/terms"];
-
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
+  const database = useDatabase();
   const router = useRouter();
-  const pathname = usePathname();
   const { toast } = useToast();
   const [isFinalizingDeletion, setIsFinalizingDeletion] = useState(false);
-  const hasCheckedDeletion = useRef(false);
+  const hasSyncedRTDB = useRef(false);
 
   const userDocRef = useMemoFirebase(() => 
     user ? doc(firestore, 'users', user.uid) : null,
@@ -36,23 +34,33 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   [user, firestore]);
   const { data: deletionRequest, isLoading: isDeletionLoading } = useDoc<any>(deletionDocRef);
 
+  // مزامنة حالة "بدون إعلانات" إلى RTDB عند الدخول لضمان اختفائها فوراً
   useEffect(() => {
-    if (user && deletionRequest && !isDeletionLoading && !hasCheckedDeletion.current) {
+    if (user && userProfile && database && !hasSyncedRTDB.current) {
+        if (userProfile.isAdFree) {
+            update(ref(database, `users/${user.uid}`), {
+                isAdFree: true,
+                adFreeActivatedAt: userProfile.adFreeActivatedAt?.toDate ? userProfile.adFreeActivatedAt.toDate().getTime() : Date.now()
+            });
+        }
+        hasSyncedRTDB.current = true;
+    }
+  }, [user, userProfile, database]);
+
+  useEffect(() => {
+    if (user && deletionRequest && !isDeletionLoading) {
       const requestedAtRaw = deletionRequest.requestedAt;
       const requestedAt = requestedAtRaw?.toDate ? requestedAtRaw.toDate() : (requestedAtRaw ? new Date(requestedAtRaw) : null);
       if (!requestedAt) return;
       const now = new Date();
       const diffMs = now.getTime() - requestedAt.getTime();
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      if (diffMs < 60000) return;
-      if (diffDays < 7) {
-        const dRef = doc(firestore, 'deletionRequests', user.uid);
-        hasCheckedDeletion.current = true; 
-        deleteDoc(dRef).then(() => {
-           toast({ title: "أهلاً بك مجدداً!", description: "لقد تم إلغاء طلب حذف حسابك تلقائياً." });
+      
+      if (diffMs > 60000 && diffDays < 7) {
+        deleteDoc(doc(firestore!, 'deletionRequests', user.uid)).then(() => {
+           toast({ title: "أهلاً بك مجدداً!", description: "تم إلغاء طلب حذف حسابك." });
         });
-      } else {
-        hasCheckedDeletion.current = true;
+      } else if (diffDays >= 7) {
         handleFinalDeletion();
       }
     }
@@ -81,10 +89,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         displayName: user.displayName || 'مستخدم جديد',
         photoURL: user.photoURL || '',
         lastLogin: serverTimestamp(),
-        isBlocked: userProfile?.isBlocked || false,
       }, { merge: true });
     }
-  }, [user, firestore, deletionRequest, userProfile?.isBlocked]);
+  }, [user, firestore, deletionRequest]);
 
   if (isUserLoading || (user && isProfileLoading) || isFinalizingDeletion) {
     return <SplashScreen />;

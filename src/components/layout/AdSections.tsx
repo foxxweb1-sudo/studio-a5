@@ -1,26 +1,36 @@
-
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { useUser, useDatabase } from '@/firebase';
+import { ref, onValue } from 'firebase/database';
 
 /**
- * مكون إعلان البانر 468x60 - يختفي عند تفعيل كود إزالة الإعلانات
+ * مكون إعلان البانر 468x60 - يراقب RTDB لإخفاء الإعلان فوراً
  */
 export function BannerAd() {
   const { user } = useUser();
-  const firestore = useFirestore();
-  const adRef = useRef<HTMLDivElement>(null);
-
-  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: profile } = useDoc<any>(userRef);
+  const database = useDatabase();
+  const [isAdFree, setIsAdFree] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // لا نحمل الإعلان إذا كان المستخدم قد فعل وضع إزالة الإعلانات
-    if (profile?.isAdFree) return;
+    if (!user || !database) return;
 
-    if (adRef.current && adRef.current.childNodes.length === 0) {
+    // مراقبة حالة الإعلانات في Realtime Database
+    const adFreeRef = ref(database, `users/${user.uid}/isAdFree`);
+    const unsubscribe = onValue(adFreeRef, (snapshot) => {
+      setIsAdFree(!!snapshot.val());
+      setIsLoaded(true);
+    });
+
+    return () => unsubscribe();
+  }, [user, database]);
+
+  useEffect(() => {
+    if (isAdFree || !isLoaded) return;
+
+    const adContainer = document.getElementById('ad-banner-slot');
+    if (adContainer && adContainer.childNodes.length === 0) {
       const script = document.createElement('script');
       const conf = document.createElement('script');
       conf.innerHTML = `
@@ -34,33 +44,42 @@ export function BannerAd() {
       `;
       script.src = 'https://www.highrevenueformat.com/fbc7f87800be1cae51dad70ec282616e/invoke.js';
       script.async = true;
-      adRef.current.appendChild(conf);
-      adRef.current.appendChild(script);
+      adContainer.appendChild(conf);
+      adContainer.appendChild(script);
     }
-  }, [profile?.isAdFree]);
+  }, [isAdFree, isLoaded]);
 
-  if (profile?.isAdFree) return null;
+  if (isAdFree) return null;
 
   return (
-    <div className="flex flex-col items-center w-full my-8 overflow-hidden">
+    <div className="flex flex-col items-center w-full my-8 overflow-hidden min-h-[80px]">
       <span className="text-[9px] text-muted-foreground font-black mb-1.5 uppercase tracking-[0.2em] opacity-60">مادة إعلانية</span>
-      <div ref={adRef} className="max-w-full rounded-xl overflow-hidden shadow-sm" />
+      <div id="ad-banner-slot" className="max-w-full rounded-xl overflow-hidden shadow-sm" />
     </div>
   );
 }
 
 /**
- * مكون الإعلان المخصص (Native) - يختفي عند تفعيل كود إزالة الإعلانات
+ * مكون الإعلان المخصص (Native) - يراقب RTDB لإخفاء الإعلان فوراً
  */
 export function NativeArticleAd() {
   const { user } = useUser();
-  const firestore = useFirestore();
-  
-  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: profile } = useDoc<any>(userRef);
+  const database = useDatabase();
+  const [isAdFree, setIsAdFree] = useState(false);
 
   useEffect(() => {
-    if (profile?.isAdFree) return;
+    if (!user || !database) return;
+
+    const adFreeRef = ref(database, `users/${user.uid}/isAdFree`);
+    const unsubscribe = onValue(adFreeRef, (snapshot) => {
+      setIsAdFree(!!snapshot.val());
+    });
+
+    return () => unsubscribe();
+  }, [user, database]);
+
+  useEffect(() => {
+    if (isAdFree) return;
 
     const scriptId = 'profitablerate-script';
     if (!document.getElementById(scriptId)) {
@@ -71,9 +90,9 @@ export function NativeArticleAd() {
       script.setAttribute('data-cfasync', 'false');
       document.head.appendChild(script);
     }
-  }, [profile?.isAdFree]);
+  }, [isAdFree]);
 
-  if (profile?.isAdFree) return null;
+  if (isAdFree) return null;
 
   return (
     <div className="w-full my-12 flex flex-col items-center">

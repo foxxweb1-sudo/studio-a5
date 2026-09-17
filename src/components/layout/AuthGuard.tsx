@@ -1,10 +1,9 @@
 "use client";
 
-import { useUser, useFirestore, useDoc, useMemoFirebase, useDatabase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { ref, update, get } from "firebase/database";
 import { Ban } from "lucide-react";
 import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
@@ -18,11 +17,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
-  const database = useDatabase();
   const router = useRouter();
   const { toast } = useToast();
   const [isFinalizingDeletion, setIsFinalizingDeletion] = useState(false);
-  const hasSyncedRTDB = useRef(false);
 
   const userDocRef = useMemoFirebase(() => 
     user ? doc(firestore, 'users', user.uid) : null,
@@ -33,30 +30,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     user ? doc(firestore, 'deletionRequests', user.uid) : null,
   [user, firestore]);
   const { data: deletionRequest, isLoading: isDeletionLoading } = useDoc<any>(deletionDocRef);
-
-  // مزامنة حالة "بدون إعلانات" إلى RTDB وضمان وجود قيمة افتراضية
-  useEffect(() => {
-    if (user && database && !hasSyncedRTDB.current) {
-        const userAdRef = ref(database, `users/${user.uid}/isAdFree`);
-        
-        get(userAdRef).then((snap) => {
-            if (!snap.exists()) {
-                // إذا لم تكن القيمة موجودة في RTDB، نضع القيمة من Firestore أو false افتراضياً
-                update(ref(database, `users/${user.uid}`), {
-                    isAdFree: userProfile?.isAdFree || false,
-                    lastLogin: Date.now()
-                });
-            } else if (userProfile?.isAdFree && !snap.val()) {
-                // إذا كان محترفاً في Firestore ولكن ليس في RTDB (تزامن متأخر)
-                update(ref(database, `users/${user.uid}`), {
-                    isAdFree: true
-                });
-            }
-        });
-        
-        hasSyncedRTDB.current = true;
-    }
-  }, [user, userProfile, database]);
 
   useEffect(() => {
     if (user && deletionRequest && !isDeletionLoading) {

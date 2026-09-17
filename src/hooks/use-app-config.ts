@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 
 export const DEFAULT_LOGO = "https://i.ibb.co/Nbhqk4f/36465.png";
 export const DEFAULT_NAME = "الحضور";
-export const DEFAULT_VERSION = "v3.77.0";
+export const DEFAULT_VERSION = "v4.0.0";
 export const DEFAULT_LOGIN_BG = "https://picsum.photos/seed/dunes/1920/1080";
 export const DEFAULT_SIGNUP_BG = "https://picsum.photos/seed/lake/1920/1080";
 
@@ -50,21 +50,6 @@ export function useAppConfig() {
     apkDownloadUrl: config?.apkDownloadUrl || DEFAULT_APK_URL,
     cookiePolicyUrl: config?.cookiePolicyUrl || DEFAULT_COOKIE_POLICY_URL,
     updatesUrl: config?.updatesUrl || DEFAULT_UPDATES_URL,
-    
-    // الأكواد الإعلانية
-    nativeAdCode: config?.nativeAdCode || '',
-    popunderAdCode: config?.popunderAdCode || '',
-    socialBarCode: config?.socialBarCode || '',
-    smartlinkCode: config?.smartlinkCode || '',
-    banner728x90Code: config?.banner728x90Code || '',
-    banner320x50Code: config?.banner320x50Code || '',
-    banner160x300Code: config?.banner160x300Code || '',
-    banner468x60Code: config?.banner468x60Code || '',
-    banner300x250Code: config?.banner300x250Code || '',
-    banner160x600Code: config?.banner160x600Code || '',
-    adsenseClientCode: config?.adsenseClientCode || '',
-    adsenseInArticleCode: config?.adsenseInArticleCode || '',
-    adsenseResponsiveCode: config?.adsenseResponsiveCode || '',
   }), [config]);
 
   return {

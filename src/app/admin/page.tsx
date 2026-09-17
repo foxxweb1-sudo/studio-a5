@@ -1,8 +1,7 @@
 'use client';
 
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDatabase } from '@/firebase';
-import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, onValue } from 'firebase/database';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -15,73 +14,47 @@ import {
   Loader2, 
   Users, 
   UserCircle,
-  Fingerprint,
-  Settings,
   Database,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Trash2,
-  CalendarClock,
-  Star,
-  ShieldAlert,
+  Settings,
   BadgeCheck,
-  Info,
-  Plus,
-  Ticket,
-  Code
+  ShieldCheck,
+  ShieldAlert,
+  Layers
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ADMIN_EMAIL } from '@/lib/constants';
 import Link from 'next/link';
 import { useAllUsers } from '@/hooks/use-app-data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const database = useDatabase();
   const { toast } = useToast();
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
-  const [promoCodesCount, setPromoCodesCount] = useState(0);
   
-  const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
+  const { users, isLoading: usersLoading, toggleUserBlock, toggleUserVerify } = useAllUsers();
 
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
   useEffect(() => {
-    if (isUserLoading || !isAdmin || !firestore || !database) return;
+    if (isUserLoading || !isAdmin || !firestore) return;
 
-    // جلب الطلاب من Firestore مع استخراج معرف المعلم من المسار
-    const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
-      const list = snap.docs.map(doc => {
-        const data = doc.data();
-        const teacherUid = doc.ref.parent.parent?.id; // استخراج UID المعلم من المسار
-        return { id: doc.id, ...data, teacherUid };
-      });
+    // مراقبة كافة الطلاب في النظام
+    const unsubStudents = onSnapshot(collection(firestore, 'students'), (snap) => {
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAllStudents(list);
       setLoadingStudents(false);
     });
 
-    // جلب عدد الأكواد من Realtime Database
-    const codesRef = ref(database, 'promoCodes');
-    const unsubCodes = onValue(codesRef, (snapshot) => {
-      const data = snapshot.val();
-      setPromoCodesCount(data ? Object.keys(data).length : 0);
-    });
-
-    return () => {
-      unsubStudents();
-      unsubCodes();
-    };
-  }, [firestore, database, isAdmin, isUserLoading]);
+    return () => unsubStudents();
+  }, [firestore, isAdmin, isUserLoading]);
 
   if (isUserLoading || !isAdmin) {
     return (
@@ -92,31 +65,30 @@ export default function AdminPage() {
     );
   }
 
+  const verifiedCount = users.filter(u => u.isVerified).length;
+
   const STATS_DATA = [
     { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
-    { label: 'الأكواد (RTDB)', value: promoCodesCount, icon: Ticket, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { label: 'المعلمين المسجلين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
+    { label: 'حسابات موثقة', value: verifiedCount, icon: BadgeCheck, color: 'text-emerald-500', bg: 'bg-emerald-50' },
   ];
 
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-7xl mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <PageHeader className="border-0 pb-0">
-          <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
-          <PageHeaderDescription>إدارة نظام CybeNode الموحد بالكامل</PageHeaderDescription>
+          <div className="flex items-center gap-3 text-primary mb-2">
+            <div className="p-3 bg-primary/10 rounded-2xl">
+               <ShieldCheck className="h-6 w-6" />
+            </div>
+            <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
+          </div>
+          <PageHeaderDescription>إدارة نظام CybeNode الموحد بالكامل وبصلاحيات مطلقة.</PageHeaderDescription>
         </PageHeader>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => router.push('/admin/promo')} className="rounded-xl font-bold gap-2 bg-indigo-50 border-indigo-200 text-indigo-700 h-11">
-              <Ticket className="h-4 w-4" />
-              إدارة الأكواد
-          </Button>
-          <Button variant="outline" onClick={() => router.push('/admin/settings?tab=ads')} className="rounded-xl font-bold gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 h-11">
-              <Code className="h-4 w-4" />
-              إدارة الإعلانات
-          </Button>
-          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2 h-11">
+          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2 h-11 border-primary/20">
               <Settings className="h-4 w-4" />
-              إعدادات الهوية
+              إعدادات المنصة
           </Button>
           <Button onClick={() => router.push('/')} className="rounded-xl font-bold gap-2 h-11">
               <ArrowLeft className="h-4 w-4" />
@@ -127,7 +99,7 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {STATS_DATA.map((stat) => (
-            <Card key={stat.label} className="border-0 shadow-sm rounded-3xl overflow-hidden">
+            <Card key={stat.label} className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white">
                 <CardContent className="p-6 flex items-center gap-4">
                     <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
                         <stat.icon className="w-6 h-6" />
@@ -143,8 +115,8 @@ export default function AdminPage() {
 
        <Tabs defaultValue="users" className="w-full">
             <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 w-full flex overflow-x-auto justify-start h-auto gap-1">
-                <TabsTrigger value="users" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">المستخدمين</TabsTrigger>
-                <TabsTrigger value="teacher-uids" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">سجلات المعلمين</TabsTrigger>
+                <TabsTrigger value="users" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">إدارة المعلمين</TabsTrigger>
+                <TabsTrigger value="teacher-uids" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">سجلات البيانات</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users">
@@ -162,17 +134,24 @@ export default function AdminPage() {
                               <div className="w-full overflow-hidden">
                                 <h4 className="font-black text-slate-800 truncate">{u.displayName}</h4>
                                 <p className="text-[10px] text-muted-foreground truncate font-medium">{u.email}</p>
-                                <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
-                                    <code className="text-[8px] opacity-40 select-all block font-mono">{u.uid || u.id}</code>
-                                </div>
                               </div>
-                              <Button 
-                                variant={u.isBlocked ? "default" : "outline"} 
-                                onClick={() => toggleUserBlock(u.uid || u.id, !!u.isBlocked)} 
-                                className={`w-full rounded-xl font-black h-10 text-xs ${u.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-rose-600 hover:bg-rose-50 border-rose-100'}`}
-                              >
-                                  {u.isBlocked ? "إلغاء الحظر" : "حظر المستخدم"}
-                              </Button>
+                              
+                              <div className="flex flex-col gap-2 w-full pt-2 border-t border-dashed">
+                                <Button 
+                                    variant={u.isVerified ? "default" : "outline"} 
+                                    onClick={() => toggleUserVerify(u.uid || u.id, !!u.isVerified)} 
+                                    className={`w-full rounded-xl font-black h-9 text-[10px] ${u.isVerified ? 'bg-blue-600 hover:bg-blue-700' : 'text-blue-600 border-blue-100'}`}
+                                >
+                                    {u.isVerified ? "إلغاء التوثيق" : "توثيق الحساب"}
+                                </Button>
+                                <Button 
+                                    variant={u.isBlocked ? "default" : "outline"} 
+                                    onClick={() => toggleUserBlock(u.uid || u.id, !!u.isBlocked)} 
+                                    className={`w-full rounded-xl font-black h-9 text-[10px] ${u.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-rose-600 border-rose-100'}`}
+                                >
+                                    {u.isBlocked ? "إلغاء الحظر" : "حظر المستخدم"}
+                                </Button>
+                              </div>
                             </CardContent>
                         </Card>
                     ))}
@@ -181,13 +160,14 @@ export default function AdminPage() {
 
             <TabsContent value="teacher-uids">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {Array.from(new Set(allStudents.map(s => s.teacherUid))).filter(Boolean).map(uid => (
-                        <Card key={uid as string} className="border-0 shadow-sm p-6 text-center rounded-3xl group hover:shadow-lg transition-all">
+                    {users.map(u => (
+                        <Card key={u.id} className="border-0 shadow-sm p-6 text-center rounded-3xl group hover:shadow-lg transition-all bg-white">
                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/10 transition-all">
                                 <Database className="h-6 w-6 text-primary/40 group-hover:text-primary transition-all" />
                             </div>
-                            <code className="text-[10px] block mb-4 truncate font-mono text-slate-400">{uid as string}</code>
-                            <Button asChild className="w-full rounded-xl h-10 font-bold text-xs"><Link href={`/admin/teacher/${uid}`}>عرض كافة السجلات</Link></Button>
+                            <h4 className="text-xs font-black mb-1 truncate">{u.displayName}</h4>
+                            <code className="text-[8px] block mb-4 truncate font-mono text-slate-400">{u.uid}</code>
+                            <Button asChild className="w-full rounded-xl h-10 font-bold text-[10px]"><Link href={`/admin/teacher/${u.uid}`}>عرض كافة السجلات</Link></Button>
                         </Card>
                     ))}
                 </div>

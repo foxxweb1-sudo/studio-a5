@@ -15,7 +15,7 @@ export type UserProfile = {
 
 export type ScheduleSession = {
   id: string;
-  name: string; // اسم المجموعة (مثلاً: مجموعة السبت صباحاً)
+  name: string;
   grade: string;
   days: string[];
   startTime: string;
@@ -43,32 +43,11 @@ export type PaymentConfig = {
   updatedAt?: FieldValue;
 };
 
-export type DeletionRequest = {
-  id: string;
-  uid: string;
-  email: string;
-  displayName: string;
-  photoURL?: string;
-  requestedAt: any;
-  reason: string;
-  studentCount: number;
-};
-
-export type Review = {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  rating: number;
-  comment: string;
-  createdAt: FieldValue | any;
-};
-
 export type Student = {
   id: string;
   name: string;
   grade: string;
-  groupId?: string; // المعرف الفريد للمجموعة التي ينتمي إليها الطالب
+  groupId?: string;
   phone?: string;
   parentPhone?: string;
   createdAt: FieldValue;
@@ -80,13 +59,11 @@ export type NewStudent = Omit<Student, 'id' | 'createdAt'>;
 export type AttendanceRecord = {
   id: string;
   studentId: string;
-  groupId?: string; // تسجيل المجموعة وقت الحضور للتوثيق
+  groupId?: string;
   date: string;
   status: 'present' | 'absent';
   createdAt: FieldValue;
 };
-
-export type NewPayment = Omit<PaymentRecord, 'id' | 'createdAt' | 'date'>;
 
 export type PaymentRecord = {
   id: string;
@@ -126,23 +103,5 @@ export type GlobalConfig = {
   apkDownloadUrl?: string;
   cookiePolicyUrl?: string;
   updatesUrl?: string;
-  
-  // نظام الإعلانات المطور
-  nativeAdCode?: string;
-  popunderAdCode?: string;
-  socialBarCode?: string;
-  smartlinkCode?: string;
-  banner728x90Code?: string;
-  banner320x50Code?: string;
-  banner160x300Code?: string;
-  banner468x60Code?: string;
-  banner300x250Code?: string;
-  banner160x600Code?: string;
-  
-  // جوجل أدسنس
-  adsenseClientCode?: string; // كود التفعيل العام (Header)
-  adsenseInArticleCode?: string;
-  adsenseResponsiveCode?: string;
-  
   lastRulesUpdate?: FieldValue;
 };

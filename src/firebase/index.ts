@@ -33,7 +33,7 @@ export function initializeFirebase() {
 export function getSdks(firebaseApp: FirebaseApp) {
   const firestore = getFirestore(firebaseApp);
   const auth = getAuth(firebaseApp);
-  // ربط الـ RTDB بالرابط السحابي المخصص
+  // ربط الـ RTDB بالرابط السحابي المخصص لضمان عمل الإعلانات والأكواد سحابياً
   const database = getDatabase(firebaseApp, "https://studio-6098024039-4334b-default-rtdb.firebaseio.com/");
 
   return {

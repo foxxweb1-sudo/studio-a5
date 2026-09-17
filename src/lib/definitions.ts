@@ -1,3 +1,4 @@
+
 import { FieldValue } from "firebase/firestore";
 
 export type UserProfile = {
@@ -10,7 +11,21 @@ export type UserProfile = {
   paymentTiming?: 'start' | 'mid' | 'end';
   isBlocked?: boolean;
   isVerified?: boolean;
+  isAssistant?: boolean;
+  assignedTeacherId?: string;
+  assistantEmail?: string;
+  assistantPassword?: string;
+  assistantExpiresAt?: any;
   lastLogin?: FieldValue;
+};
+
+export type PromoCode = {
+  id: string;
+  code: string;
+  isUsed: boolean;
+  usedBy?: string;
+  usedAt?: any;
+  createdAt: FieldValue;
 };
 
 export type ScheduleSession = {
@@ -54,8 +69,6 @@ export type Student = {
   isArchived?: boolean;
 };
 
-export type NewStudent = Omit<Student, 'id' | 'createdAt'>;
-
 export type AttendanceRecord = {
   id: string;
   studentId: string;
@@ -83,8 +96,6 @@ export type ExamResult = {
   createdAt: FieldValue;
 };
 
-export type NewExamResult = Omit<ExamResult, 'id' | 'createdAt'>;
-
 export type GlobalConfig = {
   id: string;
   appName?: string;
@@ -95,13 +106,8 @@ export type GlobalConfig = {
   contactPhone?: string;
   contactEmail?: string;
   supportUrl?: string;
-  whatsappChannel?: string;
-  facebook?: string;
-  twitter?: string;
-  telegram?: string;
   techStoreUrl?: string;
   apkDownloadUrl?: string;
   cookiePolicyUrl?: string;
   updatesUrl?: string;
-  lastRulesUpdate?: FieldValue;
 };

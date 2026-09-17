@@ -1,8 +1,9 @@
+
 {
   "entities": {
     "User": {
       "title": "User",
-      "description": "Represents a teacher in the CybeNode system.",
+      "description": "Represents a teacher or assistant in the system.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
@@ -10,37 +11,31 @@
         "displayName": { "type": "string" },
         "photoURL": { "type": "string" },
         "phone": { "type": "string" },
-        "paymentTiming": { "type": "string", "enum": ["start", "mid", "end"] },
+        "isAssistant": { "type": "boolean" },
+        "assignedTeacherId": { "type": "string", "description": "The UID of the teacher this assistant manages." },
         "isBlocked": { "type": "boolean" },
         "isVerified": { "type": "boolean" },
-        "isAdFree": { "type": "boolean" },
-        "adFreeActivatedAt": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "lastLogin": { "type": "string", "format": "date-time" }
+        "assistantExpiresAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email"]
     },
-    "GlobalConfig": {
-        "title": "GlobalConfig",
-        "description": "System-wide settings and ad management.",
-        "type": "object",
-        "properties": {
-            "appName": { "type": "string" },
-            "appLogo": { "type": "string" },
-            "appVersion": { "type": "string" },
-            "banner728x90Code": { "type": "string" },
-            "banner300x250Code": { "type": "string" },
-            "popunderAdCode": { "type": "string" },
-            "nativeAdCode": { "type": "string" },
-            "socialBarCode": { "type": "string" },
-            "smartlinkCode": { "type": "string" },
-            "adsenseClientCode": { "type": "string" }
-        }
+    "PromoCode": {
+      "title": "PromoCode",
+      "description": "Subscription code for Personal Assistant.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "isUsed": { "type": "boolean" },
+        "usedBy": { "type": "string" },
+        "usedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": { "providers": ["password", "google.com"] },
   "firestore": {
-    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Teacher profiles" },
-    "/appConfig/global": { "schema": { "$ref": "#/entities/GlobalConfig" }, "description": "Global settings" }
+    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "User profiles" },
+    "/promoCodes/{codeId}": { "schema": { "$ref": "#/entities/PromoCode" }, "description": "Activation codes" }
   }
 }

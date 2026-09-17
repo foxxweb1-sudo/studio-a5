@@ -4,57 +4,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // دالة التحقق من هوية المدير الرئيسي لـ CybeNode
     function isOwner() {
-      return request.auth != null && 
-             request.auth.token.email != null && 
-             request.auth.token.email == 'cybenode.site@gmail.com';
+      return request.auth != null && request.auth.token.email == 'cybenode.site@gmail.com';
     }
 
-    // 1. القراءة العامة لكافة سجلات الطلاب (المزامنة، وبوابة الأهل)
-    match /{path=**}/students/{id} { allow read: if true; }
-    match /{path=**}/attendance/{id} { allow read: if true; }
-    match /{path=**}/payments/{id} { allow read: if true; }
-    match /{path=**}/exams/{id} { allow read: if true; }
+    function isAssistantOf(teacherId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return request.auth != null && 
+             userDoc.isAssistant == true && 
+             userDoc.assignedTeacherId == teacherId;
+    }
 
-    // 2. قواعد المستخدمين (المعلمين)
+    // 1. قواعد المستخدمين والمعلمين
     match /users/{userId} {
-      allow read: if true;
+      allow read: if request.auth != null && (request.auth.uid == userId || isOwner());
       allow write: if request.auth != null && (request.auth.uid == userId || isOwner());
       
       match /{allSub=**} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || isOwner());
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAssistantOf(userId) || isOwner());
       }
     }
 
-    // 3. المجموعات العامة والأنظمة المركزية
-    match /appConfig/{id} { 
-      allow read: if true; 
-      allow write: if isOwner(); 
-    }
-    
-    match /contactMessages/{id} { 
-      allow create: if true; 
-      allow read, write: if isOwner(); 
+    // 2. الأكواد الترويجية
+    match /promoCodes/{id} {
+      allow read: if request.auth != null;
+      allow write: if isOwner() || (request.auth != null && !resource.data.isUsed);
     }
 
-    match /deletionRequests/{id} { 
-      allow read, write: if request.auth != null && (request.auth.uid == id || isOwner()); 
-    }
-
-    match /reviews/{id} { 
-      allow read: if true; 
-      allow create: if request.auth != null; 
-      allow delete: if isOwner(); 
-    }
-
-    match /reviewPermissions/{id} { 
-      allow read, write: if request.auth != null; 
-    }
-
-    // ملاحظة: تم نقل نظام الأكواد الترويجية بالكامل إلى Realtime Database 
-    // لضمان التزامن اللحظي وحل مشاكل الصلاحيات المعقدة.
-    
-    // CybeNode Security Sync v5.0 - Full RTDB & Firestore Managed Rules
+    match /appConfig/{id} { allow read: if true; allow write: if isOwner(); }
+    match /deletionRequests/{id} { allow read, write: if request.auth != null && (request.auth.uid == id || isOwner()); }
   }
 }

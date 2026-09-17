@@ -1,18 +1,10 @@
+
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  ArrowLeft, 
-  Info, 
-  Share2, 
-  Palette, 
-  AppWindow, 
-  ChevronLeft,
-  Tag,
-  UserCircle
-} from 'lucide-react';
+import { ArrowLeft, Info, Share2, Palette, AppWindow, ChevronLeft, Tag, UserCircle, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +12,7 @@ import { useAppConfig } from '@/hooks/use-app-config';
 import { useUser } from '@/firebase';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import AssistantActivation from '@/components/features/promo/AssistantActivation';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -69,16 +62,19 @@ export default function SettingsPage() {
         <Button 
           variant="outline" 
           onClick={() => router.back()}
-          className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all"
+          className="rounded-xl border-primary/20 hover:bg-primary/5 h-12 px-6 font-bold"
         >
           <ArrowLeft className="ms-2 h-4 w-4" />
           رجوع
         </Button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
+        {/* نظام تفعيل المساعد */}
+        <AssistantActivation />
+
+        <Card className="border-0 shadow-xl bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 text-primary rounded-xl">
@@ -94,7 +90,7 @@ export default function SettingsPage() {
               className="w-full justify-between h-auto py-5 px-4 rounded-2xl hover:bg-primary/5 font-bold group transition-all"
              >
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20">
+                    <div className="p-3 bg-primary text-white rounded-2xl shadow-lg">
                         <UserCircle className="h-6 w-6" />
                     </div>
                     <div className="flex flex-col items-start text-right">
@@ -107,34 +103,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                <Info className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-xl font-black">عن التطبيق</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <AppWindow className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">اسم التطبيق</span>
-              </div>
-              <span className="font-bold text-primary">{config.appName}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-sm">الإصدار الحالي</span>
-              </div>
-              <span className="font-mono bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold">{config.appVersion}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
+        <Card className="border-0 shadow-xl bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
@@ -149,22 +118,6 @@ export default function SettingsPage() {
               <Button variant={theme === 'dark' ? 'default' : 'ghost'} onClick={() => setTheme('dark')} className="rounded-xl font-bold">داكن</Button>
               <Button variant={theme === 'system' ? 'default' : 'ghost'} onClick={() => setTheme('system')} className="rounded-xl font-bold">النظام</Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
-                <Share2 className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-xl font-black">مشاركة وتواصل</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={handleShare} className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-lg shadow-primary/20">
-              <Share2 className="h-5 w-5" /> مشاركة التطبيق
-            </Button>
           </CardContent>
         </Card>
 

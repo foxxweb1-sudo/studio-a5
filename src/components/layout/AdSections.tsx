@@ -1,15 +1,25 @@
+
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 /**
- * مكون إعلان البانر 468x60
+ * مكون إعلان البانر 468x60 - يختفي عند تفعيل كود إزالة الإعلانات
  */
 export function BannerAd() {
+  const { user } = useUser();
+  const firestore = useFirestore();
   const adRef = useRef<HTMLDivElement>(null);
 
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: profile } = useDoc<any>(userRef);
+
   useEffect(() => {
-    // نتحقق من عدم وجود الإعلان مسبقاً لمنع التكرار عند إعادة الرندر
+    // لا نحمل الإعلان إذا كان المستخدم قد فعل وضع إزالة الإعلانات
+    if (profile?.isAdFree) return;
+
     if (adRef.current && adRef.current.childNodes.length === 0) {
       const script = document.createElement('script');
       const conf = document.createElement('script');
@@ -27,7 +37,9 @@ export function BannerAd() {
       adRef.current.appendChild(conf);
       adRef.current.appendChild(script);
     }
-  }, []);
+  }, [profile?.isAdFree]);
+
+  if (profile?.isAdFree) return null;
 
   return (
     <div className="flex flex-col items-center w-full my-8 overflow-hidden">
@@ -38,11 +50,18 @@ export function BannerAd() {
 }
 
 /**
- * مكون الإعلان المخصص (Native) أسفل المقالات
+ * مكون الإعلان المخصص (Native) - يختفي عند تفعيل كود إزالة الإعلانات
  */
 export function NativeArticleAd() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: profile } = useDoc<any>(userRef);
+
   useEffect(() => {
-    // تحميل السكربت الخارجي في الـ Head
+    if (profile?.isAdFree) return;
+
     const scriptId = 'profitablerate-script';
     if (!document.getElementById(scriptId)) {
       const script = document.createElement('script');
@@ -52,7 +71,9 @@ export function NativeArticleAd() {
       script.setAttribute('data-cfasync', 'false');
       document.head.appendChild(script);
     }
-  }, []);
+  }, [profile?.isAdFree]);
+
+  if (profile?.isAdFree) return null;
 
   return (
     <div className="w-full my-12 flex flex-col items-center">

@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -12,36 +13,43 @@ service cloud.firestore {
     // 2. قواعد المستخدمين (المعلمين)
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'tech.support.app@gmail.com');
+      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'cybenode.site@gmail.com');
       
       match /{allSub=**} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'tech.support.app@gmail.com');
+        allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'cybenode.site@gmail.com');
       }
     }
 
     // 3. المجموعات العامة والأنظمة المركزية
     match /appConfig/{id} { 
       allow read: if true; 
-      allow write: if request.auth != null && request.auth.token.email.lower() == 'tech.support.app@gmail.com'; 
+      allow write: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com'; 
     }
     
     match /contactMessages/{id} { 
       allow create: if true; 
-      allow read, write: if request.auth != null && request.auth.token.email.lower() == 'tech.support.app@gmail.com'; 
+      allow read, write: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com'; 
     }
 
     match /deletionRequests/{id} { 
-      allow read, write: if request.auth != null && (request.auth.uid == id || request.auth.token.email.lower() == 'tech.support.app@gmail.com'); 
+      allow read, write: if request.auth != null && (request.auth.uid == id || request.auth.token.email.lower() == 'cybenode.site@gmail.com'); 
     }
 
     match /reviews/{id} { 
       allow read: if true; 
       allow create: if request.auth != null; 
-      allow delete: if request.auth != null && request.auth.token.email.lower() == 'tech.support.app@gmail.com'; 
+      allow delete: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com'; 
     }
 
     match /reviewPermissions/{id} { 
       allow read, write: if request.auth != null; 
+    }
+
+    // 4. نظام الأكواد الترويجية (Admin Only)
+    match /promoCodes/{codeId} {
+      allow read, write: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com';
+      // السماح بالبحث عن الكود لتفعيله للمستخدم العادي
+      allow get: if request.auth != null;
     }
   }
 }

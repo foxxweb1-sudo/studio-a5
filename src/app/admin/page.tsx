@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -27,7 +28,8 @@ import {
   ShieldAlert,
   BadgeCheck,
   Info,
-  Plus
+  Plus,
+  Ticket
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -228,6 +230,10 @@ export default function AdminPage() {
           <PageHeaderDescription>إدارة المستخدمين والأنظمة المركزية</PageHeaderDescription>
         </PageHeader>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin/promo')} className="rounded-xl font-bold gap-2 bg-indigo-50 border-indigo-200 text-indigo-700">
+              <Ticket className="h-4 w-4" />
+              أكواد الخصم
+          </Button>
           <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2">
               <Settings className="h-4 w-4" />
               إعدادات الهوية
@@ -364,6 +370,11 @@ export default function AdminPage() {
                                 </h4>
                                 <p className="text-[10px] text-muted-foreground font-mono truncate w-full">{u.email}</p>
                                 <code className="text-[8px] opacity-40 select-all block mt-1">{u.uid}</code>
+                                {u.isAdFree && (
+                                    <Badge variant="outline" className="mt-2 rounded-lg bg-emerald-50 text-emerald-600 border-emerald-100 text-[8px] h-4">
+                                        بدون إعلانات
+                                    </Badge>
+                                )}
                               </div>
                               
                               {isAccountAdmin ? (

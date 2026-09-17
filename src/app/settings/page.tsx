@@ -4,6 +4,7 @@
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   ArrowLeft, 
   Info, 
@@ -24,7 +25,11 @@ import {
   Users,
   LogIn,
   UserPlus,
-  Globe
+  Globe,
+  Ticket,
+  Zap,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -32,9 +37,10 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -42,7 +48,14 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { config } = useAppConfig();
   const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<any>(userRef);
+
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [isActivating, setIsActivating] = useState(false);
 
   const handleProtectedClick = (e: React.MouseEvent, href: string) => {
     if (!user) {
@@ -50,6 +63,46 @@ export default function SettingsPage() {
       setShowAuthDialog(true);
     } else {
       router.push(href);
+    }
+  };
+
+  const handleActivateCode = async () => {
+    if (!user || !promoCode.trim()) return;
+    setIsActivating(true);
+    try {
+        const codeRef = doc(firestore, 'promoCodes', promoCode.trim().toUpperCase());
+        const codeSnap = await getDoc(codeRef);
+        
+        if (!codeSnap.exists()) {
+            toast({ variant: "destructive", title: "كود غير صالح", description: "الكود الذي أدخلته غير موجود في النظام." });
+            return;
+        }
+
+        const codeData = codeSnap.data();
+        if (codeData.isUsed) {
+            toast({ variant: "destructive", title: "كود مستخدم", description: "هذا الكود تم استخدامه مسبقاً من قبل مستخدم آخر." });
+            return;
+        }
+
+        // 1. تحديث الكود كـ مستخدم
+        await updateDoc(codeRef, {
+            isUsed: true,
+            usedBy: user.uid,
+            usedAt: serverTimestamp()
+        });
+
+        // 2. تفعيل وضع Ad-Free للمستخدم
+        await updateDoc(doc(firestore, 'users', user.uid), {
+            isAdFree: true,
+            adFreeActivatedAt: serverTimestamp()
+        });
+
+        toast({ title: "تم التفعيل بنجاح!", description: "تمت إزالة كافة الإعلانات من حسابك مدى الحياة." });
+        setPromoCode('');
+    } catch (e) {
+        toast({ variant: "destructive", title: "خطأ في التفعيل", description: "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً." });
+    } finally {
+        setIsActivating(false);
     }
   };
 
@@ -77,7 +130,7 @@ export default function SettingsPage() {
   const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
   
   return (
-    <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-12 px-4">
+    <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-24 px-4">
       <div className="flex justify-between items-start">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">الإعدادات</PageHeaderTitle>
@@ -94,6 +147,72 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
+        
+        {/* قسم إزالة الإعلانات الترويجي */}
+        {user && !userProfile?.isAdFree && (
+            <Card className="border-0 shadow-2xl rounded-[2.5rem] bg-indigo-600 text-white overflow-hidden relative group">
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] bg-[length:250%_250%] animate-[shimmer_5s_infinite]" />
+                <CardContent className="p-8 space-y-6 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                            <Zap className="h-8 w-8 text-yellow-300 fill-current" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black">نسخة احترافية بدون إعلانات</h3>
+                            <p className="text-sm font-bold opacity-80 mt-1">تخلص من كافة الإعلانات مدى الحياة بـ 50 ج.م فقط.</p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 items-center">
+                        <Input 
+                            placeholder="ضع كود التفعيل هنا..." 
+                            value={promoCode}
+                            onChange={(e) => setPromoCode(e.target.value)}
+                            className="h-14 rounded-2xl bg-white/10 border-white/20 text-white placeholder:text-white/40 text-center font-black tracking-widest uppercase"
+                        />
+                        <Button 
+                            onClick={handleActivateCode}
+                            disabled={isActivating || !promoCode.trim()}
+                            className="bg-white text-indigo-600 hover:bg-slate-100 rounded-2xl h-14 px-8 font-black text-lg gap-2 shadow-2xl w-full sm:w-auto"
+                        >
+                            {isActivating ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                            تفعيل
+                        </Button>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <a href="https://wa.me/201550729858" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold opacity-60 uppercase">شراء كود تفعيل</span>
+                                <span className="text-sm font-black">01550729858</span>
+                            </div>
+                            <MessageCircle className="h-5 w-5 text-emerald-400" />
+                        </a>
+                        <a href="https://whatsapp.com/channel/0029VbCyb52DeON36q813U3W" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/5 text-right">
+                             <div className="flex flex-col">
+                                <span className="text-[10px] font-bold opacity-60 uppercase">أكواد مجانية يومياً</span>
+                                <span className="text-sm font-black">تابع قناتنا</span>
+                            </div>
+                            <Send className="h-5 w-5 text-blue-400" />
+                        </a>
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+
+        {/* إذا كان مفعلاً بالفعل */}
+        {userProfile?.isAdFree && (
+            <div className="p-6 bg-emerald-50 border-2 border-emerald-100 rounded-[2.5rem] flex items-center gap-5">
+                <div className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20">
+                    <ShieldCheck className="h-8 w-8" />
+                </div>
+                <div>
+                    <h4 className="text-lg font-black text-emerald-800">حساب احترافي مفعل</h4>
+                    <p className="text-xs text-emerald-600 font-bold">تهانينا! أنت تستخدم النسخة الخالية من الإعلانات مدى الحياة.</p>
+                </div>
+            </div>
+        )}
+
         {/* قسم الحساب */}
         <div className="relative p-[2px] overflow-hidden rounded-[2.5rem] group">
           <div className="absolute inset-[-1000%] animate-spin-border bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,hsl(var(--primary))_50%,transparent_100%)] opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
@@ -387,6 +506,12 @@ export default function SettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      `}</style>
     </div>
   );
 }

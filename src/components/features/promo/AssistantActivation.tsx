@@ -31,17 +31,26 @@ export default function AssistantActivation() {
 
     setIsActivating(true);
     try {
-        // البحث عن الكود في Firestore
-        const q = query(collection(firestore, 'promoCodes'), where('code', '==', code.trim().toUpperCase()), where('isUsed', '==', false));
+        // البحث عن الكود - تبسيط الاستعلام لتجنب الحاجة لفهرس مركب (Composite Index)
+        const q = query(
+            collection(firestore, 'promoCodes'), 
+            where('code', '==', code.trim().toUpperCase())
+        );
         const snap = await getDocs(q);
 
-        if (snap.empty) {
-            toast({ variant: "destructive", title: "كود غير صالح", description: "الكود خاطئ أو تم استخدامه مسبقاً." });
+        // البحث عن كود غير مستخدم يدوياً في النتائج
+        const codeDoc = snap.docs.find(d => d.data().isUsed === false);
+
+        if (!codeDoc) {
+            toast({ 
+                variant: "destructive", 
+                title: "كود غير صالح", 
+                description: "الكود خاطئ، تم استخدامه مسبقاً، أو انتهت صلاحيته." 
+            });
             setIsActivating(false);
             return;
         }
 
-        const codeDoc = snap.docs[0];
         const expiryDate = addMonths(new Date(), 1);
         
         // إنشاء بيانات المساعد الرقمي
@@ -49,23 +58,9 @@ export default function AssistantActivation() {
         const assistantEmail = `assistant_${assistantId}@alhodoor.site`;
         const assistantPassword = Math.random().toString(36).substring(2, 12).toUpperCase() + '@' + Math.floor(100 + Math.random() * 900);
 
-        // 1. تحديث الكود كـ مستخدم
-        await updateDoc(doc(firestore, 'promoCodes', codeDoc.id), {
-            isUsed: true,
-            usedBy: user.uid,
-            usedAt: serverTimestamp()
-        });
-
-        // 2. ربط المساعد بحساب المعلم
-        await updateDoc(doc(firestore, 'users', user.uid), {
-            assistantEmail,
-            assistantPassword,
-            assistantExpiresAt: expiryDate,
-        });
-
-        // 3. إنشاء مستند المساعد مسبقاً (Pre-registration) باستخدام الإيميل كـ ID لسرعة البحث
+        // 1. إنشاء مستند المساعد أولاً لضمان نجاح الربط
         await setDoc(doc(firestore, 'users', assistantEmail), {
-            uid: '', // سيتم تحديثه عند أول تسجيل دخول
+            uid: '', 
             email: assistantEmail,
             displayName: `مساعد لـ ${user.displayName || 'معلم'}`,
             isAssistant: true,
@@ -76,12 +71,30 @@ export default function AssistantActivation() {
             createdAt: serverTimestamp()
         });
 
+        // 2. تحديث الكود كـ مستخدم
+        await updateDoc(doc(firestore, 'promoCodes', codeDoc.id), {
+            isUsed: true,
+            usedBy: user.uid,
+            usedAt: serverTimestamp()
+        });
+
+        // 3. ربط المساعد بحساب المعلم
+        await updateDoc(doc(firestore, 'users', user.uid), {
+            assistantEmail,
+            assistantPassword,
+            assistantExpiresAt: expiryDate,
+        });
+
         await reloadUser();
         toast({ title: "تم التفعيل بنجاح!", description: "باقة المساعد الشخصي نشطة الآن. انسخ البيانات وأرسلها للدعم." });
         setCode('');
     } catch (error: any) {
-        console.error(error);
-        toast({ variant: "destructive", title: "خطأ في التفعيل", description: "تأكد من اتصالك بالإنترنت وصلاحية الكود." });
+        console.error("Activation Error:", error);
+        toast({ 
+            variant: "destructive", 
+            title: "فشل التفعيل", 
+            description: "حدث خطأ غير متوقع. يرجى التأكد من اتصالك بالإنترنت والمحاولة مجدداً." 
+        });
     } finally {
         setIsActivating(false);
     }

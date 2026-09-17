@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -15,7 +14,7 @@ export const DEFAULT_SIGNUP_BG = "https://picsum.photos/seed/lake/1920/1080";
 export const DEFAULT_CONTACT_PHONE = "201121473424";
 export const DEFAULT_CONTACT_EMAIL = "techstore.eg.app@gmail.com";
 export const DEFAULT_SUPPORT_URL = "https://blog.alhodoor.site/p/contact-us.html";
-export const DEFAULT_WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbCCufAGOj9nfuY9o93L";
+export const DEFAULT_WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbCyb52DeON36q813U3W";
 export const DEFAULT_FACEBOOK = "https://web.facebook.com/share/g/18Ky7vbzqF/";
 export const DEFAULT_TWITTER = "https://x.com/tqnyt170296";
 export const DEFAULT_TELEGRAM = "https://t.me/TqnyatStore";
@@ -51,6 +50,8 @@ export function useAppConfig() {
     apkDownloadUrl: config?.apkDownloadUrl || DEFAULT_APK_URL,
     cookiePolicyUrl: config?.cookiePolicyUrl || DEFAULT_COOKIE_POLICY_URL,
     updatesUrl: config?.updatesUrl || DEFAULT_UPDATES_URL,
+    bannerAdCode: config?.bannerAdCode || '',
+    popunderAdCode: config?.popunderAdCode || '',
   }), [
     config?.appName, 
     config?.appLogo, 
@@ -67,7 +68,9 @@ export function useAppConfig() {
     config?.techStoreUrl,
     config?.apkDownloadUrl,
     config?.cookiePolicyUrl,
-    config?.updatesUrl
+    config?.updatesUrl,
+    config?.bannerAdCode,
+    config?.popunderAdCode
   ]);
 
   return {

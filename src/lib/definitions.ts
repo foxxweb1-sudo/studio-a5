@@ -126,5 +126,7 @@ export type GlobalConfig = {
   apkDownloadUrl?: string;
   cookiePolicyUrl?: string;
   updatesUrl?: string;
+  bannerAdCode?: string; // كود إعلان البانر السحابي
+  popunderAdCode?: string; // كود إعلان البوب اندر السحابي
   lastRulesUpdate?: FieldValue;
 };

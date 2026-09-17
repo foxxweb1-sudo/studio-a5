@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDatabase } from '@/firebase';
@@ -15,7 +14,6 @@ import {
   ArrowLeft, 
   Loader2, 
   Users, 
-  MessageSquare,
   UserCircle,
   Fingerprint,
   Settings,
@@ -30,7 +28,8 @@ import {
   BadgeCheck,
   Info,
   Plus,
-  Ticket
+  Ticket,
+  Code
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,7 +49,6 @@ export default function AdminPage() {
   const { toast } = useToast();
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [promoCodesCount, setPromoCodesCount] = useState(0);
   
@@ -68,13 +66,7 @@ export default function AdminPage() {
       setLoadingStudents(false);
     });
 
-    // جلب الرسائل من Firestore
-    const unsubMessages = onSnapshot(query(collection(firestore, 'contactMessages'), orderBy('createdAt', 'desc')), (snap) => {
-      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setMessages(list);
-    });
-
-    // جلب عدد الأكواد من Realtime Database (لحل مشكلة الصلاحيات)
+    // جلب عدد الأكواد من Realtime Database
     const codesRef = ref(database, 'promoCodes');
     const unsubCodes = onValue(codesRef, (snapshot) => {
       const data = snapshot.val();
@@ -83,7 +75,6 @@ export default function AdminPage() {
 
     return () => {
       unsubStudents();
-      unsubMessages();
       unsubCodes();
     };
   }, [firestore, database, isAdmin, isUserLoading]);
@@ -100,7 +91,6 @@ export default function AdminPage() {
   const STATS_DATA = [
     { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
     { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
-    { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     { label: 'الأكواد (RTDB)', value: promoCodesCount, icon: Ticket, color: 'text-indigo-500', bg: 'bg-indigo-50' },
   ];
 
@@ -109,12 +99,16 @@ export default function AdminPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
-          <PageHeaderDescription>إدارة نظام CybeNode الموحد (الأنظمة السحابية)</PageHeaderDescription>
+          <PageHeaderDescription>إدارة نظام CybeNode الموحد بالكامل</PageHeaderDescription>
         </PageHeader>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => router.push('/admin/promo')} className="rounded-xl font-bold gap-2 bg-indigo-50 border-indigo-200 text-indigo-700 h-11">
               <Ticket className="h-4 w-4" />
               إدارة الأكواد
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2 bg-emerald-50 border-emerald-200 text-emerald-700 h-11">
+              <Code className="h-4 w-4" />
+              إدارة الإعلانات
           </Button>
           <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2 h-11">
               <Settings className="h-4 w-4" />
@@ -127,7 +121,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {STATS_DATA.map((stat) => (
             <Card key={stat.label} className="border-0 shadow-sm rounded-3xl overflow-hidden">
                 <CardContent className="p-6 flex items-center gap-4">
@@ -146,7 +140,6 @@ export default function AdminPage() {
        <Tabs defaultValue="users" className="w-full">
             <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 w-full flex overflow-x-auto justify-start h-auto gap-1">
                 <TabsTrigger value="users" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">المستخدمين</TabsTrigger>
-                <TabsTrigger value="messages" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">الرسائل</TabsTrigger>
                 <TabsTrigger value="teacher-uids" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">سجلات المعلمين</TabsTrigger>
             </TabsList>
             
@@ -176,28 +169,6 @@ export default function AdminPage() {
                               >
                                   {u.isBlocked ? "إلغاء الحظر" : "حظر المستخدم"}
                               </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </TabsContent>
-
-            <TabsContent value="messages">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {messages.map(msg => (
-                        <Card key={msg.id} className="border-0 shadow-sm cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all rounded-3xl overflow-hidden group" onClick={() => router.push(`/admin/messages/${msg.id}`)}>
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-primary/5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all"><MessageSquare className="h-5 w-5" /></div>
-                                        <h4 className="font-black text-sm">{msg.name}</h4>
-                                    </div>
-                                    <Badge variant="outline" className="text-[8px] rounded-lg">{msg.status || 'pending'}</Badge>
-                                </div>
-                                <p className="text-xs text-slate-500 line-clamp-3 italic font-medium leading-relaxed">"{msg.message}"</p>
-                                <div className="mt-4 text-[9px] font-black text-slate-400 text-left">
-                                    {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
-                                </div>
                             </CardContent>
                         </Card>
                     ))}

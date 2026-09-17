@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   ArrowLeft, 
   Loader2, 
@@ -30,7 +30,8 @@ import {
   ShieldCheck,
   Bell,
   UploadCloud,
-  Smartphone
+  Smartphone,
+  Code
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { serverTimestamp } from 'firebase/firestore';
@@ -58,7 +59,9 @@ export default function AdminAppSettingsPage() {
     techStoreUrl: '',
     apkDownloadUrl: '',
     cookiePolicyUrl: '',
-    updatesUrl: ''
+    updatesUrl: '',
+    bannerAdCode: '',
+    popunderAdCode: ''
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -95,7 +98,9 @@ export default function AdminAppSettingsPage() {
         techStoreUrl: config.techStoreUrl || '',
         apkDownloadUrl: config.apkDownloadUrl || '',
         cookiePolicyUrl: config.cookiePolicyUrl || '',
-        updatesUrl: config.updatesUrl || ''
+        updatesUrl: config.updatesUrl || '',
+        bannerAdCode: config.bannerAdCode || '',
+        popunderAdCode: config.popunderAdCode || ''
       });
     }
   }, [config]);
@@ -106,7 +111,7 @@ export default function AdminAppSettingsPage() {
       await updateConfig(formData);
       toast({
         title: "تم الحفظ",
-        description: "تم تحديث كافة الإعدادات والروابط بنجاح."
+        description: "تم تحديث كافة الإعدادات وأكواد الإعلانات بنجاح."
       });
     } catch (error) {
       toast({
@@ -154,27 +159,6 @@ export default function AdminAppSettingsPage() {
     fileInputRef.current?.click();
   };
 
-  const handleUpdateRules = async () => {
-    setIsUpdatingRules(true);
-    try {
-      await updateConfig({
-        lastRulesUpdate: serverTimestamp()
-      });
-      toast({
-        title: "تزامن القواعد",
-        description: "جاري نشر قواعد الأمان الجديدة إلى خوادم CybeNode."
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: "فشل التزامن."
-      });
-    } finally {
-      setTimeout(() => setIsUpdatingRules(false), 2000);
-    }
-  };
-
   if (isUserLoading || !isAdmin) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -189,8 +173,8 @@ export default function AdminAppSettingsPage() {
       
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <PageHeader className="border-0 pb-0">
-          <PageHeaderTitle className="text-3xl font-black">إعدادات النظام</PageHeaderTitle>
-          <PageHeaderDescription>التحكم في الهوية، الصور، والروابط</PageHeaderDescription>
+          <PageHeaderTitle className="text-3xl font-black">إعدادات النظام العليا</PageHeaderTitle>
+          <PageHeaderDescription>التحكم في الهوية، الإعلانات السحابية، والروابط</PageHeaderDescription>
         </PageHeader>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button 
@@ -199,7 +183,7 @@ export default function AdminAppSettingsPage() {
             className="rounded-xl font-bold gap-2 shadow-lg bg-primary text-white flex-grow sm:flex-initial h-11 px-6"
           >
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            حفظ الإعدادات
+            حفظ كافة التغييرات
           </Button>
           <Button variant="outline" onClick={() => router.back()} className="rounded-xl font-bold gap-2 flex-grow sm:flex-initial h-11 px-6">
             <ArrowLeft className="h-4 w-4" />
@@ -211,8 +195,8 @@ export default function AdminAppSettingsPage() {
       <Tabs defaultValue="identity" className="w-full">
         <TabsList className="bg-slate-100 p-1 rounded-xl mb-8 flex flex-wrap h-auto gap-1">
           <TabsTrigger value="identity" className="rounded-lg font-bold py-2.5">الهوية والصور</TabsTrigger>
+          <TabsTrigger value="ads" className="rounded-lg font-bold py-2.5">إدارة الإعلانات</TabsTrigger>
           <TabsTrigger value="social" className="rounded-lg font-bold py-2.5">التواصل والروابط</TabsTrigger>
-          <TabsTrigger value="system" className="rounded-lg font-bold py-2.5">صيانة النظام</TabsTrigger>
         </TabsList>
 
         <TabsContent value="identity" className="space-y-6">
@@ -304,6 +288,58 @@ export default function AdminAppSettingsPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="ads" className="space-y-6">
+            <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-slate-900 text-white">
+                <CardHeader className="p-8 border-b border-white/5">
+                    <CardTitle className="text-xl flex items-center gap-3">
+                        <Code className="h-6 w-6 text-indigo-400" />
+                        إدارة الإعلانات السحابية
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 space-y-8">
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="space-y-3">
+                            <Label className="text-slate-400 font-bold flex items-center gap-2">
+                                <Badge variant="outline" className="text-indigo-400 border-indigo-400/30">JS/HTML</Badge>
+                                كود إعلان البانر (Banner Ad)
+                            </Label>
+                            <Textarea 
+                                value={formData.bannerAdCode}
+                                onChange={(e) => setFormData({...formData, bannerAdCode: e.target.value})}
+                                placeholder="ضع كود الـ Script الخاص بالبانر هنا..."
+                                className="min-h-[150px] bg-white/5 border-white/10 rounded-2xl font-mono text-xs text-emerald-400 focus:bg-white/10 transition-all"
+                            />
+                            <p className="text-[10px] text-slate-500 italic font-medium">سيظهر هذا الكود في المساحات المخصصة للإعلانات للمستخدمين العاديين.</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label className="text-slate-400 font-bold flex items-center gap-2">
+                                <Badge variant="outline" className="text-rose-400 border-rose-400/30">POPUNDER</Badge>
+                                كود إعلان النوافذ المنبثقة (Pop-under)
+                            </Label>
+                            <Textarea 
+                                value={formData.popunderAdCode}
+                                onChange={(e) => setFormData({...formData, popunderAdCode: e.target.value})}
+                                placeholder="ضع كود الـ Script الخاص بالبوب اندر هنا..."
+                                className="min-h-[150px] bg-white/5 border-white/10 rounded-2xl font-mono text-xs text-amber-400 focus:bg-white/10 transition-all"
+                            />
+                            <p className="text-[10px] text-slate-500 italic font-medium">هذا الكود سيتم حقنه في خلفية الموقع ليظهر لمرة واحدة لكل جلسة.</p>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-start gap-4">
+                        <AlertCircle className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                            <h4 className="font-bold text-indigo-200 text-sm">ملاحظة أمنية</h4>
+                            <p className="text-xs text-slate-400 leading-relaxed">
+                                يرجى التأكد من أن الأكواد التي تضعها آمنة ومأخوذة من شركات إعلانية موثوقة. الأكواد الخاطئة قد تسبب بطء في الموقع أو مشاكل في العرض.
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </TabsContent>
 
         <TabsContent value="social" className="space-y-6">
@@ -435,51 +471,7 @@ export default function AdminAppSettingsPage() {
             </Card>
           </div>
         </TabsContent>
-
-        <TabsContent value="system" className="space-y-6">
-          <Card className="border-2 border-blue-500/10 shadow-none rounded-3xl overflow-hidden bg-blue-50/30">
-            <CardHeader className="p-6 border-b border-blue-100">
-              <CardTitle className="text-lg flex items-center gap-2 text-blue-600">
-                <Database className="h-5 w-5" />
-                صيانة القواعد الأمنية
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-2">
-                <h4 className="font-bold text-sm flex items-center gap-2">
-                  تحديث مخطط الأمان
-                  <Badge variant="outline" className="text-[10px] rounded-lg">مستحسن</Badge>
-                </h4>
-                <p className="text-xs text-slate-500 max-w-xl">
-                  استخدم هذا الزر لمزامنة القواعد الأمنية المحدثة مع خادم CybeNode لضمان حماية بيانات الطلاب وخصوصية المعلمين.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 w-full md:w-auto">
-                 <Button 
-                    onClick={handleUpdateRules} 
-                    disabled={isUpdatingRules}
-                    variant="outline"
-                    className="w-full md:w-auto h-11 rounded-xl font-bold px-8 gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
-                  >
-                    {isUpdatingRules ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    تزامن القواعد
-                  </Button>
-                  <p className="text-[9px] text-center text-slate-400 font-bold">نظام الأمان يعمل الآن بشكل تلقائي ومحمي بالأكواد.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
-
-      <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-4 mb-10 text-right">
-        <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <h4 className="font-bold text-amber-900 text-sm">ملاحظة هامة</h4>
-          <p className="text-xs text-amber-700/80">
-            يمكنك الآن رفع الصور مباشرة من جهازك بالضغط على زر "رفع" بجانب كل حقل. سيتم حفظ الصور بشكل آمن على خوادمنا وتحديث الروابط تلقائياً عبر فريق CybeNode.
-          </p>
-        </div>
-      </div>
 
       <div className="text-center pt-8">
           <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">

@@ -58,6 +58,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#4F46E5" />
         
         <meta name="yandex-verification" content="0faaccb6c44771f0" />
+        {/* التحديث الجديد لمعرف جوجل لضمان عدم الحظر */}
         <meta name="google-signin-client_id" content="24940764496-iep9gluuur5ndtj8okrgj3pth0vsr1vl.apps.googleusercontent.com" />
         <meta name="google-site-verification" content="24940764496-iep9gluuur5ndtj8okrgj3pth0vsr1vl.apps.googleusercontent.com" />
       </head>

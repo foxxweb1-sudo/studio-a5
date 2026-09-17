@@ -5,7 +5,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // دالة التحقق من هوية المدير الرئيسي لـ CybeNode
-    // تم التحديث لضمان مطابقة البريد الإلكتروني بدقة وحل مشكلة الصلاحيات
     function isOwner() {
       return request.auth != null && 
              request.auth.token.email != null && 
@@ -53,15 +52,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null; 
     }
 
-    // 4. نظام الأكواد الترويجية (Admin Only)
-    // تم تحديث القاعدة لتسمح بـ 'list' للمدير بشكل صريح ومباشر
+    // 4. نظام الأكواد الترويجية (Firestore)
     match /promoCodes/{codeId} {
-      // المالك لديه صلاحية القراءة والكتابة الكاملة (تشمل list و get)
+      // السماح للمدير بكافة العمليات بما فيها عرض القائمة
       allow read, write: if isOwner();
-      // المستخدم العادي يمكنه جلب كود واحد فقط للتحقق منه عند التفعيل
+      // السماح للمستخدم العادي بجلب كود واحد فقط للتحقق
       allow get: if request.auth != null;
     }
 
-    // تعليق إجباري لتحديث القواعد في السيرفر الآن: CybeNode Security Sync v2.6 - Explicit List Permission Granted
+    // CybeNode Security Sync v3.0 - Full Firestore Integration
   }
 }

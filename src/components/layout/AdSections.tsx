@@ -1,33 +1,24 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUser, useDatabase } from '@/firebase';
-import { ref, onValue } from 'firebase/database';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 /**
- * مكون إعلان البانر 468x60 - يراقب RTDB لإخفاء الإعلان فوراً
+ * مكون إعلان البانر 468x60 - يراقب Firestore لإخفاء الإعلان للمشتركين
  */
 export function BannerAd() {
   const { user } = useUser();
-  const database = useDatabase();
-  const [isAdFree, setIsAdFree] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const firestore = useFirestore();
+  
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<any>(userRef);
+
+  const isAdFree = !!userProfile?.isAdFree;
 
   useEffect(() => {
-    if (!user || !database) return;
-
-    // مراقبة حالة الإعلانات في Realtime Database
-    const adFreeRef = ref(database, `users/${user.uid}/isAdFree`);
-    const unsubscribe = onValue(adFreeRef, (snapshot) => {
-      setIsAdFree(!!snapshot.val());
-      setIsLoaded(true);
-    });
-
-    return () => unsubscribe();
-  }, [user, database]);
-
-  useEffect(() => {
-    if (isAdFree || !isLoaded) return;
+    if (isAdFree) return;
 
     const adContainer = document.getElementById('ad-banner-slot');
     if (adContainer && adContainer.childNodes.length === 0) {
@@ -47,7 +38,7 @@ export function BannerAd() {
       adContainer.appendChild(conf);
       adContainer.appendChild(script);
     }
-  }, [isAdFree, isLoaded]);
+  }, [isAdFree]);
 
   if (isAdFree) return null;
 
@@ -60,23 +51,16 @@ export function BannerAd() {
 }
 
 /**
- * مكون الإعلان المخصص (Native) - يراقب RTDB لإخفاء الإعلان فوراً
+ * مكون الإعلان المخصص (Native) - يراقب Firestore لإخفاء الإعلان للمشتركين
  */
 export function NativeArticleAd() {
   const { user } = useUser();
-  const database = useDatabase();
-  const [isAdFree, setIsAdFree] = useState(false);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    if (!user || !database) return;
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<any>(userRef);
 
-    const adFreeRef = ref(database, `users/${user.uid}/isAdFree`);
-    const unsubscribe = onValue(adFreeRef, (snapshot) => {
-      setIsAdFree(!!snapshot.val());
-    });
-
-    return () => unsubscribe();
-  }, [user, database]);
+  const isAdFree = !!userProfile?.isAdFree;
 
   useEffect(() => {
     if (isAdFree) return;

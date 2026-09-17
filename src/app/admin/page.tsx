@@ -1,8 +1,8 @@
+
 'use client';
 
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDatabase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, onValue } from 'firebase/database';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -39,47 +39,26 @@ import Link from 'next/link';
 import { useAllUsers } from '@/hooks/use-app-data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { DeletionRequest, Review } from '@/lib/definitions';
-import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-
-const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
-  pending: { label: 'قيد الانتظار', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
-  reviewed: { label: 'تمت المراجعة', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Info },
-  replied: { label: 'تم الرد', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
-  rejected: { label: 'مرفوض', color: 'bg-rose-100 text-rose-700 border-rose-200', icon: XCircle },
-};
 
 export default function AdminPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const database = useDatabase();
   const { toast } = useToast();
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
-  const [manualUid, setManualUid] = useState('');
-  const [verifyUid, setVerifyUid] = useState('');
-  const [reviewUid, setReviewUid] = useState('');
-  const [promoCount, setPromoCount] = useState(0);
-  const [isProcessingManual, setIsProcessingManual] = useState(false);
-  const [isProcessingVerify, setIsProcessingVerify] = useState(false);
-  const [isGrantingReview, setIsProcessingReview] = useState(false);
-
+  
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
-  useEffect(() => {
-    if (!database || !isAdmin) return;
-    const codesRef = ref(database, 'promoCodes');
-    onValue(codesRef, (snap) => {
-        setPromoCount(snap.exists() ? Object.keys(snap.val()).length : 0);
-    });
-  }, [database, isAdmin]);
+  const promoCodesQuery = useMemoFirebase(() => 
+    (firestore && isAdmin) ? collection(firestore, 'promoCodes') : null,
+  [firestore, isAdmin]);
+  const { data: promoCodes } = useCollection<any>(promoCodesQuery);
 
   useEffect(() => {
     if (isUserLoading || !isAdmin || !firestore) return;
@@ -101,46 +80,6 @@ export default function AdminPage() {
     };
   }, [firestore, isAdmin, isUserLoading]);
 
-  const handleManualBlock = async (action: 'block' | 'unblock') => {
-    if (!manualUid.trim() || !firestore) return;
-    setIsProcessingManual(true);
-    try {
-      const userRef = doc(firestore, 'users', manualUid.trim());
-      await setDoc(userRef, { isBlocked: action === 'block', updatedAt: new Date() }, { merge: true });
-      toast({ title: action === 'block' ? "تم الحظر" : "تم إلغاء الحظر" });
-      setManualUid('');
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ في المعرف" });
-    } finally {
-      setIsProcessingManual(false);
-    }
-  };
-
-  const handleManualVerify = async (action: 'verify' | 'unverify') => {
-    if (!verifyUid.trim() || !firestore) return;
-    setIsProcessingVerify(true);
-    try {
-      const userRef = doc(firestore, 'users', verifyUid.trim());
-      await setDoc(userRef, { isVerified: action === 'verify', verifiedAt: action === 'verify' ? serverTimestamp() : null }, { merge: true });
-      toast({ title: action === 'verify' ? "تم التوثيق" : "تم إلغاء التوثيق" });
-      setVerifyUid('');
-    } catch (error) {
-      toast({ variant: "destructive", title: "خطأ في المعرف" });
-    } finally {
-      setIsProcessingVerify(false);
-    }
-  };
-
-  const calculateRemainingTime = (requestedAt: any) => {
-    if (!requestedAt) return "غير معروف";
-    const date = requestedAt.toDate ? requestedAt.toDate() : new Date(requestedAt);
-    const executionDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const diff = executionDate.getTime() - new Date().getTime();
-    if (diff <= 0) return "بانتظار التنفيذ";
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return `${days} يوم متبقي`;
-  };
-
   if (isUserLoading || !isAdmin) {
     return <div className="p-20 text-center"><Loader2 className="animate-spin inline-block" /></div>;
   }
@@ -149,7 +88,7 @@ export default function AdminPage() {
     { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
     { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
     { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { label: 'الأكواد (RTDB)', value: promoCount, icon: Ticket, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { label: 'الأكواد', value: promoCodes?.length || 0, icon: Ticket, color: 'text-indigo-500', bg: 'bg-indigo-50' },
   ];
 
   return (
@@ -157,12 +96,12 @@ export default function AdminPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
-          <PageHeaderDescription>إدارة نظام CybeNode اللحظي</PageHeaderDescription>
+          <PageHeaderDescription>إدارة نظام CybeNode الموحد (Firestore)</PageHeaderDescription>
         </PageHeader>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => router.push('/admin/promo')} className="rounded-xl font-bold gap-2 bg-indigo-50 border-indigo-200 text-indigo-700">
               <Ticket className="h-4 w-4" />
-              أكواد الخصم (RTDB)
+              أكواد الخصم
           </Button>
           <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2">
               <Settings className="h-4 w-4" />

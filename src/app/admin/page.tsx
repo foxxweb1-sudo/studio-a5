@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -21,16 +21,19 @@ export default function AdminPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   
-  const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [allStudentsCount, setAllStudentsCount] = useState(0);
   const { users, isLoading: usersLoading, toggleUserBlock, toggleUserVerify } = useAllUsers();
 
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
   useEffect(() => {
     if (isUserLoading || !isAdmin || !firestore) return;
-    const unsubStudents = onSnapshot(collection(firestore, 'students'), (snap) => {
-      setAllStudents(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    
+    // جلب إجمالي الطلاب عبر Collection Group
+    const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
+      setAllStudentsCount(snap.size);
     });
+    
     return () => unsubStudents();
   }, [firestore, isAdmin, isUserLoading]);
 
@@ -68,7 +71,7 @@ export default function AdminPage() {
         <StatCard label="المعلمين" value={users.filter(u => !u.isAssistant).length} icon={UserCircle} color="text-purple-500" bg="bg-purple-50" />
         <StatCard label="المساعدين النشطين" value={assistantsCount} icon={Zap} color="text-amber-500" bg="bg-amber-50" />
         <StatCard label="حسابات موثقة" value={verifiedCount} icon={BadgeCheck} color="text-emerald-500" bg="bg-emerald-50" />
-        <StatCard label="إجمالي الطلاب" value={allStudents.length} icon={Users} color="text-blue-500" bg="bg-blue-50" />
+        <StatCard label="إجمالي الطلاب" value={allStudentsCount} icon={Users} color="text-blue-500" bg="bg-blue-50" />
       </div>
 
        <Tabs defaultValue="users" className="w-full">

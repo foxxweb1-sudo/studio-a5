@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -57,7 +58,8 @@ export default function RootLayout({
         <meta name="theme-color" content="#4F46E5" />
         
         <meta name="yandex-verification" content="0faaccb6c44771f0" />
-        <meta name="google-site-verification" content="-DbtwtLAsT3hmizJuQZ9XTSdTSRjJUEWIs-au398y3w" />
+        <meta name="google-signin-client_id" content="24940764496-iep9gluuur5ndtj8okrgj3pth0vsr1vl.apps.googleusercontent.com" />
+        <meta name="google-site-verification" content="24940764496-iep9gluuur5ndtj8okrgj3pth0vsr1vl.apps.googleusercontent.com" />
       </head>
       <body className="font-body antialiased">
         <Script id="register-sw">

@@ -4,9 +4,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // دالة التحقق من هوية المدير الرئيسي
+    // دالة التحقق من هوية المدير الرئيسي - تم التحديث لضمان الدقة
     function isOwner() {
-      return request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com';
+      return request.auth != null && 
+             request.auth.token.email != null && 
+             request.auth.token.email.lower() == 'cybenode.site@gmail.com';
     }
 
     // 1. القراءة العامة لكافة سجلات الطلاب (الحضور، المدفوعات، الامتحانات، والبيانات)
@@ -51,11 +53,14 @@ service cloud.firestore {
     }
 
     // 4. نظام الأكواد الترويجية (Admin Only for List/Write)
+    // تم تحسين القواعد لضمان قدرة المدير على جلب القائمة بالكامل
     match /promoCodes/{codeId} {
       // المدير فقط يمكنه رؤية القائمة بالكامل أو التعديل
       allow list, write: if isOwner();
       // المستخدم العادي يمكنه جلب كود واحد فقط للتحقق من صلاحيته وتفعيله
       allow get: if request.auth != null;
     }
+
+    // تعليق لإجبار السيرفر على تحديث القواعد الآن: CybeNode Security Protocol v2.1
   }
 }

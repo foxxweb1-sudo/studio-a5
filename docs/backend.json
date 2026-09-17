@@ -3,32 +3,53 @@
   "entities": {
     "User": {
       "title": "User",
-      "description": "Represents a user (Teacher) of the application.",
+      "description": "Represents a teacher in the CybeNode system.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "phone": { "type": "string", "description": "WhatsApp number for communication." },
+        "paymentTiming": { "type": "string", "enum": ["start", "mid", "end"] },
         "isBlocked": { "type": "boolean" },
         "isVerified": { "type": "boolean" },
-        "isAdFree": { "type": "boolean" },
+        "isAdFree": { "type": "boolean", "description": "True if user activated a promo code to remove ads." },
         "adFreeActivatedAt": { "type": "string", "format": "date-time" },
-        "photoURL": { "type": "string" },
-        "phone": { "type": "string" },
-        "paymentTiming": { "type": "string", "enum": ["start", "mid", "end"] },
+        "createdAt": { "type": "string", "format": "date-time" },
         "lastLogin": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email"]
     },
     "PromoCode": {
       "title": "PromoCode",
+      "description": "Unique codes to remove ads for teachers.",
       "type": "object",
       "properties": {
         "code": { "type": "string" },
         "isUsed": { "type": "boolean" },
-        "usedBy": { "type": "string" },
+        "usedBy": { "type": "string", "description": "User UID who used this code." },
         "usedAt": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code"]
+    },
+    "AppConfig": {
+      "title": "AppConfig",
+      "description": "Global application settings and branding.",
+      "type": "object",
+      "properties": {
+        "appName": { "type": "string" },
+        "appLogo": { "type": "string" },
+        "appVersion": { "type": "string" },
+        "loginBg": { "type": "string" },
+        "signupBg": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "techStoreUrl": { "type": "string" },
+        "whatsappChannel": { "type": "string" },
+        "apkDownloadUrl": { "type": "string" },
+        "lastRulesUpdate": { "type": "string", "format": "date-time" }
       }
     },
     "Student": { 
@@ -39,8 +60,10 @@
         "grade": { "type": "string" }, 
         "groupId": { "type": "string" },
         "parentPhone": { "type": "string" },
-        "isArchived": { "type": "boolean" } 
-      } 
+        "isArchived": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "grade"]
     },
     "AttendanceRecord": { 
       "title": "AttendanceRecord", 
@@ -48,7 +71,8 @@
       "properties": { 
         "studentId": { "type": "string" }, 
         "status": { "type": "string", "enum": ["present", "absent"] }, 
-        "date": { "type": "string" } 
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
       } 
     },
     "Payment": { 
@@ -57,7 +81,9 @@
       "properties": { 
         "studentId": { "type": "string" }, 
         "amount": { "type": "number" }, 
-        "month": { "type": "string" } 
+        "month": { "type": "string", "description": "Format YYYY-MM" },
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
       } 
     },
     "ExamResult": { 
@@ -67,17 +93,46 @@
         "studentId": { "type": "string" }, 
         "score": { "type": "number" }, 
         "totalScore": { "type": "number" }, 
-        "date": { "type": "string" } 
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
       } 
+    },
+    "DeletionRequest": {
+      "title": "DeletionRequest",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string" }
+      }
+    },
+    "Review": {
+      "title": "Review",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": { "providers": ["password", "google.com"] },
   "firestore": {
-    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Teacher profile" },
-    "/promoCodes/{codeId}": { "schema": { "$ref": "#/entities/PromoCode" }, "description": "Promo codes for ad removal" },
-    "/users/{userId}/students/{studentId}": { "schema": { "$ref": "#/entities/Student" }, "description": "Student records for a teacher" },
+    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Teacher profiles" },
+    "/promoCodes/{codeId}": { "schema": { "$ref": "#/entities/PromoCode" }, "description": "Ad-free activation codes" },
+    "/appConfig/{id}": { "schema": { "$ref": "#/entities/AppConfig" }, "description": "Central app settings" },
+    "/deletionRequests/{id}": { "schema": { "$ref": "#/entities/DeletionRequest" }, "description": "Account deletion queue" },
+    "/reviews/{id}": { "schema": { "$ref": "#/entities/Review" }, "description": "User app ratings" },
+    "/users/{userId}/students/{studentId}": { "schema": { "$ref": "#/entities/Student" }, "description": "Student records" },
     "/users/{userId}/attendance/{id}": { "schema": { "$ref": "#/entities/AttendanceRecord" }, "description": "Attendance logs" },
     "/users/{userId}/payments/{id}": { "schema": { "$ref": "#/entities/Payment" }, "description": "Payment logs" },
-    "/users/{userId}/exams/{id}": { "schema": { "$ref": "#/entities/ExamResult" }, "description": "Exam results" }
+    "/users/{userId}/exams/{id}": { "schema": { "$ref": "#/entities/ExamResult" }, "description": "Academic scores" },
+    "/users/{userId}/config/{configId}": { "schema": "object", "description": "User-specific settings (schedule, payment periods)" }
   }
 }

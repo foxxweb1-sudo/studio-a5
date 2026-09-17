@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDatabase } from '@/firebase';
 import { collection, query, orderBy, collectionGroup, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, onValue } from 'firebase/database';
 import { useEffect, useState, useMemo } from 'react';
 import {
   PageHeader,
@@ -45,50 +46,62 @@ export default function AdminPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const database = useDatabase();
   const { toast } = useToast();
   
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
+  const [promoCodesCount, setPromoCodesCount] = useState(0);
   
   const { users, isLoading: usersLoading, toggleUserBlock } = useAllUsers();
 
   const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
 
-  const promoCodesQuery = useMemoFirebase(() => 
-    (firestore && isAdmin) ? collection(firestore, 'promoCodes') : null,
-  [firestore, isAdmin]);
-  const { data: promoCodes } = useCollection<any>(promoCodesQuery);
-
   useEffect(() => {
-    if (isUserLoading || !isAdmin || !firestore) return;
+    if (isUserLoading || !isAdmin || !firestore || !database) return;
 
+    // جلب الطلاب من Firestore
     const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
       const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAllStudents(list);
       setLoadingStudents(false);
     });
 
+    // جلب الرسائل من Firestore
     const unsubMessages = onSnapshot(query(collection(firestore, 'contactMessages'), orderBy('createdAt', 'desc')), (snap) => {
       const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setMessages(list);
     });
 
+    // جلب عدد الأكواد من Realtime Database (لحل مشكلة الصلاحيات)
+    const codesRef = ref(database, 'promoCodes');
+    const unsubCodes = onValue(codesRef, (snapshot) => {
+      const data = snapshot.val();
+      setPromoCodesCount(data ? Object.keys(data).length : 0);
+    });
+
     return () => {
       unsubStudents();
       unsubMessages();
+      unsubCodes();
     };
-  }, [firestore, isAdmin, isUserLoading]);
+  }, [firestore, database, isAdmin, isUserLoading]);
 
   if (isUserLoading || !isAdmin) {
-    return <div className="p-20 text-center"><Loader2 className="animate-spin inline-block" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="font-bold text-slate-400">جاري التحقق من صلاحيات المدير...</p>
+      </div>
+    );
   }
 
   const STATS_DATA = [
     { label: 'إجمالي الطلاب', value: allStudents.length, icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
     { label: 'المستخدمين', value: users.length, icon: UserCircle, color: 'text-purple-500', bg: 'bg-purple-50' },
     { label: 'الرسائل', value: messages.length, icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { label: 'الأكواد', value: promoCodes?.length || 0, icon: Ticket, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { label: 'الأكواد (RTDB)', value: promoCodesCount, icon: Ticket, color: 'text-indigo-500', bg: 'bg-indigo-50' },
   ];
 
   return (
@@ -96,18 +109,18 @@ export default function AdminPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <PageHeader className="border-0 pb-0">
           <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
-          <PageHeaderDescription>إدارة نظام CybeNode الموحد (Firestore)</PageHeaderDescription>
+          <PageHeaderDescription>إدارة نظام CybeNode الموحد (الأنظمة السحابية)</PageHeaderDescription>
         </PageHeader>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => router.push('/admin/promo')} className="rounded-xl font-bold gap-2 bg-indigo-50 border-indigo-200 text-indigo-700">
+          <Button variant="outline" onClick={() => router.push('/admin/promo')} className="rounded-xl font-bold gap-2 bg-indigo-50 border-indigo-200 text-indigo-700 h-11">
               <Ticket className="h-4 w-4" />
-              أكواد الخصم
+              إدارة الأكواد
           </Button>
-          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2 h-11">
               <Settings className="h-4 w-4" />
               إعدادات الهوية
           </Button>
-          <Button onClick={() => router.push('/')} className="rounded-xl font-bold gap-2">
+          <Button onClick={() => router.push('/')} className="rounded-xl font-bold gap-2 h-11">
               <ArrowLeft className="h-4 w-4" />
               الرئيسية
           </Button>
@@ -116,14 +129,14 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {STATS_DATA.map((stat) => (
-            <Card key={stat.label} className="border-0 shadow-sm">
+            <Card key={stat.label} className="border-0 shadow-sm rounded-3xl overflow-hidden">
                 <CardContent className="p-6 flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
+                    <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
                         <stat.icon className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-slate-400">{stat.label}</div>
-                      <div className="text-xl font-black">{stat.value}</div>
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</div>
+                      <div className="text-2xl font-black tabular-nums">{stat.value}</div>
                     </div>
                 </CardContent>
             </Card>
@@ -131,31 +144,37 @@ export default function AdminPage() {
       </div>
 
        <Tabs defaultValue="users" className="w-full">
-            <TabsList className="bg-slate-100 p-1 rounded-xl mb-6 w-full flex overflow-x-auto justify-start h-auto">
-                <TabsTrigger value="users" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">المستخدمين</TabsTrigger>
-                <TabsTrigger value="messages" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">الرسائل</TabsTrigger>
-                <TabsTrigger value="teacher-uids" className="rounded-lg px-6 py-2 font-bold flex-1 sm:flex-initial">سجلات المعلمين</TabsTrigger>
+            <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 w-full flex overflow-x-auto justify-start h-auto gap-1">
+                <TabsTrigger value="users" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">المستخدمين</TabsTrigger>
+                <TabsTrigger value="messages" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">الرسائل</TabsTrigger>
+                <TabsTrigger value="teacher-uids" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial data-[state=active]:bg-white data-[state=active]:shadow-sm">سجلات المعلمين</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {users.map((u) => (
-                        <Card key={u.uid} className={`border-0 shadow-sm ${u.isBlocked ? 'bg-rose-50' : 'bg-white'}`}>
+                        <Card key={u.uid} className={`border-0 shadow-sm rounded-3xl ${u.isBlocked ? 'bg-rose-50 border border-rose-100' : 'bg-white'}`}>
                             <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
                               <div className="relative">
-                                <Avatar className="h-16 w-16">
+                                <Avatar className="h-20 w-20 border-2 border-white shadow-md">
                                   <AvatarImage src={u.photoURL} />
-                                  <AvatarFallback>{u.displayName?.substring(0, 1)}</AvatarFallback>
+                                  <AvatarFallback className="bg-slate-100 font-bold">{u.displayName?.substring(0, 1)}</AvatarFallback>
                                 </Avatar>
-                                {u.isVerified && <div className="absolute -top-1 -right-1 bg-white rounded-full"><BadgeCheck className="h-5 w-5 fill-blue-500 text-white" /></div>}
+                                {u.isVerified && <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"><BadgeCheck className="h-6 w-6 fill-blue-500 text-white" /></div>}
                               </div>
                               <div className="w-full overflow-hidden">
-                                <h4 className="font-bold text-sm truncate">{u.displayName}</h4>
-                                <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
-                                <code className="text-[8px] opacity-40 select-all block mt-1">{u.uid}</code>
+                                <h4 className="font-black text-slate-800 truncate">{u.displayName}</h4>
+                                <p className="text-[10px] text-muted-foreground truncate font-medium">{u.email}</p>
+                                <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
+                                    <code className="text-[8px] opacity-40 select-all block font-mono">{u.uid}</code>
+                                </div>
                               </div>
-                              <Button variant={u.isBlocked ? "secondary" : "ghost"} onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} className={`w-full rounded-xl font-bold h-9 text-xs ${u.isBlocked ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                  {u.isBlocked ? "إلغاء الحظر" : "حظر"}
+                              <Button 
+                                variant={u.isBlocked ? "default" : "outline"} 
+                                onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} 
+                                className={`w-full rounded-xl font-black h-10 text-xs ${u.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-rose-600 hover:bg-rose-50 border-rose-100'}`}
+                              >
+                                  {u.isBlocked ? "إلغاء الحظر" : "حظر المستخدم"}
                               </Button>
                             </CardContent>
                         </Card>
@@ -166,13 +185,19 @@ export default function AdminPage() {
             <TabsContent value="messages">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {messages.map(msg => (
-                        <Card key={msg.id} className="border-0 shadow-sm cursor-pointer hover:shadow-md" onClick={() => router.push(`/admin/messages/${msg.id}`)}>
+                        <Card key={msg.id} className="border-0 shadow-sm cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all rounded-3xl overflow-hidden group" onClick={() => router.push(`/admin/messages/${msg.id}`)}>
                             <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-2 bg-primary/5 rounded-xl text-primary"><MessageSquare className="h-5 w-5" /></div>
-                                    <h4 className="font-bold text-sm">{msg.name}</h4>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2.5 bg-primary/5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all"><MessageSquare className="h-5 w-5" /></div>
+                                        <h4 className="font-black text-sm">{msg.name}</h4>
+                                    </div>
+                                    <Badge variant="outline" className="text-[8px] rounded-lg">{msg.status || 'pending'}</Badge>
                                 </div>
-                                <p className="text-xs text-slate-500 line-clamp-3 italic">"{msg.message}"</p>
+                                <p className="text-xs text-slate-500 line-clamp-3 italic font-medium leading-relaxed">"{msg.message}"</p>
+                                <div className="mt-4 text-[9px] font-black text-slate-400 text-left">
+                                    {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleDateString('ar-EG') : '...'}
+                                </div>
                             </CardContent>
                         </Card>
                     ))}
@@ -181,11 +206,13 @@ export default function AdminPage() {
 
             <TabsContent value="teacher-uids">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {Array.from(new Set(allStudents.map(s => s.teacherUid))).map(uid => (
-                        <Card key={uid} className="border-0 shadow-sm p-6 text-center">
-                            <Database className="h-6 w-6 mx-auto mb-3 text-primary opacity-20" />
-                            <code className="text-[10px] block mb-4 truncate">{uid}</code>
-                            <Button asChild className="w-full rounded-xl h-9 text-xs"><Link href={`/admin/teacher/${uid}`}>عرض سجلاته</Link></Button>
+                    {Array.from(new Set(allStudents.map(s => s.teacherUid))).filter(Boolean).map(uid => (
+                        <Card key={uid} className="border-0 shadow-sm p-6 text-center rounded-3xl group hover:shadow-lg transition-all">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/10 transition-all">
+                                <Database className="h-6 w-6 text-primary/40 group-hover:text-primary transition-all" />
+                            </div>
+                            <code className="text-[10px] block mb-4 truncate font-mono text-slate-400">{uid}</code>
+                            <Button asChild className="w-full rounded-xl h-10 font-bold text-xs"><Link href={`/admin/teacher/${uid}`}>عرض كافة السجلات</Link></Button>
                         </Card>
                     ))}
                 </div>

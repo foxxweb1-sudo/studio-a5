@@ -22,15 +22,15 @@
       "required": ["uid", "email"]
     },
     "PromoCode": {
-      "title": "PromoCode",
-      "description": "Unique codes to remove ads for teachers.",
+      "title": "PromoCode (Realtime DB)",
+      "description": "Unique codes to remove ads, managed in RTDB for performance.",
       "type": "object",
       "properties": {
         "code": { "type": "string" },
         "isUsed": { "type": "boolean" },
         "usedBy": { "type": "string" },
-        "usedAt": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "usedAt": { "type": "number" },
+        "createdAt": { "type": "number" }
       },
       "required": ["code"]
     },
@@ -46,53 +46,22 @@
         "isArchived": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
-    },
-    "Attendance": {
-      "title": "Attendance",
-      "description": "Student attendance entry.",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "date": { "type": "string" },
-        "status": { "type": "string", "enum": ["present", "absent"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Payment": {
-      "title": "Payment",
-      "description": "Financial record for a student.",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "amount": { "type": "number" },
-        "month": { "type": "string" },
-        "date": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Exam": {
-      "title": "Exam",
-      "description": "Student exam result.",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "score": { "type": "number" },
-        "totalScore": { "type": "number" },
-        "date": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
     }
   },
   "auth": { "providers": ["password", "google.com"] },
   "firestore": {
     "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Teacher profiles" },
-    "/promoCodes/{codeId}": { "schema": { "$ref": "#/entities/PromoCode" }, "description": "Ad-free codes" },
-    "/appConfig/{id}": { "schema": "object", "description": "Global settings" },
+    "/appConfig/global": { "schema": "object", "description": "Global settings" },
     "/deletionRequests/{id}": { "schema": "object", "description": "Account deletions" },
     "/reviews/{id}": { "schema": "object", "description": "App reviews" },
     "/users/{userId}/students/{studentId}": { "schema": { "$ref": "#/entities/Student" }, "description": "Students" },
-    "/users/{userId}/attendance/{id}": { "schema": { "$ref": "#/entities/Attendance" }, "description": "Attendance logs" },
-    "/users/{userId}/payments/{id}": { "schema": { "$ref": "#/entities/Payment" }, "description": "Payments" },
-    "/users/{userId}/exams/{id}": { "schema": { "$ref": "#/entities/Exam" }, "description": "Exam scores" }
+    "/users/{userId}/attendance/{id}": { "schema": "object", "description": "Attendance logs" },
+    "/users/{userId}/payments/{id}": { "schema": "object", "description": "Payments" },
+    "/users/{userId}/exams/{id}": { "schema": "object", "description": "Exam scores" }
+  },
+  "realtime_database": {
+    "/promoCodes/{code}": { "schema": { "$ref": "#/entities/PromoCode" }, "description": "Ad-free codes" },
+    "/portal/{teacherId}/{studentId}": { "schema": "object", "description": "Parent portal data" },
+    "/users/{userId}/isAdFree": { "type": "boolean", "description": "Real-time ad status" }
   }
 }

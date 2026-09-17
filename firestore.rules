@@ -52,14 +52,9 @@ service cloud.firestore {
       allow read, write: if request.auth != null; 
     }
 
-    // 4. نظام الأكواد الترويجية (Firestore)
-    match /promoCodes/{codeId} {
-      // السماح للمدير بكافة العمليات بما فيها عرض القائمة
-      allow read, write: if isOwner();
-      // السماح للمستخدم العادي بجلب كود واحد فقط للتحقق
-      allow get: if request.auth != null;
-    }
-
-    // CybeNode Security Sync v3.0 - Full Firestore Integration
+    // ملاحظة: تم نقل نظام الأكواد الترويجية بالكامل إلى Realtime Database 
+    // لضمان التزامن اللحظي وحل مشاكل الصلاحيات المعقدة.
+    
+    // CybeNode Security Sync v5.0 - Full RTDB & Firestore Managed Rules
   }
 }

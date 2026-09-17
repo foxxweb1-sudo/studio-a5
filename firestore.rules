@@ -4,6 +4,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // دالة التحقق من هوية المدير الرئيسي
+    function isOwner() {
+      return request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com';
+    }
+
     // 1. القراءة العامة لكافة سجلات الطلاب (الحضور، المدفوعات، الامتحانات، والبيانات)
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
@@ -13,42 +18,43 @@ service cloud.firestore {
     // 2. قواعد المستخدمين (المعلمين)
     match /users/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'cybenode.site@gmail.com');
+      allow write: if request.auth != null && (request.auth.uid == userId || isOwner());
       
       match /{allSub=**} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.email.lower() == 'cybenode.site@gmail.com');
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isOwner());
       }
     }
 
     // 3. المجموعات العامة والأنظمة المركزية
     match /appConfig/{id} { 
       allow read: if true; 
-      allow write: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com'; 
+      allow write: if isOwner(); 
     }
     
     match /contactMessages/{id} { 
       allow create: if true; 
-      allow read, write: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com'; 
+      allow read, write: if isOwner(); 
     }
 
     match /deletionRequests/{id} { 
-      allow read, write: if request.auth != null && (request.auth.uid == id || request.auth.token.email.lower() == 'cybenode.site@gmail.com'); 
+      allow read, write: if request.auth != null && (request.auth.uid == id || isOwner()); 
     }
 
     match /reviews/{id} { 
       allow read: if true; 
       allow create: if request.auth != null; 
-      allow delete: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com'; 
+      allow delete: if isOwner(); 
     }
 
     match /reviewPermissions/{id} { 
       allow read, write: if request.auth != null; 
     }
 
-    // 4. نظام الأكواد الترويجية (Admin Only)
+    // 4. نظام الأكواد الترويجية (Admin Only for List/Write)
     match /promoCodes/{codeId} {
-      allow read, write: if request.auth != null && request.auth.token.email.lower() == 'cybenode.site@gmail.com';
-      // السماح بالبحث عن الكود لتفعيله للمستخدم العادي
+      // المدير فقط يمكنه رؤية القائمة بالكامل أو التعديل
+      allow list, write: if isOwner();
+      // المستخدم العادي يمكنه جلب كود واحد فقط للتحقق من صلاحيته وتفعيله
       allow get: if request.auth != null;
     }
   }

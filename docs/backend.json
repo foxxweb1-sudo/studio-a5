@@ -12,7 +12,10 @@
         "isBlocked": { "type": "boolean" },
         "isVerified": { "type": "boolean" },
         "isAdFree": { "type": "boolean" },
+        "adFreeActivatedAt": { "type": "string", "format": "date-time" },
         "photoURL": { "type": "string" },
+        "phone": { "type": "string" },
+        "paymentTiming": { "type": "string", "enum": ["start", "mid", "end"] },
         "lastLogin": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email"]
@@ -24,7 +27,8 @@
         "code": { "type": "string" },
         "isUsed": { "type": "boolean" },
         "usedBy": { "type": "string" },
-        "usedAt": { "type": "string", "format": "date-time" }
+        "usedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
       }
     },
     "Student": { 
@@ -33,6 +37,7 @@
       "properties": { 
         "name": { "type": "string" }, 
         "grade": { "type": "string" }, 
+        "groupId": { "type": "string" },
         "parentPhone": { "type": "string" },
         "isArchived": { "type": "boolean" } 
       } 

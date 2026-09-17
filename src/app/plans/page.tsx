@@ -25,7 +25,8 @@ import {
   Mail,
   User as UserIcon,
   Image as ImageIcon,
-  Check
+  Check,
+  Tag
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +34,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AssistantActivation from '@/components/features/promo/AssistantActivation';
 
 export default function PlansPage() {
   const router = useRouter();
@@ -152,9 +154,9 @@ export default function PlansPage() {
             <div className="p-3 bg-emerald-500/10 rounded-2xl">
                <Zap className="h-6 w-6" />
             </div>
-            <PageHeaderTitle className="text-3xl font-black">بوابة الشراء الآمنة</PageHeaderTitle>
+            <PageHeaderTitle className="text-3xl font-black">بوابة باقة المساعد</PageHeaderTitle>
           </div>
-          <PageHeaderDescription>أتمم عملية اشتراكك في باقة المساعد الشخصي بذكاء.</PageHeaderDescription>
+          <PageHeaderDescription>اشترك الآن أو فعل الكود الخاص بك للحصول على تجربة إدارة احترافية.</PageHeaderDescription>
         </PageHeader>
         <Button 
           variant="outline" 
@@ -168,41 +170,46 @@ export default function PlansPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         
-        {/* Left Side: Dynamic Display */}
-        <div className="lg:col-span-3 space-y-6">
+        {/* Left Side: Subscription & Info */}
+        <div className="lg:col-span-3 space-y-8">
             {step === 'info' ? (
-                <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-slate-900">
-                    <CardHeader className="bg-emerald-500/5 border-b p-8">
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-emerald-500 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
-                                <UserCheck className="h-8 w-8" />
-                            </div>
-                            <div>
-                                <CardTitle className="text-2xl font-black text-emerald-700">باقة المساعد الشخصي</CardTitle>
-                                <Badge className="bg-yellow-400 text-emerald-900 font-black px-3 py-1 rounded-lg mt-1">100 ج.م شهرياً</Badge>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-8">
-                        <div className="space-y-4">
-                            {features.map((feature, i) => (
-                                <div key={i} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors group">
-                                    <div className="p-1 bg-emerald-100 text-emerald-600 rounded-full group-hover:scale-110 transition-transform">
-                                        <CheckCircle2 className="h-4 w-4" />
-                                    </div>
-                                    <p className="font-bold text-slate-700 dark:text-slate-200">{feature}</p>
-                                </div>
-                            ))}
-                        </div>
-                        <Button 
-                            onClick={() => setStep('payment')}
-                            className="w-full h-16 mt-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl gap-3 shadow-xl"
-                        >
-                            بدء إجراءات الدفع
-                            <ArrowLeft className="h-6 w-6 ms-2 rotate-180" />
-                        </Button>
-                    </CardContent>
-                </Card>
+                <>
+                  <Card className="border-0 shadow-2xl rounded-[3rem] overflow-hidden bg-white dark:bg-slate-900">
+                      <CardHeader className="bg-emerald-500/5 border-b p-8">
+                          <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 bg-emerald-500 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
+                                  <UserCheck className="h-8 w-8" />
+                              </div>
+                              <div>
+                                  <CardTitle className="text-2xl font-black text-emerald-700">باقة المساعد الشخصي</CardTitle>
+                                  <Badge className="bg-yellow-400 text-emerald-900 font-black px-3 py-1 rounded-lg mt-1">100 ج.م شهرياً</Badge>
+                              </div>
+                          </div>
+                      </CardHeader>
+                      <CardContent className="p-8">
+                          <div className="space-y-4">
+                              {features.map((feature, i) => (
+                                  <div key={i} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
+                                      <div className="p-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-600 rounded-full group-hover:scale-110 transition-transform">
+                                          <CheckCircle2 className="h-4 w-4" />
+                                      </div>
+                                      <p className="font-bold text-slate-700 dark:text-slate-200">{feature}</p>
+                                  </div>
+                              ))}
+                          </div>
+                          <Button 
+                              onClick={() => setStep('payment')}
+                              className="w-full h-16 mt-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl gap-3 shadow-xl"
+                          >
+                              بدء إجراءات الشراء
+                              <ArrowLeft className="h-6 w-6 ms-2 rotate-180" />
+                          </Button>
+                      </CardContent>
+                  </Card>
+
+                  {/* قسم التفعيل بالأكواد - تم نقله إلى هنا */}
+                  <AssistantActivation />
+                </>
             ) : (
                 <div className="space-y-6">
                     <Card className="border-0 shadow-xl rounded-[2.5rem] bg-slate-900 text-white overflow-hidden">

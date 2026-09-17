@@ -2,9 +2,9 @@
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Info, Share2, Palette, AppWindow, ChevronLeft, Tag, UserCircle, Zap } from 'lucide-react';
+import { ArrowLeft, Info, Share2, Palette, AppWindow, ChevronLeft, Tag, UserCircle, Zap, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,7 @@ import { useAppConfig } from '@/hooks/use-app-config';
 import { useUser } from '@/firebase';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import AssistantActivation from '@/components/features/promo/AssistantActivation';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -71,8 +71,27 @@ export default function SettingsPage() {
 
       <div className="space-y-8">
         
-        {/* نظام تفعيل المساعد */}
-        <AssistantActivation />
+        {/* رابط باقة المساعد بدلاً من المربع المباشر */}
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-[2.5rem] overflow-hidden group">
+          <CardContent className="p-8 space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md shadow-inner">
+                <Zap className="h-8 w-8 fill-current" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black">باقة المساعد الشخصي</h3>
+                <p className="text-xs font-bold opacity-80">اشترك الآن أو فعل الكود الخاص بك لإدارة حسابك بذكاء.</p>
+              </div>
+            </div>
+            
+            <Button asChild className="w-full h-14 rounded-2xl bg-white text-orange-600 hover:bg-slate-50 font-black text-lg gap-2 shadow-2xl">
+              <Link href="/plans">
+                <Star className="h-5 w-5 fill-current" />
+                تفعيل الكود أو الاشتراك
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
 
         <Card className="border-0 shadow-xl bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
           <CardHeader className="pb-2">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDatabase } from '@/firebase';
@@ -59,9 +60,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (isUserLoading || !isAdmin || !firestore || !database) return;
 
-    // جلب الطلاب من Firestore
+    // جلب الطلاب من Firestore مع استخراج معرف المعلم من المسار
     const unsubStudents = onSnapshot(collectionGroup(firestore, 'students'), (snap) => {
-      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const list = snap.docs.map(doc => {
+        const data = doc.data();
+        const teacherUid = doc.ref.parent.parent?.id; // استخراج UID المعلم من المسار
+        return { id: doc.id, ...data, teacherUid };
+      });
       setAllStudents(list);
       setLoadingStudents(false);
     });
@@ -146,7 +151,7 @@ export default function AdminPage() {
             <TabsContent value="users">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {users.map((u) => (
-                        <Card key={u.uid} className={`border-0 shadow-sm rounded-3xl ${u.isBlocked ? 'bg-rose-50 border border-rose-100' : 'bg-white'}`}>
+                        <Card key={u.id} className={`border-0 shadow-sm rounded-3xl ${u.isBlocked ? 'bg-rose-50 border border-rose-100' : 'bg-white'}`}>
                             <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
                               <div className="relative">
                                 <Avatar className="h-20 w-20 border-2 border-white shadow-md">
@@ -159,12 +164,12 @@ export default function AdminPage() {
                                 <h4 className="font-black text-slate-800 truncate">{u.displayName}</h4>
                                 <p className="text-[10px] text-muted-foreground truncate font-medium">{u.email}</p>
                                 <div className="mt-2 pt-2 border-t border-dashed border-slate-200">
-                                    <code className="text-[8px] opacity-40 select-all block font-mono">{u.uid}</code>
+                                    <code className="text-[8px] opacity-40 select-all block font-mono">{u.uid || u.id}</code>
                                 </div>
                               </div>
                               <Button 
                                 variant={u.isBlocked ? "default" : "outline"} 
-                                onClick={() => toggleUserBlock(u.uid, !!u.isBlocked)} 
+                                onClick={() => toggleUserBlock(u.uid || u.id, !!u.isBlocked)} 
                                 className={`w-full rounded-xl font-black h-10 text-xs ${u.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'text-rose-600 hover:bg-rose-50 border-rose-100'}`}
                               >
                                   {u.isBlocked ? "إلغاء الحظر" : "حظر المستخدم"}
@@ -178,11 +183,11 @@ export default function AdminPage() {
             <TabsContent value="teacher-uids">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {Array.from(new Set(allStudents.map(s => s.teacherUid))).filter(Boolean).map(uid => (
-                        <Card key={uid} className="border-0 shadow-sm p-6 text-center rounded-3xl group hover:shadow-lg transition-all">
+                        <Card key={uid as string} className="border-0 shadow-sm p-6 text-center rounded-3xl group hover:shadow-lg transition-all">
                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/10 transition-all">
                                 <Database className="h-6 w-6 text-primary/40 group-hover:text-primary transition-all" />
                             </div>
-                            <code className="text-[10px] block mb-4 truncate font-mono text-slate-400">{uid}</code>
+                            <code className="text-[10px] block mb-4 truncate font-mono text-slate-400">{uid as string}</code>
                             <Button asChild className="w-full rounded-xl h-10 font-bold text-xs"><Link href={`/admin/teacher/${uid}`}>عرض كافة السجلات</Link></Button>
                         </Card>
                     ))}

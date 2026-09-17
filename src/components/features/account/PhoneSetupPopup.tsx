@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -28,34 +27,38 @@ export default function PhoneSetupPopup() {
   const [paymentTiming, setPaymentTiming] = useState<'start' | 'mid' | 'end'>('start');
   const [isSaving, setIsSaving] = useState(false);
   
-  // لمنع ظهور النافذة مرة أخرى بعد الحفظ مباشرة في نفس الجلسة
-  const hasSubmittedInSession = useRef(false);
+  // مفتاح التخزين المحلي لضمان عدم التكرار
+  const storageKey = user ? `setup_complete_${user.uid}` : null;
 
   useEffect(() => {
-    // لا تظهر النافذة إذا كان المستخدم قيد التحميل أو إذا كان قد سجل بالفعل في هذه الجلسة
-    if (isUserLoading || isProfileLoading || !user || !userProfile || hasSubmittedInSession.current) {
+    if (isUserLoading || isProfileLoading || !user || !userProfile || !storageKey) {
       return;
     }
 
-    // التحقق الفعلي من نقص البيانات
+    // 1. التحقق أولاً من الذاكرة المحلية (الأسرع)
+    const isLocallyComplete = localStorage.getItem(storageKey) === 'true';
+    if (isLocallyComplete) {
+      setIsOpen(false);
+      return;
+    }
+
+    // 2. التحقق من البيانات السحابية
     const isMissingData = !userProfile.phone || !userProfile.paymentTiming;
     
     if (isMissingData) {
-      // تأخير بسيط للتأكد من أن البيانات ليست في حالة تحديث مؤقتة
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-        if (userProfile.phone) {
-            setPhone(userProfile.phone.replace(/^\+\d{2,3}/, ''));
-        }
-        if (userProfile.paymentTiming) {
-            setPaymentTiming(userProfile.paymentTiming);
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
+      setIsOpen(true);
+      if (userProfile.phone) {
+          setPhone(userProfile.phone.replace(/^\+\d{2,3}/, ''));
+      }
+      if (userProfile.paymentTiming) {
+          setPaymentTiming(userProfile.paymentTiming);
+      }
     } else {
+      // إذا كانت البيانات موجودة سحابياً، نحفظها محلياً لتسريع المرة القادمة
+      localStorage.setItem(storageKey, 'true');
       setIsOpen(false);
     }
-  }, [user, userProfile, isProfileLoading, isUserLoading]);
+  }, [user, userProfile, isProfileLoading, isUserLoading, storageKey]);
 
   const handleSaveData = async () => {
     if (!phone.trim() || phone.length < 8) {
@@ -66,15 +69,21 @@ export default function PhoneSetupPopup() {
     setIsSaving(true);
     try {
       const fullPhone = `+${countryCode}${phone.replace(/\D/g, '')}`;
+      
+      // التحديث السحابي
       await updateDoc(doc(firestore, 'users', user!.uid), {
         phone: fullPhone,
         paymentTiming: paymentTiming,
         updatedAt: serverTimestamp()
       });
       
-      hasSubmittedInSession.current = true; // منع الظهور مجدداً فوراً
+      // التحديث المحلي الفوري لضمان عدم ظهور النافذة بعد الريفرش
+      if (storageKey) {
+        localStorage.setItem(storageKey, 'true');
+      }
+
       setIsOpen(false);
-      toast({ title: "تم التحديث", description: "تم تحديث بياناتك بنجاح." });
+      toast({ title: "تم التحديث", description: "تم اعتماد بياناتك بنجاح." });
     } catch (error) {
       toast({ variant: "destructive", title: "خطأ", description: "فشل حفظ البيانات، حاول مرة أخرى." });
     } finally {
@@ -84,9 +93,10 @@ export default function PhoneSetupPopup() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-        // نمنع إغلاق النافذة يدوياً إذا كانت البيانات ناقصة
-        if (!open && (!userProfile?.phone || !userProfile?.paymentTiming) && !hasSubmittedInSession.current) {
-            return;
+        // نمنع إغلاق النافذة يدوياً إلا بعد الحفظ
+        if (!open) {
+          const isComplete = (userProfile?.phone && userProfile?.paymentTiming) || (storageKey && localStorage.getItem(storageKey) === 'true');
+          if (!isComplete) return;
         }
         setIsOpen(open);
     }}>
@@ -147,15 +157,15 @@ export default function PhoneSetupPopup() {
                     >
                         <div className={cn("flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer", paymentTiming === 'start' ? 'border-primary bg-primary/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100')}>
                            <RadioGroupItem value="start" id="p-start" className="sr-only" />
-                           <Label htmlFor="p-start" className="text-[10px] font-black cursor-pointer">أول 5 أيام</Label>
+                           <Label htmlFor="p-start" className="text-[10px] font-black cursor-pointer text-center">أول 5 أيام</Label>
                         </div>
                         <div className={cn("flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer", paymentTiming === 'mid' ? 'border-primary bg-primary/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100')}>
                            <RadioGroupItem value="mid" id="p-mid" className="sr-only" />
-                           <Label htmlFor="p-mid" className="text-[10px] font-black cursor-pointer">منتصف الشهر</Label>
+                           <Label htmlFor="p-mid" className="text-[10px] font-black cursor-pointer text-center">منتصف الشهر</Label>
                         </div>
                         <div className={cn("flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer", paymentTiming === 'end' ? 'border-primary bg-primary/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100')}>
                            <RadioGroupItem value="end" id="p-end" className="sr-only" />
-                           <Label htmlFor="p-end" className="text-[10px] font-black cursor-pointer">آخر الشهر</Label>
+                           <Label htmlFor="p-end" className="text-[10px] font-black cursor-pointer text-center">آخر الشهر</Label>
                         </div>
                     </RadioGroup>
                 </div>

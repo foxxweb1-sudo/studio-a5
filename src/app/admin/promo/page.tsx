@@ -1,11 +1,11 @@
-
 'use client';
 
-import { useUser, usePromoCodes } from '@/hooks/use-app-data';
+import { useUser } from '@/firebase';
+import { usePromoCodes } from '@/hooks/use-app-data';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Key, Plus, Trash2, CheckCircle2, XCircle, Clock, Copy } from 'lucide-react';
+import { ArrowLeft, Loader2, Key, Plus, Trash2, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -38,7 +38,9 @@ export default function AdminPromoCodesPage() {
             <Button onClick={generateCode} className="rounded-xl font-black gap-2 h-12 bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-500/20">
                 <Plus className="h-5 w-5" /> توليد كود جديد
             </Button>
-            <Button variant="outline" onClick={() => router.back()} className="rounded-xl h-12"><ArrowLeft className="h-4 w-4" /></Button>
+            <Button variant="outline" onClick={() => router.back()} className="rounded-xl h-12">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
         </div>
       </div>
 
@@ -77,7 +79,9 @@ export default function AdminPromoCodesPage() {
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <Button variant="ghost" size="icon" onClick={() => deleteCode(c.id)} className="text-rose-500"><Trash2 className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => deleteCode(c.id)} className="text-rose-500">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}

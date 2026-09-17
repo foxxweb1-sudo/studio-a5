@@ -15,22 +15,21 @@ import {
   ChevronLeft,
   Tag,
   ShieldCheck,
-  Globe,
   Zap,
   CheckCircle2,
   Loader2,
-  Send
+  Send,
+  UserCircle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useAppConfig } from '@/hooks/use-app-config';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { useState } from 'react';
+import { useUser, useFirestore, useDatabase } from '@/firebase';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, get, update } from 'firebase/database';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -39,15 +38,22 @@ export default function SettingsPage() {
   const { config } = useAppConfig();
   const { user } = useUser();
   const firestore = useFirestore();
+  const database = useDatabase();
 
   const [promoCode, setPromoCode] = useState('');
   const [isActivating, setIsActivating] = useState(false);
+  const [isAdFree, setIsAdFree] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
-  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: userProfile } = useDoc<any>(userRef);
-
-  const isAdFree = !!userProfile?.isAdFree;
+  useEffect(() => {
+    if (!user || !database) return;
+    const adFreeRef = ref(database, `users/${user.uid}/isAdFree`);
+    get(adFreeRef).then((snap) => {
+        if (snap.exists()) {
+            setIsAdFree(snap.val());
+        }
+    });
+  }, [user, database]);
 
   const handleProtectedClick = (e: React.MouseEvent, href: string) => {
     if (!user) {
@@ -59,48 +65,55 @@ export default function SettingsPage() {
   };
 
   const handleActivateCode = async () => {
-    if (!user || !promoCode.trim() || !firestore) return;
+    if (!user || !promoCode.trim() || !database || !firestore) return;
     setIsActivating(true);
     try {
         const codeInput = promoCode.trim().toUpperCase();
-        const codeRef = doc(firestore, 'promoCodes', codeInput);
-        const codeSnap = await getDoc(codeRef);
+        const codeRef = ref(database, `promoCodes/${codeInput}`);
+        const codeSnap = await get(codeRef);
         
         if (!codeSnap.exists()) {
-            toast({ variant: "destructive", title: "كود غير صالح", description: "الكود الذي أدخلته غير موجود في النظام." });
+            toast({ variant: "destructive", title: "كود غير صالح", description: "الكود الذي أدخلته غير موجود في النظام السحابي." });
             return;
         }
 
-        const codeData = codeSnap.data();
+        const codeData = codeSnap.val();
         if (codeData.isUsed) {
             toast({ variant: "destructive", title: "كود مستخدم", description: "هذا الكود تم استخدامه مسبقاً." });
             return;
         }
 
-        // 1. تحديث الكود ليصبح مستخدماً
-        await updateDoc(codeRef, {
+        // 1. تحديث الكود في RTDB
+        await update(codeRef, {
             isUsed: true,
             usedBy: user.uid,
-            usedAt: serverTimestamp()
+            usedAt: Date.now()
         });
 
-        // 2. تفعيل وضع Ad-Free للمستخدم
+        // 2. تفعيل وضع Ad-Free في RTDB (لإخفاء الإعلانات فوراً)
+        await update(ref(database, `users/${user.uid}`), {
+            isAdFree: true,
+            adFreeActivatedAt: Date.now()
+        });
+
+        // 3. مزامنة الحالة مع Firestore (للسجلات الدائمة)
         await updateDoc(doc(firestore, 'users', user.uid), {
             isAdFree: true,
             adFreeActivatedAt: serverTimestamp()
         });
 
+        setIsAdFree(true);
         toast({ title: "تم التفعيل بنجاح!", description: "لقد أصبحت الآن مستخدماً احترافياً (PRO) مدى الحياة." });
         setPromoCode('');
     } catch (e) {
-        toast({ variant: "destructive", title: "خطأ في التفعيل", description: "تأكد من جودة اتصالك بالإنترنت وصلاحية الكود." });
+        toast({ variant: "destructive", title: "خطأ في التفعيل", description: "تأكد من جودة اتصالك بالإنترنت." });
     } finally {
         setIsActivating(false);
     }
   };
 
   const handleShare = async () => {
-    const appUrl = config.techStoreUrl;
+    const appUrl = config.techStoreUrl || '#';
     if (navigator.share) {
       try {
         await navigator.share({
@@ -120,8 +133,6 @@ export default function SettingsPage() {
     }
   };
 
-  const techStoreLogo = 'https://www.appcreator24.com/srv/imgs/gen/3879946_ico.png?v=5';
-  
   return (
     <div className="flex flex-col gap-8 max-w-2xl mx-auto pb-24 px-4">
       <div className="flex justify-between items-start">
@@ -200,12 +211,11 @@ export default function SettingsPage() {
                 </div>
                 <div>
                     <h4 className="text-lg font-black text-emerald-800">حساب احترافي نشط (PRO)</h4>
-                    <p className="text-xs text-emerald-600 font-bold">تهانينا! أنت الآن في النسخة الخالية من الإعلانات تماماً.</p>
+                    <p className="text-xs text-emerald-600 font-bold">تهانينا! أنت الآن في النسخة السحابية الخالية من الإعلانات.</p>
                 </div>
             </div>
         )}
 
-        {/* قسم الحساب */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
@@ -235,7 +245,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* معلومات التطبيق */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -263,7 +272,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* المظهر */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -282,7 +290,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* مشاركة وتواصل */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -326,23 +333,12 @@ export default function SettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      `}</style>
     </div>
   );
 }
-
-const UserCircle = ({ className }: { className?: string }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-        className={className}
-    >
-        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
-    </svg>
-);

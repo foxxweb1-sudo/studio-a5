@@ -2,20 +2,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useDatabase } from '@/firebase';
+import { ref, onValue } from 'firebase/database';
 
 /**
- * مكون إعلان البانر 468x60 - يراقب Firestore لإخفاء الإعلان للمشتركين
+ * مكون إعلان البانر 468x60 - يراقب Realtime Database لإخفاء الإعلان سحابياً
  */
 export function BannerAd() {
   const { user } = useUser();
-  const firestore = useFirestore();
-  
-  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: userProfile } = useDoc<any>(userRef);
+  const database = useDatabase();
+  const [isAdFree, setIsAdFree] = useState(false);
 
-  const isAdFree = !!userProfile?.isAdFree;
+  useEffect(() => {
+    if (!user || !database) return;
+
+    const adStatusRef = ref(database, `users/${user.uid}/isAdFree`);
+    const unsubscribe = onValue(adStatusRef, (snapshot) => {
+      setIsAdFree(!!snapshot.val());
+    });
+
+    return () => unsubscribe();
+  }, [user, database]);
 
   useEffect(() => {
     if (isAdFree) return;
@@ -44,23 +51,30 @@ export function BannerAd() {
 
   return (
     <div className="flex flex-col items-center w-full my-8 overflow-hidden min-h-[80px]">
-      <span className="text-[9px] text-muted-foreground font-black mb-1.5 uppercase tracking-[0.2em] opacity-60">مادة إعلانية</span>
+      <span className="text-[9px] text-muted-foreground font-black mb-1.5 uppercase tracking-[0.2em] opacity-60">مادة إعلانية سحابية</span>
       <div id="ad-banner-slot" className="max-w-full rounded-xl overflow-hidden shadow-sm" />
     </div>
   );
 }
 
 /**
- * مكون الإعلان المخصص (Native) - يراقب Firestore لإخفاء الإعلان للمشتركين
+ * مكون الإعلان المخصص (Native) - يراقب Realtime Database لإخفاء الإعلان سحابياً
  */
 export function NativeArticleAd() {
   const { user } = useUser();
-  const firestore = useFirestore();
+  const database = useDatabase();
+  const [isAdFree, setIsAdFree] = useState(false);
 
-  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: userProfile } = useDoc<any>(userRef);
+  useEffect(() => {
+    if (!user || !database) return;
 
-  const isAdFree = !!userProfile?.isAdFree;
+    const adStatusRef = ref(database, `users/${user.uid}/isAdFree`);
+    const unsubscribe = onValue(adStatusRef, (snapshot) => {
+      setIsAdFree(!!snapshot.val());
+    });
+
+    return () => unsubscribe();
+  }, [user, database]);
 
   useEffect(() => {
     if (isAdFree) return;
@@ -80,7 +94,7 @@ export function NativeArticleAd() {
 
   return (
     <div className="w-full my-12 flex flex-col items-center">
-      <span className="text-[9px] text-muted-foreground font-black mb-2 uppercase tracking-[0.2em] opacity-60">مادة إعلانية</span>
+      <span className="text-[9px] text-muted-foreground font-black mb-2 uppercase tracking-[0.2em] opacity-60">مادة إعلانية سحابية</span>
       <div className="w-full bg-white/5 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-inner">
         <div id="container-e4a3dd200a382fdfe17a5ede528a2491"></div>
       </div>

@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { useUser, useDatabase } from '@/firebase';
+import { ref, onValue, set, remove, serverTimestamp, query, orderByChild } from 'firebase/database';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,21 +37,37 @@ import {
 export default function AdminPromoCodesPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const database = useDatabase();
   const { toast } = useToast();
   
   const [newCode, setNewCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [codes, setCodes] = useState<any[]>([]);
+  const [isLoadingCodes, setIsLoadingCodes] = useState(true);
 
-  const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  const codesQuery = useMemoFirebase(() => 
-    (firestore && isAdmin) ? query(collection(firestore, 'promoCodes'), orderBy('createdAt', 'desc')) : null,
-  [firestore, isAdmin]);
+  useEffect(() => {
+    if (!database || !isAdmin) return;
 
-  const { data: codes, isLoading: isLoadingCodes } = useCollection<any>(codesQuery);
+    const codesRef = ref(database, 'promoCodes');
+    const unsubscribe = onValue(codesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.entries(data).map(([key, val]: [string, any]) => ({
+          id: key,
+          ...val
+        })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setCodes(list);
+      } else {
+        setCodes([]);
+      }
+      setIsLoadingCodes(false);
+    });
 
-  // دالة لتوليد كود عشوائي
+    return () => unsubscribe();
+  }, [database, isAdmin]);
+
   const generateRandomId = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let result = '';
@@ -66,33 +82,32 @@ export default function AdminPromoCodesPage() {
   };
 
   const handleSaveCode = async () => {
-    if (!firestore || !isAdmin) return;
+    if (!database || !isAdmin) return;
 
-    // إذا كان الحقل فارغاً، نولد كوداً فورياً
     const codeToUse = newCode.trim().toUpperCase() || generateRandomId();
 
     setIsGenerating(true);
     try {
-      const codeRef = doc(firestore, 'promoCodes', codeToUse);
-      await setDoc(codeRef, {
+      const codeRef = ref(database, `promoCodes/${codeToUse}`);
+      await set(codeRef, {
         code: codeToUse,
         isUsed: false,
-        createdAt: serverTimestamp(),
+        createdAt: Date.now(),
         createdBy: user?.uid
       });
-      toast({ title: "تم إنشاء الكود بنجاح", description: `الكود ${codeToUse} جاهز للاستخدام في Firestore.` });
+      toast({ title: "تم إنشاء الكود بنجاح", description: `الكود ${codeToUse} جاهز الآن في النظام اللحظي.` });
       setNewCode('');
     } catch (error) {
-      toast({ variant: "destructive", title: "فشل الإنشاء", description: "تأكد من صلاحيات المدير." });
+      toast({ variant: "destructive", title: "فشل الإنشاء", description: "تأكد من اتصالك بالإنترنت." });
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleDeleteCode = async (id: string) => {
-    if (!firestore) return;
+    if (!database) return;
     try {
-      await deleteDoc(doc(firestore, 'promoCodes', id));
+      await remove(ref(database, `promoCodes/${id}`));
       toast({ title: "تم حذف الكود" });
     } catch (e) {
       toast({ variant: "destructive", title: "فشل الحذف" });
@@ -104,13 +119,18 @@ export default function AdminPromoCodesPage() {
     toast({ title: "تم النسخ للحافظة" });
   };
 
-  if (isUserLoading || !isAdmin) {
+  if (isUserLoading) {
     return (
         <div className="flex flex-col items-center justify-center h-screen gap-4">
             <Loader2 className="animate-spin h-10 w-10 text-primary" />
-            <p className="font-bold text-slate-400">جاري التحقق من الهوية الإدارية...</p>
+            <p className="font-bold text-slate-400">جاري التحقق من الهوية...</p>
         </div>
     );
+  }
+
+  if (!isAdmin) {
+    router.push('/');
+    return null;
   }
 
   return (
@@ -121,9 +141,9 @@ export default function AdminPromoCodesPage() {
             <div className="p-3 bg-indigo-500/10 rounded-2xl shadow-inner">
                <Ticket className="h-6 w-6" />
             </div>
-            <PageHeaderTitle className="text-3xl font-black">إدارة الأكواد (Firestore)</PageHeaderTitle>
+            <PageHeaderTitle className="text-3xl font-black">إدارة الأكواد (RTDB)</PageHeaderTitle>
           </div>
-          <PageHeaderDescription>توليد وإدارة أكواد تفعيل باقة الـ PRO في قاعدة البيانات الرئيسية.</PageHeaderDescription>
+          <PageHeaderDescription>توليد وإدارة أكواد تفعيل باقة الـ PRO في النظام اللحظي السحابي.</PageHeaderDescription>
         </PageHeader>
         <Button variant="outline" onClick={() => router.push('/admin')} className="rounded-xl h-12 px-6 font-bold border-indigo-100 hover:bg-indigo-50">
           <ArrowLeft className="ms-2 h-4 w-4" />
@@ -163,7 +183,7 @@ export default function AdminPromoCodesPage() {
                     {isGenerating ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-6 w-6 group-hover:rotate-90 transition-transform" />}
                     اعتماد وحفظ الكود
                 </Button>
-                <p className="text-[9px] text-center text-slate-500 font-bold">عند الضغط، سيتم إنشاء الكود فوراً في Firestore ليصبح متاحاً للمستخدمين.</p>
+                <p className="text-[9px] text-center text-slate-500 font-bold">عند الضغط، سيتم إنشاء الكود فوراً في السحاب ليصبح متاحاً للمستخدمين.</p>
             </CardContent>
         </Card>
 
@@ -174,18 +194,18 @@ export default function AdminPromoCodesPage() {
                         <div className="p-2 bg-white rounded-xl shadow-sm">
                             <RefreshCw className="h-5 w-5 text-indigo-500" />
                         </div>
-                        <CardTitle className="text-xl font-black">سجل الأكواد</CardTitle>
+                        <CardTitle className="text-xl font-black">سجل الأكواد اللحظي</CardTitle>
                     </div>
-                    <Badge variant="outline" className="rounded-full px-4 py-1.5 font-black bg-white border-indigo-100 text-indigo-600">{codes?.length || 0} كود مسجل</Badge>
+                    <Badge variant="outline" className="rounded-full px-4 py-1.5 font-black bg-white border-indigo-100 text-indigo-600">{codes.length} كود مسجل</Badge>
                 </div>
             </CardHeader>
             <CardContent className="p-0">
                 {isLoadingCodes ? (
                     <div className="py-24 text-center">
                         <Loader2 className="animate-spin inline-block h-10 w-10 text-indigo-200" />
-                        <p className="text-slate-400 font-bold mt-4">جاري تحميل البيانات...</p>
+                        <p className="text-slate-400 font-bold mt-4">جاري تحميل البيانات من السحابة...</p>
                     </div>
-                ) : (codes && codes.length > 0) ? (
+                ) : (codes.length > 0) ? (
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>

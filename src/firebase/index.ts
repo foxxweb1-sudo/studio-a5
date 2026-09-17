@@ -31,9 +31,9 @@ export function initializeFirebase() {
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
-  // استخدام getFirestore التقليدي لضمان الاستقرار ومنع خطأ "Already Initialized"
   const firestore = getFirestore(firebaseApp);
   const auth = getAuth(firebaseApp);
+  // ربط الـ RTDB بالرابط السحابي المخصص
   const database = getDatabase(firebaseApp, "https://studio-6098024039-4334b-default-rtdb.firebaseio.com/");
 
   return {

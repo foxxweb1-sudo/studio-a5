@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "promoCodes": {
+      // فقط المدير يمكنه عرض قائمة كافة الأكواد
+      ".read": "auth != null && auth.token.email === 'cybenode.site@gmail.com'",
+      "$codeId": {
+        // أي مستخدم مسجل يمكنه قراءة كود معين للتحقق منه وتفعيله
+        ".read": "auth != null",
+        // المدير يمكنه الكتابة دائماً، والمستخدم يمكنه فقط تحديث الكود لجعله "مستخدماً"
+        ".write": "auth != null && (auth.token.email === 'cybenode.site@gmail.com' || (data.exists() && data.child('isUsed').val() === false))"
+      }
+    },
+    "users": {
+      "$userId": {
+        // المستخدم يمكنه رؤية حالته (بدون إعلانات) والمدير يمكنه رؤية الجميع
+        ".read": "auth != null && (auth.uid === $userId || auth.token.email === 'cybenode.site@gmail.com')",
+        // المستخدم يمكنه تحديث بياناته والمدير يمكنه التعديل أيضاً
+        ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'cybenode.site@gmail.com')"
+      }
+    },
+    "portal": {
+      // القراءة العامة لتقارير الطلاب (بوابة الأهل)
+      ".read": "true",
+      "$teacherId": {
+        // المعلم والمدير فقط يمكنهما تحديث بيانات البوابة
+        ".write": "auth != null && (auth.uid === $teacherId || auth.token.email === 'cybenode.site@gmail.com')"
+      }
+    }
+  }
+}

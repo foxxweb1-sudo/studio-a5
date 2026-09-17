@@ -59,6 +59,8 @@ export default function RootLayout({
         <meta name="yandex-verification" content="0faaccb6c44771f0" />
         <meta name="google-site-verification" content="-DbtwtLAsT3hmizJuQZ9XTSdTSRjJUEWIs-au398y3w" />
       </head>
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4623312192017580"
+     crossorigin="anonymous"></script>
       <body className="font-body antialiased">
         <Script id="register-sw">
           {`

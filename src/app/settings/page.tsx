@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
@@ -101,10 +100,16 @@ export default function SettingsPage() {
             isAdFree: true,
             adFreeActivatedAt: serverTimestamp()
         });
+        
+        // 4. حفظ الحالة محلياً للسرعة القصوى
+        localStorage.setItem(`adfree_${user.uid}`, 'true');
 
         setIsAdFree(true);
         toast({ title: "تم التفعيل بنجاح!", description: "لقد أصبحت الآن مستخدماً احترافياً (PRO) مدى الحياة." });
         setPromoCode('');
+        
+        // إعادة تحميل بسيطة لتأكيد تنظيف السكربتات
+        setTimeout(() => window.location.reload(), 1500);
     } catch (e) {
         toast({ variant: "destructive", title: "خطأ في التفعيل", description: "تأكد من جودة اتصالك بالإنترنت." });
     } finally {

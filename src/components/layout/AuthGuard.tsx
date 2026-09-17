@@ -4,7 +4,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useDatabase } from "@/f
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
-import { ref, update } from "firebase/database";
+import { ref, update, get } from "firebase/database";
 import { Ban } from "lucide-react";
 import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
@@ -34,15 +34,26 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   [user, firestore]);
   const { data: deletionRequest, isLoading: isDeletionLoading } = useDoc<any>(deletionDocRef);
 
-  // مزامنة حالة "بدون إعلانات" إلى RTDB عند الدخول لضمان اختفائها فوراً
+  // مزامنة حالة "بدون إعلانات" إلى RTDB وضمان وجود قيمة افتراضية
   useEffect(() => {
-    if (user && userProfile && database && !hasSyncedRTDB.current) {
-        if (userProfile.isAdFree) {
-            update(ref(database, `users/${user.uid}`), {
-                isAdFree: true,
-                adFreeActivatedAt: userProfile.adFreeActivatedAt?.toDate ? userProfile.adFreeActivatedAt.toDate().getTime() : Date.now()
-            });
-        }
+    if (user && database && !hasSyncedRTDB.current) {
+        const userAdRef = ref(database, `users/${user.uid}/isAdFree`);
+        
+        get(userAdRef).then((snap) => {
+            if (!snap.exists()) {
+                // إذا لم تكن القيمة موجودة في RTDB، نضع القيمة من Firestore أو false افتراضياً
+                update(ref(database, `users/${user.uid}`), {
+                    isAdFree: userProfile?.isAdFree || false,
+                    lastLogin: Date.now()
+                });
+            } else if (userProfile?.isAdFree && !snap.val()) {
+                // إذا كان محترفاً في Firestore ولكن ليس في RTDB (تزامن متأخر)
+                update(ref(database, `users/${user.uid}`), {
+                    isAdFree: true
+                });
+            }
+        });
+        
         hasSyncedRTDB.current = true;
     }
   }, [user, userProfile, database]);

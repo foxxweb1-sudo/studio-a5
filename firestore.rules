@@ -4,7 +4,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // دالة التحقق من هوية المدير الرئيسي
+    // دالة التحقق من هوية المدير الرئيسي لـ CybeNode
     // تم التحديث لضمان مطابقة البريد الإلكتروني بدقة وحل مشكلة الصلاحيات
     function isOwner() {
       return request.auth != null && 
@@ -12,7 +12,7 @@ service cloud.firestore {
              request.auth.token.email == 'cybenode.site@gmail.com';
     }
 
-    // 1. القراءة العامة لكافة سجلات الطلاب (الحضور، المدفوعات، الامتحانات، والبيانات)
+    // 1. القراءة العامة لكافة سجلات الطلاب (المزامنة، وبوابة الأهل)
     match /{path=**}/students/{id} { allow read: if true; }
     match /{path=**}/attendance/{id} { allow read: if true; }
     match /{path=**}/payments/{id} { allow read: if true; }
@@ -54,13 +54,11 @@ service cloud.firestore {
     }
 
     // 4. نظام الأكواد الترويجية (Admin Only)
-    // تم الفصل بين 'list' للمدير و 'get' للمستخدم لضمان أعلى مستويات الأمان والأداء
+    // تم تحديث القاعدة لتسمح بـ 'list' للمدير بشكل صريح ومباشر
     match /promoCodes/{codeId} {
-      // السماح للمدير بالعرض (List) والحذف والإنشاء
-      allow list, create, delete, update: if isOwner();
-      // السماح للمدير أيضاً بالقراءة الفردية
-      allow get: if isOwner();
-      // السماح للمستخدم العادي بجلب كود واحد فقط للتحقق منه عند التفعيل
+      // المالك لديه صلاحية القراءة والكتابة الكاملة (تشمل list و get)
+      allow read, write: if isOwner();
+      // المستخدم العادي يمكنه جلب كود واحد فقط للتحقق منه عند التفعيل
       allow get: if request.auth != null;
     }
 

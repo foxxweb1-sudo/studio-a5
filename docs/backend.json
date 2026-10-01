@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -19,23 +18,10 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email"]
-    },
-    "PromoCode": {
-      "title": "PromoCode",
-      "description": "Subscription code for Personal Assistant.",
-      "type": "object",
-      "properties": {
-        "code": { "type": "string" },
-        "isUsed": { "type": "boolean" },
-        "usedBy": { "type": "string" },
-        "usedAt": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
     }
   },
   "auth": { "providers": ["password", "google.com"] },
   "firestore": {
-    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "User profiles" },
-    "/promoCodes/{codeId}": { "schema": { "$ref": "#/entities/PromoCode" }, "description": "Activation codes" }
+    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "User profiles" }
   }
 }

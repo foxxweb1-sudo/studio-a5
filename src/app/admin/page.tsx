@@ -1,12 +1,11 @@
-
 'use client';
 
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/firestore';
+import { collection, onSnapshot, collectionGroup } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Users, UserCircle, Database, Settings, BadgeCheck, ShieldCheck, Zap, Key } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, UserCircle, Database, Settings, BadgeCheck, ShieldCheck, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -39,7 +38,6 @@ export default function AdminPage() {
   if (isUserLoading || !isAdmin) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>;
 
   const verifiedCount = users.filter(u => u.isVerified).length;
-  const proUsersCount = users.filter(u => u.hasAssistantPackage).length;
 
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-7xl mx-auto px-4">
@@ -51,12 +49,9 @@ export default function AdminPage() {
             </div>
             <PageHeaderTitle className="text-3xl font-black">لوحة التحكم العليا</PageHeaderTitle>
           </div>
-          <PageHeaderDescription>إدارة المعلمين، الطلاب، والأكواد المعتمدة.</PageHeaderDescription>
+          <PageHeaderDescription>إدارة المعلمين، الطلاب، وإعدادات المنصة.</PageHeaderDescription>
         </PageHeader>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => router.push('/admin/promo')} className="rounded-xl font-bold gap-2 h-11 border-amber-200 text-amber-600">
-              <Key className="h-4 w-4" /> الأكواد
-          </Button>
           <Button variant="outline" onClick={() => router.push('/admin/settings')} className="rounded-xl font-bold gap-2 h-11 border-primary/20">
               <Settings className="h-4 w-4" /> الإعدادات
           </Button>
@@ -66,9 +61,8 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label="المعلمين" value={users.filter(u => !u.isAssistant).length} icon={UserCircle} color="text-purple-500" bg="bg-purple-50" />
-        <StatCard label="مشتركي الباقة" value={proUsersCount} icon={Zap} color="text-amber-500" bg="bg-amber-50" />
         <StatCard label="حسابات موثقة" value={verifiedCount} icon={BadgeCheck} color="text-emerald-500" bg="bg-emerald-50" />
         <StatCard label="إجمالي الطلاب" value={allStudentsCount} icon={Users} color="text-blue-500" bg="bg-blue-50" />
       </div>
@@ -76,7 +70,6 @@ export default function AdminPage() {
        <Tabs defaultValue="users" className="w-full">
             <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-8 w-full flex overflow-x-auto justify-start h-auto gap-1">
                 <TabsTrigger value="users" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial">إدارة المعلمين</TabsTrigger>
-                <TabsTrigger value="pro-users" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial">مشتركي الباقة</TabsTrigger>
                 <TabsTrigger value="teacher-uids" className="rounded-xl px-8 py-3 font-black flex-1 sm:flex-initial">سجلات البيانات</TabsTrigger>
             </TabsList>
             
@@ -84,26 +77,6 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {users.filter(u => !u.isAssistant).map((u) => (
                         <UserCard key={u.id} user={u} toggleBlock={toggleUserBlock} toggleVerify={toggleUserVerify} />
-                    ))}
-                </div>
-            </TabsContent>
-
-            <TabsContent value="pro-users">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {users.filter(u => u.hasAssistantPackage).map((u) => (
-                        <Card key={u.id} className="border-0 shadow-sm rounded-3xl bg-white border-r-4 border-amber-500 overflow-hidden">
-                            <CardContent className="p-6 flex items-center gap-4">
-                                <Avatar className="h-12 w-12">
-                                    <AvatarImage src={u.photoURL} />
-                                    <AvatarFallback>{u.displayName?.substring(0, 1)}</AvatarFallback>
-                                </Avatar>
-                                <div className="overflow-hidden">
-                                    <h4 className="font-black text-sm truncate">{u.displayName}</h4>
-                                    <p className="text-[10px] text-slate-400 truncate">{u.email}</p>
-                                    <Badge variant="outline" className="mt-2 text-[8px] border-amber-200 text-amber-600 font-black">باقة نشطة</Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
                     ))}
                 </div>
             </TabsContent>

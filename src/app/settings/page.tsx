@@ -1,14 +1,11 @@
-
 'use client';
 
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Info, Share2, Palette, AppWindow, ChevronLeft, Tag, UserCircle, Zap, Star } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, UserCircle, Palette, Zap, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useToast } from '@/hooks/use-toast';
-import { useAppConfig } from '@/hooks/use-app-config';
 import { useUser } from '@/firebase';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -17,8 +14,6 @@ import Link from 'next/link';
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { toast } = useToast();
-  const { config } = useAppConfig();
   const { user } = useUser();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
@@ -28,27 +23,6 @@ export default function SettingsPage() {
       setShowAuthDialog(true);
     } else {
       router.push(href);
-    }
-  };
-
-  const handleShare = async () => {
-    const appUrl = config.techStoreUrl || '#';
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: config.appName,
-          text: `قم بتحميل تطبيق ${config.appName} لإدارة الطلاب والمدفوعات بسهولة.`,
-          url: appUrl,
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-      }
-    } else {
-      navigator.clipboard.writeText(appUrl);
-      toast({
-        title: 'تم نسخ الرابط',
-        description: 'تم نسخ رابط المتجر إلى الحافظة.',
-      });
     }
   };
 
@@ -70,8 +44,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-8">
-        
-        {/* رابط باقة المساعد بدلاً من المربع المباشر */}
         <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-[2.5rem] overflow-hidden group">
           <CardContent className="p-8 space-y-6">
             <div className="flex items-center gap-4">
@@ -80,14 +52,14 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-2xl font-black">باقة المساعد الشخصي</h3>
-                <p className="text-xs font-bold opacity-80">اشترك الآن أو فعل الكود الخاص بك لإدارة حسابك بذكاء.</p>
+                <p className="text-xs font-bold opacity-80">احصل على مساعد متخصص يدير لك حسابك بذكاء.</p>
               </div>
             </div>
             
             <Button asChild className="w-full h-14 rounded-2xl bg-white text-orange-600 hover:bg-slate-50 font-black text-lg gap-2 shadow-2xl">
               <Link href="/plans">
                 <Star className="h-5 w-5 fill-current" />
-                تفعيل الكود أو الاشتراك
+                عرض تفاصيل الباقة
               </Link>
             </Button>
           </CardContent>
@@ -139,12 +111,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="text-center pt-8">
-            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                Powered by <span className="text-primary font-black">CybeNode</span>
-            </p>
-        </div>
       </div>
 
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>

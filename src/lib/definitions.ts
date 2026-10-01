@@ -1,4 +1,3 @@
-
 import { FieldValue } from "firebase/firestore";
 
 export type UserProfile = {
@@ -16,15 +15,6 @@ export type UserProfile = {
   hasAssistantPackage?: boolean;
   assistantExpiresAt?: any;
   lastLogin?: FieldValue;
-};
-
-export type PromoCode = {
-  id: string;
-  code: string;
-  isUsed: boolean;
-  usedBy?: string;
-  usedAt?: any;
-  createdAt: FieldValue;
 };
 
 export type ScheduleSession = {

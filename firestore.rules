@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -12,13 +11,6 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // التحقق مما إذا كان المستخدم الحالي هو المعلم المسؤول عن هذا المساعد
-    function isTeacherOf(assistantId) {
-      let assistantDoc = get(/databases/$(database)/documents/users/$(assistantId)).data;
-      return assistantDoc.assignedTeacherId == request.auth.uid;
-    }
-
-    // التحقق مما إذا كان المستخدم الحالي هو مساعد لهذا المعلم
     function isAssistantOf(teacherId) {
       let userDoc = getUserData();
       return request.auth != null && 
@@ -26,21 +18,17 @@ service cloud.firestore {
              userDoc.assignedTeacherId == teacherId;
     }
 
-    // 1. قواعد المستخدمين والمعلمين
     match /users/{userId} {
-      // السماح بالقراءة: لصاحب الحساب، المدير، أو الطرف المرتبط (معلم/مساعد)
       allow read: if request.auth != null && (
         request.auth.uid == userId || 
         isOwner() || 
         isAssistantOf(userId) ||
-        (resource == null) // للسماح بالتحقق أثناء التسجيل
+        (resource == null)
       );
       
-      // السماح بالكتابة: لصاحب الحساب، المدير، أو المعلم الذي ينشئ حساب مساعده
       allow write: if request.auth != null && (
         request.auth.uid == userId || 
-        isOwner() ||
-        (request.resource.data.isAssistant == true && request.resource.data.assignedTeacherId == request.auth.uid)
+        isOwner()
       );
       
       match /{allSub=**} {
@@ -52,23 +40,13 @@ service cloud.firestore {
       }
     }
 
-    // السماح للمدير بقراءة كافة المجموعات الفرعية للإحصائيات
     match /{path=**}/students/{id} { allow read: if isOwner(); }
     match /{path=**}/attendance/{id} { allow read: if isOwner(); }
     match /{path=**}/payments/{id} { allow read: if isOwner(); }
     match /{path=**}/exams/{id} { allow read: if isOwner(); }
 
-    // 2. الأكواد الترويجية
-    match /promoCodes/{id} {
-      allow read: if request.auth != null;
-      // السماح بتحديث الكود فقط إذا كان غير مستخدم
-      allow update: if request.auth != null && resource.data.isUsed == false;
-      allow write: if isOwner();
-    }
-
     match /appConfig/{id} { allow read: if true; allow write: if isOwner(); }
     match /deletionRequests/{id} { allow read, write: if request.auth != null && (request.auth.uid == id || isOwner()); }
-    match /reviewPermissions/{id} { allow read: if request.auth != null && request.auth.uid == id; allow write: if isOwner(); }
     match /reviews/{id} { allow read: if true; allow write: if request.auth != null; }
   }
 }

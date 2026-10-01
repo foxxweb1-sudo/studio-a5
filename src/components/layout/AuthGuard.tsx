@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
@@ -9,7 +10,7 @@ import { Button } from "../ui/button";
 import { signOut, deleteUser } from "firebase/auth";
 import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { ADMIN_EMAIL } from "@/lib/constants";
+import { ADMIN_EMAILS } from "@/lib/constants";
 import SplashScreen from "./SplashScreen";
 import PhoneSetupPopup from "../features/account/PhoneSetupPopup";
 
@@ -81,7 +82,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return <SplashScreen />;
   }
 
-  const isSuperAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isSuperAdmin = !!user?.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
 
   if (user && userProfile?.isBlocked && !isSuperAdmin) {
     return (

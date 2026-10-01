@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useUser, useFirestore } from '@/firebase';
 import { useAppConfig } from '@/hooks/use-app-config';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, useRef, Suspense } from 'react';
-import { ADMIN_EMAIL } from '@/lib/constants';
+import { ADMIN_EMAILS } from '@/lib/constants';
 import { PageHeader, PageHeaderTitle, PageHeaderDescription } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,9 @@ function SettingsContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentUploadField = useRef<string | null>(null);
 
-  const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
+  const isAdmin = useMemo(() => 
+    !!user?.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase())
+  , [user]);
 
   useEffect(() => {
     if (isUserLoading) return;

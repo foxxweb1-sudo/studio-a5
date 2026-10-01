@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,7 +24,7 @@ import { ar } from 'date-fns/locale';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { ADMIN_EMAIL } from '@/lib/constants';
+import { ADMIN_EMAILS } from '@/lib/constants';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,7 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = !!user?.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
 
   const handleSignOut = () => {
     firebaseSignOut(auth).then(() => {

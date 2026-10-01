@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
@@ -9,7 +10,7 @@ import { ArrowLeft, Loader2, Users, UserCircle, Database, Settings, BadgeCheck, 
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ADMIN_EMAIL } from '@/lib/constants';
+import { ADMIN_EMAILS } from '@/lib/constants';
 import Link from 'next/link';
 import { useAllUsers } from '@/hooks/use-app-data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,7 +24,9 @@ export default function AdminPage() {
   const [allStudentsCount, setAllStudentsCount] = useState(0);
   const { users, isLoading: usersLoading, toggleUserBlock, toggleUserVerify } = useAllUsers();
 
-  const isAdmin = useMemo(() => user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase(), [user]);
+  const isAdmin = useMemo(() => 
+    !!user?.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase())
+  , [user]);
 
   useEffect(() => {
     if (isUserLoading || !isAdmin || !firestore) return;

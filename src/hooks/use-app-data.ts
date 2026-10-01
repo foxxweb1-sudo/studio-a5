@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useDatabase } from "@/firebase";
 import { Student, AttendanceRecord, PaymentRecord, UserProfile, WorkingSchedule, PaymentConfig, ExamResult } from "@/lib/definitions";
 import { collection, addDoc, doc, serverTimestamp, updateDoc, deleteDoc, query, orderBy, setDoc, onSnapshot } from "firebase/firestore";
 import { format } from 'date-fns';
-import { ADMIN_EMAIL } from "@/lib/constants";
+import { ADMIN_EMAILS } from "@/lib/constants";
 import { useEffect, useState } from "react";
 
 export function useTargetUid() {
@@ -39,7 +40,7 @@ export function useTargetUid() {
 export function useAllUsers() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = !!user?.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
 
   const usersQuery = useMemoFirebase(() => 
     (firestore && isAdmin && user) ? collection(firestore, 'users') : null,

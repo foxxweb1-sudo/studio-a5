@@ -13,8 +13,7 @@ export type UserProfile = {
   isVerified?: boolean;
   isAssistant?: boolean;
   assignedTeacherId?: string;
-  assistantEmail?: string;
-  assistantPassword?: string;
+  hasAssistantPackage?: boolean;
   assistantExpiresAt?: any;
   lastLogin?: FieldValue;
 };

@@ -31,7 +31,7 @@ import { UserPlus, Loader2, User, Eye, EyeOff, Mail as MailIcon, Image as ImageI
 import Image from "next/image";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { doc, setDoc, serverTimestamp, getDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -102,49 +102,28 @@ export default function SignUp() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      // 1. التحقق الفوري من وجود مستند مساعد مسبق (Pre-registration)
-      const assistantDocRef = doc(firestore, 'users', values.email.toLowerCase());
-      const assistantSnap = await getDoc(assistantDocRef);
-      const preExistingAssistant = assistantSnap.exists() ? assistantSnap.data() : null;
-
-      // 2. إنشاء الحساب في Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const fullPhone = `+${values.countryCode}${values.phone.replace(/\D/g, '')}`;
       
-      const finalDisplayName = preExistingAssistant ? preExistingAssistant.displayName : values.displayName;
-
       await updateProfile(userCredential.user, {
-        displayName: finalDisplayName,
+        displayName: values.displayName,
         photoURL: values.photoURL
       });
 
-      // 3. تحديث أو إنشاء مستند المستخدم في Firestore
-      if (preExistingAssistant) {
-        // إذا كان مساعداً، نقوم بتحديث المستند الموجود وربطه بالـ Auth UID
-        await updateDoc(assistantDocRef, {
-            uid: userCredential.user.uid,
-            lastLogin: serverTimestamp(),
-            photoURL: values.photoURL,
-            phone: fullPhone,
-            updatedAt: serverTimestamp()
-        });
-      } else {
-        // حساب معلم عادي
-        await setDoc(doc(firestore, 'users', userCredential.user.uid), {
-            uid: userCredential.user.uid,
-            email: values.email,
-            displayName: values.displayName,
-            photoURL: values.photoURL,
-            phone: fullPhone,
-            paymentTiming: values.paymentTiming,
-            createdAt: serverTimestamp(),
-            lastLogin: serverTimestamp(),
-        });
-      }
+      await setDoc(doc(firestore, 'users', userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: values.email,
+          displayName: values.displayName,
+          photoURL: values.photoURL,
+          phone: fullPhone,
+          paymentTiming: values.paymentTiming,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+      });
 
       toast({
         title: "تم إنشاء الحساب بنجاح",
-        description: `مرحباً بك في نظام ${config.appName}، جاري توجيهك...`,
+        description: `مرحباً بك في نظام ${config.appName}.`,
       });
       router.push('/');
     } catch (error: any) {
@@ -152,7 +131,7 @@ export default function SignUp() {
       toast({
         variant: "destructive",
         title: "خطأ في التسجيل",
-        description: error.code === 'auth/email-already-in-use' ? "هذا البريد مسجل مسبقاً." : "فشل إنشاء الحساب، يرجى مراجعة البيانات.",
+        description: error.code === 'auth/email-already-in-use' ? "هذا البريد مسجل مسبقاً." : "فشل إنشاء الحساب.",
       });
     } finally {
       setIsLoading(false);
@@ -167,14 +146,14 @@ export default function SignUp() {
       await signInWithPopup(auth, provider);
       toast({
         title: "تم التسجيل بنجاح",
-        description: `مرحباً بك في نظام ${config.appName} عبر حساب جوجل.`,
+        description: `مرحباً بك في نظام ${config.appName} عبر جوجل.`,
       });
       router.push('/');
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "فشل التسجيل بجوجل",
-        description: "حدث خطأ أو تم إلغاء العملية.",
+        title: "فشل التسجيل",
+        description: "حدث خطأ أثناء المحاولة.",
       });
     } finally {
       setIsGoogleLoading(false);
@@ -276,11 +255,8 @@ export default function SignUp() {
                               <SelectItem value="966">+966</SelectItem>
                               <SelectItem value="971">+971</SelectItem>
                               <SelectItem value="965">+965</SelectItem>
-                              <SelectItem value="212">+212</SelectItem>
-                              <SelectItem value="213">+213</SelectItem>
                             </SelectContent>
                           </Select>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -308,7 +284,7 @@ export default function SignUp() {
                 render={({ field }) => (
                   <FormItem className="space-y-3">
                     <FormLabel className="font-black text-[10px] uppercase tracking-widest text-white/60 px-1 flex items-center gap-2">
-                        <Wallet className="h-3 w-3" /> موعد تحصيل الرسوم من الطلاب
+                        <Wallet className="h-3 w-3" /> موعد تحصيل الرسوم
                     </FormLabel>
                     <FormControl>
                       <RadioGroup
@@ -330,7 +306,6 @@ export default function SignUp() {
                         </div>
                       </RadioGroup>
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -340,13 +315,13 @@ export default function SignUp() {
                 name="photoURL"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-black text-[10px] uppercase tracking-widest text-white/60 px-1">الصورة الشخصية (إلزامية)</FormLabel>
+                    <FormLabel className="font-black text-[10px] uppercase tracking-widest text-white/60 px-1">الصورة الشخصية</FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
                         <div className="relative flex-grow">
                             <ImageIcon className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
                             <Input
-                                placeholder="ارفع صورتك الرسمية..."
+                                placeholder="ارفع صورتك..."
                                 className="pr-12 rounded-2xl h-14 bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:bg-white/10 text-[10px] font-mono transition-all"
                                 {...field}
                                 readOnly
@@ -365,7 +340,6 @@ export default function SignUp() {
                         </Button>
                       </div>
                     </FormControl>
-                    <FormMessage className="text-[10px] font-bold" />
                   </FormItem>
                 )}
               />
@@ -393,7 +367,6 @@ export default function SignUp() {
                         </button>
                       </div>
                     </FormControl>
-                    <FormMessage className="text-[10px] font-bold" />
                   </FormItem>
                 )}
               />
